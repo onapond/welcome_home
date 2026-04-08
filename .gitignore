@@ -1,0 +1,25 @@
+# ─── Next.js ──────────────────────────────────────────────────
+.next/
+out/
+build/
+
+# ─── 환경변수 (절대 커밋하지 말 것) ─────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── 의존성 ───────────────────────────────────────────────────
+node_modules/
+sanity/node_modules/
+
+# ─── OS / Editor ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/settings.json
+
+# ─── 임시 파일 ────────────────────────────────────────────────
+*.log
+*.tsbuildinfo
+.vercel
+.env.local.example.bak

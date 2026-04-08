@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(cp -r /tmp/welcome_home_init/node_modules /c/dev/welcome_home/)",
+      "Bash(cp /tmp/welcome_home_init/package.json /c/dev/welcome_home/)",
+      "Bash(cp /tmp/welcome_home_init/package-lock.json /c/dev/welcome_home/)",
+      "Bash(cp /tmp/welcome_home_init/tsconfig.json /c/dev/welcome_home/)",
+      "Bash(cp /tmp/welcome_home_init/next.config.ts /c/dev/welcome_home/)",
+      "Bash(cp -r /tmp/welcome_home_init/src /c/dev/welcome_home/)",
+      "Bash(cp -r /tmp/welcome_home_init/public /c/dev/welcome_home/)",
+      "Bash(ls:*)",
+      "Bash(grep -E '\\\\.\\(ts|json|mjs\\)$')",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(npm run:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(node_modules/.bin/next lint:*)",
+      "Bash(node_modules/.bin/eslint src/ --ext .tsx,.ts)",
+      "Bash(grep -v \"//\")",
+      "Bash(grep -v \"aria-label\\\\|//\")"
+    ]
+  }
+}
