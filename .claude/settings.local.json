@@ -22,7 +22,28 @@
       "Bash(node_modules/.bin/next lint:*)",
       "Bash(node_modules/.bin/eslint src/ --ext .tsx,.ts)",
       "Bash(grep -v \"//\")",
-      "Bash(grep -v \"aria-label\\\\|//\")"
+      "Bash(grep -v \"aria-label\\\\|//\")",
+      "Bash(claude mcp:*)",
+      "Bash(vercel --version)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel:*)",
+      "mcp__Sanity__list_organizations",
+      "mcp__Sanity__list_projects",
+      "mcp__Sanity__list_datasets",
+      "mcp__Sanity__get_schema",
+      "Bash(npx sanity@latest schema deploy)",
+      "Bash(./node_modules/.bin/sanity schema:*)",
+      "mcp__Sanity__add_cors_origin",
+      "mcp__Sanity__create_documents_from_json",
+      "mcp__Sanity__publish_documents",
+      "Bash(printf \"re13zhns\")",
+      "Bash(grep -v \"run \\\\`npm\")",
+      "Bash(grep -v \"npm warn\\\\|npm fund\\\\|170 packages\\\\|added\\\\|up to date\\\\|run \\\\`npm\")",
+      "Bash(start:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

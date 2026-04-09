@@ -1,0 +1,535 @@
+{
+  "timestamp": "2026-04-08T01:50:12.942Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-04-08T01:35:13.814Z",
+    "activeFeatures": [
+      "welcome_home",
+      "layout",
+      "ui",
+      "sections",
+      "visit",
+      "sermons",
+      "about",
+      "sanity",
+      "schemas",
+      "scripts",
+      "features",
+      "news"
+    ],
+    "primaryFeature": "welcome_home",
+    "features": {
+      "welcome_home": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-07T11:08:49.377Z",
+          "lastUpdated": "2026-04-08T01:35:13.813Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\app\\not-found.tsx"
+      },
+      "layout": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-07T11:28:24.797Z",
+          "lastUpdated": "2026-04-07T11:35:20.636Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\components\\layout\\Footer.tsx"
+      },
+      "ui": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-07T11:38:19.837Z",
+          "lastUpdated": "2026-04-07T11:38:34.717Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\components\\ui\\ImagePlaceholder.tsx"
+      },
+      "sections": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-07T11:40:44.158Z",
+          "lastUpdated": "2026-04-08T01:12:43.324Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\components\\sections\\LatestSermonSection.tsx"
+      },
+      "visit": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T00:51:13.602Z",
+          "lastUpdated": "2026-04-08T01:30:19.991Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\app\\visit\\page.tsx"
+      },
+      "sermons": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T00:53:30.461Z",
+          "lastUpdated": "2026-04-08T01:13:55.551Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\app\\sermons\\page.tsx"
+      },
+      "about": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T00:56:22.923Z",
+          "lastUpdated": "2026-04-08T01:30:31.517Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\app\\about\\page.tsx"
+      },
+      "sanity": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T01:01:25.050Z",
+          "lastUpdated": "2026-04-08T01:12:18.503Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\lib\\sanity\\queries.ts"
+      },
+      "schemas": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T01:01:43.593Z",
+          "lastUpdated": "2026-04-08T01:02:12.686Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\sanity\\schemas\\index.ts"
+      },
+      "scripts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T01:03:28.006Z",
+          "lastUpdated": "2026-04-08T01:03:28.006Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\scripts\\seed-sanity.ts"
+      },
+      "features": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T01:13:50.383Z",
+          "lastUpdated": "2026-04-08T01:30:13.726Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\components\\features\\VisitClient.tsx"
+      },
+      "news": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-04-08T01:14:39.434Z",
+          "lastUpdated": "2026-04-08T01:14:39.434Z"
+        },
+        "lastFile": "C:\\dev\\welcome_home\\src\\app\\news\\page.tsx"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-04-07T10:46:04.470Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-04-08T01:35:13.814Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-04-07T11:08:49.377Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:09:15.674Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:09:32.987Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:28:24.797Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:28:47.075Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:35:20.636Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:38:19.837Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:38:25.756Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:38:34.717Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:40:44.158Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T11:48:31.606Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:00:16.514Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:00:55.885Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:01:01.619Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:02:31.391Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:03:11.505Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:03:15.551Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:10:23.808Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:12:46.059Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-07T12:14:25.868Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T00:45:57.968Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T00:47:05.382Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T00:51:13.602Z",
+        "feature": "visit",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T00:53:30.461Z",
+        "feature": "sermons",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T00:56:22.924Z",
+        "feature": "about",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:25.050Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:32.470Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:43.593Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:46.251Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:52.240Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:01:55.807Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:05.796Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:11.977Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:12.686Z",
+        "feature": "schemas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:21.569Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:30.089Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:02:47.092Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:03:28.006Z",
+        "feature": "scripts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:12:18.503Z",
+        "feature": "sanity",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:12:43.324Z",
+        "feature": "sections",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:12:49.426Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:13:50.383Z",
+        "feature": "features",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:13:55.551Z",
+        "feature": "sermons",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:14:39.434Z",
+        "feature": "news",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:22:22.754Z",
+        "feature": "about",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:22:29.555Z",
+        "feature": "about",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:22:30.929Z",
+        "feature": "visit",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:22:41.681Z",
+        "feature": "about",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:22:42.774Z",
+        "feature": "visit",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:13.726Z",
+        "feature": "features",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:19.991Z",
+        "feature": "visit",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:31.517Z",
+        "feature": "about",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:43.069Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:49.294Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:30:49.901Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:34:53.120Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-04-08T01:35:13.813Z",
+        "feature": "welcome_home",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}
