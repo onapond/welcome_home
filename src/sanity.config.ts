@@ -6,8 +6,8 @@ export default defineConfig({
   name: "chungpa-central-church",
   title: "청파중앙교회 CMS",
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+  projectId: (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "").trim(),
+  dataset: (process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production").trim(),
 
   plugins: [
     structureTool({
