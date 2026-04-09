@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["sanity", "@sanity/ui", "@sanity/icons", "@sanity/color"],
   images: {
     remotePatterns: [
       // Sanity CDN — CMS 이미지 (설교 썸네일, 갤러리, 주보 등)
