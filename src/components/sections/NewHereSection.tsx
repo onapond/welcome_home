@@ -88,7 +88,7 @@ export default function NewHereSection() {
             {/* CTA */}
             <div>
               <Link
-                href="/visit/first-time"
+                href="/visit#reservation"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all duration-300 hover:brightness-110"
                 style={{ backgroundColor: "var(--color-primary)" }}
               >

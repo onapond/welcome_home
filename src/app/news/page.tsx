@@ -87,7 +87,7 @@ function PostCard({ post }: { post: Post }) {
 
   return (
     <Link
-      href={`/news/${post.slug.current}`}
+      href={post.slug?.current ? `/news/${post.slug.current}` : "#"}
       className="group flex items-start gap-4 rounded-2xl p-5 transition-all duration-200 hover:shadow-md"
       style={{
         backgroundColor: "var(--color-white)",
@@ -251,7 +251,7 @@ export default async function NewsPage() {
                 return (
                   <Link
                     key={post._id}
-                    href={`/news/${post.slug.current}`}
+                    href={post.slug?.current ? `/news/${post.slug.current}` : "#"}
                     className="group flex flex-col gap-3 rounded-2xl p-5 transition-all duration-200 hover:brightness-110"
                     style={{
                       backgroundColor: "rgba(255,255,255,0.07)",

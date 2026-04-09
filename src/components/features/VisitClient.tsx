@@ -415,7 +415,7 @@ export default function VisitClient() {
       </section>
 
       {/* 4. Visit Form */}
-      <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
+      <section id="reservation" className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader label="방문 예약" title="방문 신청하기" align="center" className="mb-3" />
           <p className="text-sm text-center mb-12" style={{ color: "var(--color-dark-soft)" }}>

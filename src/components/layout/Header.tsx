@@ -96,7 +96,7 @@ export default function Header() {
 
               {/* CTA Button */}
               <Link
-                href="/visit/first-time"
+                href="/visit#reservation"
                 className={[
                   "ml-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300",
                   scrolled

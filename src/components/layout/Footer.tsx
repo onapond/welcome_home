@@ -4,22 +4,22 @@ import { Youtube, Instagram, Mail } from "lucide-react";
 
 const FOOTER_LINKS = {
   예배: [
-    { label: "예배 안내", href: "/visit/service-times" },
-    { label: "처음 오시는 분", href: "/visit/first-time" },
-    { label: "오시는 길", href: "/visit/location" },
-    { label: "자녀 프로그램", href: "/visit/kids" },
+    { label: "새가족 안내", href: "/visit" },
+    { label: "방문 예약", href: "/visit#reservation" },
+    { label: "오시는 길", href: "/visit#location" },
+    { label: "예배 시간", href: "/visit#service-times" },
   ],
   공동체: [
-    { label: "청년부 United", href: "/community/youth" },
-    { label: "청소년부", href: "/community/students" },
-    { label: "선교", href: "/community/mission" },
-    { label: "소그룹 / 구역", href: "/community/groups" },
+    { label: "청년부 United", href: "/community#youth" },
+    { label: "청소년부", href: "/community#students" },
+    { label: "선교", href: "/community#mission" },
+    { label: "소그룹 / 구역", href: "/community#groups" },
   ],
   미디어: [
-    { label: "최신 설교", href: "/sermons/latest" },
-    { label: "설교 아카이브", href: "/sermons/archive" },
-    { label: "공지사항", href: "/news/announcements" },
-    { label: "교회 갤러리", href: "/news/gallery" },
+    { label: "설교 아카이브", href: "/sermons" },
+    { label: "소식 & 공지", href: "/news" },
+    { label: "문의하기", href: "/contact" },
+    { label: "교회소개", href: "/about" },
   ],
 } as const;
 

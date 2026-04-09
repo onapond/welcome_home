@@ -73,7 +73,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             {/* CTA */}
             <div className="p-6 border-t border-gray-100">
               <Link
-                href="/visit/first-time"
+                href="/visit#reservation"
                 onClick={onClose}
                 className="block w-full text-center px-6 py-3 rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:brightness-110"
                 style={{ backgroundColor: "var(--color-primary)" }}

@@ -23,3 +23,5 @@ Thumbs.db
 *.tsbuildinfo
 .vercel
 .env.local.example.bak
+
+.vercel
