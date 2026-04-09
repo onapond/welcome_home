@@ -108,6 +108,77 @@ public/images/              # logo.png (교체 예정 이미지들 여기에 추
 | 방문/문의 폼 실제 저장 안 됨 | 미해결 | 백엔드 연동 필요 |
 | 지도 플레이스홀더 | 미해결 | 카카오 API 키 필요 |
 | 교회 사진 없음 | 미해결 | 사진 제공받아 교체 필요 |
+| **/studio 관리자 페이지 작동 안 함** | **미해결** | 아래 상세 참고 |
+
+---
+
+## 🚨 미해결: /studio 관리자 페이지
+
+### 증상
+`welcomehome-seven.vercel.app/studio` 접속 시 Studio UI가 뜨지 않음.
+
+### 근본 원인
+**Next.js 16 + Turbopack + Sanity Studio v3 호환성 문제**
+- Next.js 16은 Turbopack을 기본 번들러로 사용
+- Sanity Studio를 SSR(서버사이드 렌더링)하면 `TypeError: createContext is not a function` 에러 발생
+- `dynamic({ ssr: false })`로 우회하면 빌드는 통과하지만 Studio 내부 라우팅이 깨짐
+
+### 시도한 방법 (모두 실패)
+
+| 방법 | 결과 | 실패 이유 |
+|------|------|-----------|
+| `NextStudio` 직접 사용 | 빌드 실패 | Turbopack SSR에서 `createContext is not a function` |
+| `dynamic({ ssr: false })` + `NextStudio` | 런타임 에러 | "Tool not found: studio" — Next.js 라우팅 통합 깨짐 |
+| `dynamic({ ssr: false })` + 순수 `Studio` | 런타임 에러 | 동일 |
+| `transpilePackages` 추가 | 빌드 실패 | 근본 해결 안 됨 |
+| `serverExternalPackages` 추가 | 로컬 빌드 성공, Vercel 실패 | Vercel 런타임에서 패키지 미탑재 |
+| `basePath: "/studio"` config 설정 | 효과 없음 | 라우팅 이슈 지속 |
+
+### 현재 코드 상태
+- `src/app/studio/[[...tool]]/page.tsx` — `dynamic({ ssr: false })`로 `sanity/Studio` 로드 시도
+- `src/sanity.config.ts` — `basePath: "/studio"`, 스키마 정상 설정
+- `src/components/layout/ClientLayout.tsx` — `/studio` 경로에서 Header/Footer 숨김
+
+### 권장 해결책 (시도 안 해본 것)
+
+#### 방법 A: Sanity 공식 호스팅으로 전환 (가장 간단, 즉시 가능) ⭐ 추천
+```bash
+cd sanity
+npx sanity deploy
+# → 무료, https://chungpa-central-church.sanity.studio 같은 URL 생성
+```
+- 코드 변경 없이 즉시 사용 가능
+- 완전히 별도 URL이지만 무료이고 안정적
+- 홈페이지 Footer에 관리자 링크 추가하면 됨
+
+#### 방법 B: Next.js를 Webpack으로 빌드
+Next.js 16은 Turbopack이 기본. Webpack으로 강제 전환하면 SSR 에러가 사라질 수 있음.
+```ts
+// next.config.ts 에 추가
+experimental: {
+  turbopack: false  // 유효 여부 확인 필요
+}
+```
+또는 package.json:
+```json
+"build": "TURBOPACK=0 next build"
+```
+
+#### 방법 C: next-sanity 업그레이드 대기
+next-sanity가 Next.js 16 Turbopack을 공식 지원하는 버전 출시 후 재시도
+
+### 관련 파일
+```
+src/app/studio/[[...tool]]/page.tsx   ← Studio 라우트
+src/sanity.config.ts                  ← Studio 설정 (basePath 포함)
+src/components/layout/ClientLayout.tsx ← /studio 경로 헤더 제외
+sanity/                               ← 독립 Sanity 프로젝트 (로컬 실행 가능)
+```
+
+### 로컬에서 Studio 사용하는 임시 방법
+```bash
+cd sanity && npm run dev  # → http://localhost:3333 에서 정상 작동
+```
 
 ---
 
