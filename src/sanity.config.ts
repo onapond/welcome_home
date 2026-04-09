@@ -13,6 +13,7 @@ export default defineConfig({
     structureTool({
       structure: (S) =>
         S.list()
+          .id("root")
           .title("콘텐츠 관리")
           .items([
             S.listItem()
