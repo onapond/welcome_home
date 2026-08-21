@@ -95,10 +95,24 @@ vercel --prod → READY
 `NEXT_PUBLIC_SITE_URL`은 **등록하지 않았다**. 미설정 시 `src/lib/site.ts`의
 폴백(vercel.app)이 쓰이며 현재 상태에 맞다. S2 도메인 이전 시 등록할 것.
 
-> ⚠️ **GitHub push 미완료**: 로컬에 커밋 2건(`27174d5`, `e21b895`)이 있으나
-> git 자격증명이 없어 `origin/main`에 반영하지 못했다. 배포는 Vercel CLI로
-> 직접 수행했으므로 **프로덕션이 GitHub main보다 앞서 있다.**
-> `gh auth login` 후 `git push origin main` 필요.
+GitHub push 완료 — 로컬·`origin/main`·프로덕션이 모두 동기화됨 (`992c5e3`).
+
+### ⚠️ 중요: 이 프로젝트는 GitHub 자동배포가 연결되어 있지 않다
+
+`git push origin main` 후 90초간 관찰했으나 **새 배포가 생성되지 않았다.**
+Vercel 프로젝트에 Git 연동이 없어 push는 배포를 트리거하지 않는다.
+
+- 히스토리의 빈 커밋 `chore: Vercel 배포 재트리거` 2건(`b83f06d`, `c290676`)이
+  연달아 있는 것은 git으로 배포를 트리거하려다 실패한 흔적으로 보인다.
+- **배포는 반드시 아래 CLI 명령으로 해야 한다.** push만 하고 배포된 줄
+  알면 프로덕션이 낡은 상태로 남는다.
+
+```bash
+vercel --prod --yes --scope onaponds-projects
+```
+
+> 향후 개선: Vercel 대시보드 → Settings → Git 에서 `onapond/welcome_home`을
+> 연결하면 push 자동배포와 PR 프리뷰를 쓸 수 있다. 연결 여부는 별도 판단 사항.
 
 ---
 
@@ -187,10 +201,14 @@ cd sanity && ./node_modules/.bin/sanity schema deploy
 
 ## 배포 방법
 
+⚠️ **GitHub 자동배포가 연결되어 있지 않다. push만으로는 배포되지 않는다.**
+
 ```bash
-# 변경사항 후 프로덕션 배포
+# 변경사항 후 프로덕션 배포 (유일한 배포 경로)
 vercel --prod --yes --scope onaponds-projects
 ```
+
+git 자격증명은 `gh auth login` → `gh auth setup-git` 으로 설정한다.
 
 ---
 
