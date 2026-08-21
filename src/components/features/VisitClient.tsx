@@ -148,25 +148,61 @@ function AccordionItem({
 
 const SERVICE_OPTIONS = ["주일예배 (11:00)", "수요예배 (19:30)", "금요기도회 (21:00)", "새벽기도 (05:30)"];
 
+const EMPTY_VISIT_FORM = {
+  name: "",
+  phone: "",
+  service: SERVICE_OPTIONS[0],
+  count: "1",
+  memo: "",
+};
+
 function VisitForm() {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    service: SERVICE_OPTIONS[0],
-    count: "1",
-    memo: "",
-  });
+  const [form, setForm] = useState(EMPTY_VISIT_FORM);
+  const [consent, setConsent] = useState(false);
+  // 허니팟 — 사람에게 보이지 않으므로 값이 차면 봇이다
+  const [website, setWebsite] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
-    setForm({ name: "", phone: "", service: SERVICE_OPTIONS[0], count: "1", memo: "" });
-    setTimeout(() => setSubmitted(false), 5000);
+    if (loading) return; // 중복 제출 방지
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, consent, website }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // 서버 검증 실패 시 첫 번째 항목을, 그 외에는 서버 메시지를 보여준다
+        const fieldMessage = Array.isArray(data.errors) ? data.errors[0]?.message : null;
+        setError(
+          fieldMessage ??
+            data.message ??
+            "신청을 접수하지 못했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다."
+        );
+        return;
+      }
+
+      setSubmitted(true);
+      setForm(EMPTY_VISIT_FORM);
+      setConsent(false);
+    } catch {
+      setError("네트워크 오류로 신청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const inputClass = "w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2";
@@ -189,6 +225,20 @@ function VisitForm() {
           }}
         >
           방문 신청이 접수되었습니다. 담당 사역자가 연락드리겠습니다.
+        </div>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl px-5 py-4 text-sm font-medium"
+          style={{
+            backgroundColor: "#FEF2F2",
+            border: "1px solid #FCA5A5",
+            color: "#B91C1C",
+          }}
+        >
+          {error}
         </div>
       )}
 
@@ -303,12 +353,44 @@ function VisitForm() {
         />
       </div>
 
+      {/* 허니팟 — 화면·스크린리더 모두에서 감춘다 */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
+        <label htmlFor="visit-website">이 항목은 비워두세요</label>
+        <input
+          id="visit-website"
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
+      </div>
+
+      <label className="flex items-start gap-3 text-sm cursor-pointer" style={{ color: "var(--color-dark-soft)" }}>
+        <input
+          type="checkbox"
+          name="consent"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          required
+          className="mt-0.5 flex-shrink-0"
+          style={{ accentColor: "var(--color-primary)" }}
+        />
+        <span>
+          방문 안내를 위해 이름과 연락처를 수집하는 데 동의합니다.
+          수집한 정보는 안내 목적으로만 사용하며, 안내가 끝나면 파기합니다.
+          <span aria-hidden="true" style={{ color: "#e53e3e" }}> *</span>
+        </span>
+      </label>
+
       <button
         type="submit"
-        className="self-start inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 active:scale-95"
+        disabled={loading}
+        className="self-start inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ backgroundColor: "var(--color-primary)" }}
       >
-        방문 신청하기
+        {loading ? "신청 중..." : "방문 신청하기"}
       </button>
     </form>
   );
