@@ -99,3 +99,19 @@ img, video {
   height: auto;
   display: block;
 }
+
+/* ── 로딩 인디케이터 ─────────────────────────────────────────── */
+
+@keyframes chungpa-loading {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* 모션 감소를 선호하는 사용자에게는 움직임 대신 정적 표시를 준다 */
+@media (prefers-reduced-motion: reduce) {
+  [style*="chungpa-loading"] {
+    animation: none !important;
+    width: 100% !important;
+    opacity: 0.5;
+  }
+}
