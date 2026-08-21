@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import { NAV_LINKS } from "./Header";
 
 interface MobileNavProps {
@@ -11,32 +10,32 @@ interface MobileNavProps {
 }
 
 export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
+  /*
+    열림/닫힘을 CSS transform 전환으로 처리한다. 항상 마운트해 두고 화면 밖으로
+    밀어두므로, 닫는 애니메이션도 자연스럽게 재생된다.
+    닫힌 동안에는 inert로 키보드·스크린리더 접근을 막는다.
+  */
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/50"
-            onClick={onClose}
-            aria-hidden="true"
-          />
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-200"
+        style={{
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-          {/* Drawer */}
-          <motion.nav
-            key="drawer"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-            className="fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl flex flex-col"
-            aria-label="모바일 메뉴"
-          >
+      {/* Drawer */}
+      <nav
+        className="fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out"
+        style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
+        aria-label="모바일 메뉴"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+      >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <span
@@ -81,9 +80,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 처음 오시나요?
               </Link>
             </div>
-          </motion.nav>
-        </>
-      )}
-    </AnimatePresence>
+      </nav>
+    </>
   );
 }
