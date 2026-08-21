@@ -5,6 +5,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import LocationSection from "@/components/sections/LocationSection";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/visit/service-times" },
   title: "예배 안내",
   description:
     "청파중앙교회 예배 시간 안내. 주일예배(11:00), 수요예배(19:30), 금요기도회(21:00), 새벽기도(05:30). 누구나 환영합니다.",

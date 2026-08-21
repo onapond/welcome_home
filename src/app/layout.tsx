@@ -34,9 +34,8 @@ export const metadata: Metadata = {
     description: "서울 용산구 청파동에 위치한 청파중앙교회입니다.",
   },
   metadataBase: new URL(SITE_URL),
-  alternates: {
-    canonical: "/",
-  },
+  // canonical은 페이지마다 달라야 하므로 여기에 두지 않는다.
+  // 루트에 두면 모든 하위 페이지가 홈을 canonical로 선언해 색인에서 빠진다.
 };
 
 export default function RootLayout({

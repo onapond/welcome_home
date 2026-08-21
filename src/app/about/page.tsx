@@ -5,6 +5,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "교회소개",
   description:
     "1962년 서울 용산구에서 설립된 청파중앙교회를 소개합니다. 담임목사 소개, 교회 역사, 비전, 신앙고백을 확인하세요.",

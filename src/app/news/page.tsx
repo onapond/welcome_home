@@ -9,6 +9,7 @@ import type { Post, Bulletin } from "@/lib/sanity/types";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/news" },
   title: "소식",
   description: "청파중앙교회 공지사항, 교회 소식, 주보를 확인하세요.",
 };
