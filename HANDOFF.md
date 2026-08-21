@@ -1,6 +1,11 @@
 # 청파중앙교회 홈페이지 — 핸드오프 문서
 
 > 마지막 갱신: 2026-08-21 | 다음 작업자: Claude Code
+>
+> **여기부터 읽으세요** — 이번 세션(2026-08-21)에 구 사이트 자산 4,559건을 수집하고
+> 임포트 준비를 끝냈습니다. 작업 내역은 아래 [S5-a](#s5-a--구-사이트-자산-수집--임포트-준비-완료),
+> 다음에 할 일은 [CONTENT_IMPORT.md](./CONTENT_IMPORT.md)에 있습니다.
+> 남은 선행 조건은 **쓰기 인증 하나**(`npx sanity login`)입니다.
 
 ---
 
@@ -35,11 +40,22 @@
 | S1 | 코드 버그 수정 (limit, SITE_URL 일원화, sitemap 경로, env명, contact metadata) | 검증 통과 + 배포 | ✅ 완료 (미배포) |
 | S3 | Resend 기반 폼 백엔드 (방문신청·문의) | 실제 제출 → 담당자 수신 확인 | 🟡 코드 완료 / 키 대기 |
 | S4 | Sanity Studio 운영 방식 확정 (`sanity deploy`) | 관리자 URL + 사용 절차 문서화 | ⬜ |
-| S5 | 실제 콘텐츠 반영 (사진·설교 YouTube ID·주보) | ImagePlaceholder 0개 | ⬜ **교회 자료 수령 필요** |
+| S5 | 실제 콘텐츠 반영 (사진·설교 링크·주보) | ImagePlaceholder 0개 | 🟡 자산 수집 완료 / 임포트 대기 → **[CONTENT_IMPORT.md](./CONTENT_IMPORT.md)** |
 | S2 | chungpa21.org 도메인 이전 | 도메인 HTTP 200 | ⬜ S5 이후 |
 | S6 | 최종 운영 QA | QA 리포트 갱신 | ⬜ |
 
-> S5는 교회에서 사진·설교 링크·주보를 받아야 착수 가능하다. 다른 세션과 병렬로 미리 요청해 둘 것.
+> **2026-08-21 갱신 — S5 선행 작업 완료.** 구 사이트에서 자산을 직접 수집했으므로 "교회 자료 수령"은 더 이상 병목이 아니다.
+> 사진 3,731장 · 설교 565건 · 주보 112개 · 영상 링크 707건 · 연혁 202건 · 교역자 12명을 `../chungpa21-crawl/`에 확보했다.
+> 임포트 계획·필드 매핑·미결정 사항은 **[CONTENT_IMPORT.md](./CONTENT_IMPORT.md)** 에 정리되어 있다. 다음 세션은 그 문서에서 시작할 것.
+>
+> 새로 드러난 두 가지:
+> - **구 사이트는 죽지 않았다.** `chungpa21.org` HTTP 200. 아래 "DNS가 죽은 서버를 가리킨다"는 기록은 2026-08-21 기준으로는 사실이 아니다. 다만 언제 다시 죽을지 모르므로 `chungpa21-crawl/`이 마지막 스냅샷일 수 있다.
+> - **2016~2023년 설교 영상 331건은 Vimeo에 있고 현재 재생되지 않는다** (표본 30건 전수 403).
+>
+> **Vimeo 관련 결정 (2026-08-21, 사용자):** Vimeo는 **사용하지 않는다.** `vimeoId` 필드를 추가하지 않고 계정 복구도 기다리지 않는다.
+> 해당 설교는 **메타데이터만 아카이브로 유지**한다(제목·날짜·설교자·성경본문·본문글을 넣고 영상은 비움).
+> 찬양 88건은 **별도 `praise` 타입으로 분리**한다. 따라서 S5는 Vimeo 답을 기다리지 않고 바로 착수 가능하며,
+> 남은 선행 조건은 **`SANITY_API_WRITE_TOKEN` 발급** 하나뿐이다.
 
 ### S0 — 기반 복구 (완료)
 
@@ -75,6 +91,177 @@ vercel env pull   → .env.local 생성 (Sanity 3종 확인)
 - `layout.tsx`: 루트 canonical 제거 (재발 방지용 주석 기재)
 - 7개 페이지 metadata에 각자 경로의 canonical 추가
 - 홈(`src/app/page.tsx`)은 metadata export가 없어 신설
+
+### S5-a — 구 사이트 자산 수집 + 임포트 준비 (완료)
+
+이번 세션의 본 작업. **Sanity에는 아무것도 쓰지 않았다.** 쓰기 인증 없이 가능한 데까지 진행한 상태다.
+
+#### 1) 구 사이트 전수 크롤링 → `../chungpa21-crawl/`
+
+`chungpa21.org`는 웹처치(ASP.NET) CMS다. `link_manager.js`의 `goTo()` 디스패처를 읽어
+게시판 URL 규칙을 역산한 뒤 전 게시판을 페이지네이션까지 훑었다.
+
+| 수집물 | 수량 | 기간 |
+|---|---:|---|
+| 설교·찬양 게시물 | 565 | 2016-01-03 ~ 2026-08-16 |
+| 앨범 게시물 / 사진 | 463 / 3,731 | 2018-06-06 ~ 2026-08-05 |
+| 주보 PDF | 112 | 2024-02 ~ 2026-08 |
+| 영상 링크 | 707 | YouTube 330 · Vimeo 377 |
+| 교회 연혁 | 202 | 1962.08.08 ~ 2025.12.25 |
+| 섬기는 분들 | 12 | — |
+| **다운로드 파일** | **4,559** | **1.14 GB** |
+
+무결성: 0바이트·손상 파일 0건, PDF 112개 전부 정상(각 2쪽).
+실패 4건은 구 사이트에 애초에 없던 UI 아이콘(`/img/icon_phone.png` 등).
+
+막혔던 지점 하나 — 주보는 `ajax_weekly_V2_cate.asp`가 웹처치의 `com` 쿠키를 요구하는데,
+그 값에 `&`와 `=`가 들어 있어 파이썬 `http.cookiejar`가 조용히 버린다.
+`lib_fetch.py`에서 Set-Cookie를 직접 파싱해 헤더로 되돌려 실어 보내 해결했다.
+
+#### 2) Sanity 스키마 4종 신설
+
+| 파일 | 용도 | 이유 |
+|---|---|---|
+| `sanity/schemas/praise.ts` | 찬양 88건 | `sermon`은 설교자·성경본문이 required인데 찬양엔 본래 없는 값 |
+| `sanity/schemas/churchHistory.ts` | 연혁 202건 | 담을 타입이 아예 없었음 |
+| `sanity/schemas/staff.ts` | 섬기는 분들 12명 | 담을 타입이 아예 없었음 |
+| `sanity/schemas/churchInfo.ts` | 교회 기본 정보 | dataset에는 있는데 스키마 파일이 없어 Studio에서 편집 불가였음 |
+
+`index.ts`에 전부 등록. `sermon`은 **손대지 않았다** — Vimeo를 안 쓰기로 해서 `vimeoId`가 불필요하고,
+required도 아래 3)의 복구로 전부 채워지므로 완화할 이유가 없다.
+
+`staff.ts`에는 `publishContact` 불리언을 두고 이메일·전화를 그 뒤에 숨겼다.
+구 사이트가 교역자 4명의 개인 휴대폰·이메일을 그대로 노출하고 있었기 때문에 기본값은 비공개다.
+
+#### 3) 변환 파이프라인 → `scripts/import/transform.mjs`
+
+네트워크를 쓰지 않고 Sanity에 쓰지도 않는다. 크롤 데이터를 읽어 NDJSON과 검수용 CSV만 만든다.
+
+```
+sermon        467건    churchHistory 202건
+praise         34건    staff          12건    bulletin 112건
+                                              ─────────────
+                                              827건 + 에셋참조 348건
+```
+
+정제 내용:
+- 제목 앞 날짜 프리픽스 **275건** 제거 — `231217 - …`(주일예배)와 `2023-04-21 …`(금요예배) 두 형식
+- 설교자·성경본문 **277건** 복구 — 목록에는 없고 상세 본문에 `▶ 설교자 : …` 로만 남아 있던 값
+- `summary`에서 `▶ 설교일/설교자/제목/본문` 메타 줄 제거
+- 앨범 카테고리 자동 분류 초안
+
+검증 결과: 필수필드 누락 0 · `_id` 중복 0 · 날짜형식 오류 0 ·
+**에셋 참조 348건 전건 실제 파일 존재 확인**.
+`_id`를 소스 seq로 고정(`sermon-571`, `history-000`, `bulletin-2024-02-11`)해 재실행이 안전하다.
+
+#### 4) 작업 중 스스로 잡은 오류
+
+기록해 둔다. 같은 함정을 다시 밟지 않기 위해서다.
+
+| 증상 | 원인 | 조치 |
+|---|---|---|
+| 앨범 분류기가 463건 중 **230건을 `etc`로** 떨굼 | 특별영상 보드(gallery 대상 아님)까지 억지로 분류 + `척사대회`·`임직식`·`김장`·`노회` 등 실제 행사어 누락 | 보드별로 분리하고 규칙 보강 → `etc` 62건(23%)으로 감소, 사진 0장 위반 0건 |
+| 연혁 202건 중 **3건 누락** | `2012.07.` 처럼 일자 없이 마침표로 끝나는 형식을 정규식이 못 받음 | 3형식 모두 수용 → 202/202 |
+| 제목 정제가 89건에 그침 | 금요예배는 `2023-04-21 ` 형식을 쓰는데 주일예배 형식만 처리 | 두 형식 모두 처리 → 275건 |
+| 보고서에 적은 보드별 영상 보유 건수가 틀림 | 세어 보지 않고 추정해서 씀 | 실측 후 정정 (아래 표) |
+
+실측값:
+
+| 게시판 | 총 | YouTube | 영상 없음 |
+|---|---:|---:|---:|
+| 주일예배 | 405 | 128 | 277 |
+| 금요예배 | 72 | 71 | 1 |
+| 찬양 | 88 | 34 | 54 |
+
+#### 5) 검증
+
+```
+npx tsc --noEmit   → exit 0
+npm run lint       → 에러 0, 경고 0
+```
+
+새 스키마는 루트 `tsconfig.json`의 `exclude`에 `sanity`가 있어 프로젝트 tsc 범위 밖이다.
+별도 tsconfig로 `sanity/schemas/**/*.ts`만 따로 타입체크해 통과를 확인했다.
+
+#### 6) 남긴 문서
+
+- `CONTENT_IMPORT.md` (신규) — 임포트 계획 전체. 필드 매핑·스키마 갭·미결정 사항·실행 명령
+- `../chungpa21-crawl/README.md` — 크롤 데이터 설명과 재실행 방법
+
+---
+
+### S7 — 렌더링 결함 수정 (완료·배포)
+
+브라우저로 직접 사이트를 열어보고 발견한 결함들이다. 코드·SSR 검증만으로는
+드러나지 않았다.
+
+#### 1. 어두운 배경의 흰 제목이 전부 안 보였다 — 사이트 전역
+
+`globals.css`의 베이스 타이포그래피가 **캐스케이드 레이어 밖**에 있어
+`h1,h2,h3 { color: var(--color-dark) }`가 Tailwind의 `text-white`를 눌렀다.
+CSS 규칙상 **레이어 밖 스타일은 `@layer utilities` 안의 스타일을 특정도와
+무관하게 이긴다.**
+
+영향 범위 10곳: 홈 히어로, `/about`·`/community`·`/news`·`/visit`·`/contact`·
+`/visit/service-times` 각 히어로, `LocationSection`, `LatestSermonSection`.
+모두 어두운 배경 위에 어두운 글씨로 렌더링되어 사실상 보이지 않았다.
+
+→ 베이스 스타일을 `@layer base`로 감쌌다. 재발 방지 주석을 남겼다.
+
+> ⚠️ **앞으로 `globals.css`에 요소 선택자 규칙을 추가할 때는 반드시
+> `@layer base` 안에 넣을 것.** 레이어 밖에 두면 Tailwind 유틸리티가 전부 무력화된다.
+
+#### 2. framer-motion이 동작하지 않았다
+
+`initial={{opacity:0}}` 상태로 멈춰 히어로의 표어·CTA가 계속 투명했고,
+표어 타임라인은 2024 노드만 희미하게 보였다. `HeroSection` 서브트리는
+**하이드레이션 자체가 되지 않았다**(슬라이더 버튼에 React 핸들러 미부착).
+`/studio`가 겪는 Next.js 16 Turbopack 비호환과 같은 계열로 보인다.
+
+→ framer-motion을 걷어내고 CSS 애니메이션으로 대체했다(사용처 3곳).
+   의존성도 제거했다. `JourneyTimeline`은 서버 컴포넌트가 되었다.
+
+> **원칙**: 화면 최상단 콘텐츠의 기본 상태를 '보임'으로 두고 등장 효과만 얹는다.
+> JS가 실패해도 표어와 CTA는 항상 보여야 한다.
+
+#### 3. 로고가 흰 사각형이었다
+
+`public/images/logo.png`는 확장자와 달리 **1920x1080 JPEG이고 배경이 검정**이다.
+알파가 없어 `brightness(0) invert(1)` 필터가 사각형 전체를 흰색으로 만들었다.
+
+→ 검정 배경을 투명 처리하고 로고만 크롭한 `logo-mark.png`(1310x490)를 만들어
+   연결했다. 원본은 보존한다.
+
+> ⚠️ **임시 대응이다.** 교회에서 원본 벡터 또는 투명 배경 로고를 받는 것이 맞다.
+> JPEG에서 복원한 것이라 경계에 압축 잡티가 남아 있을 수 있다.
+
+#### 4. 그 외
+
+- 죽은 푸터 앵커 2개 수정 (`/visit#location`, `/visit#service-times`)
+- `error.tsx` / `loading.tsx` 신설 — 폴백 화면이 전무했다
+- `main` 랜드마크 중복 제거 — 모든 문서에 `<main>`이 둘씩 있었다
+- `ImagePlaceholder`에 `hideLabel` 추가
+
+#### 도메인 상태 정정
+
+앞선 기록의 "chungpa21.org가 죽었다"와 다른 세션의 "HTTP 200이다"는
+**둘 다 절반만 맞다.**
+
+```
+http://chungpa21.org   → 200
+https://chungpa21.org  → 연결 실패
+```
+
+**구 사이트는 HTTP로만 살아 있고 HTTPS가 없다.** 브라우저가 경고를 띄우는
+상태이며, 도메인 이전 시 이 점도 함께 해소된다.
+
+#### 배운 것
+
+코드 리뷰와 SSR HTML 검증만으로는 **CSS 캐스케이드와 하이드레이션 문제를
+잡을 수 없다.** 마크업에 텍스트가 있어도 화면에는 안 보일 수 있다.
+다음 세션도 변경 후에는 실제 브라우저로 열어볼 것.
+
+---
 
 ### S3 — 폼 백엔드 (코드 완료, 환경변수 대기)
 
@@ -252,17 +439,35 @@ vercel --prod --yes --scope onaponds-projects
 
 ## Sanity CMS 현황
 
-- 스키마: sermon, sermonSeries, post, bulletin, gallery, event (배포 완료)
-- 샘플 데이터 (라이브):
-  - 설교 시리즈 3개 (요한복음, 산상수훈, 특별설교)
-  - 설교 10개 (김항우 목사)
-  - 소식/공지 4개
-  - 주보 3개
+프로젝트 `re13zhns` / 데이터셋 `production`
+
+**스키마 (로컬 10종, 2026-08-21 기준 — 4종은 아직 미배포)**
+```
+sermon · sermonSeries · post · bulletin · gallery · event   ← 기존, 배포 완료
+praise · churchHistory · staff · churchInfo                  ← 신설, 배포 필요
+```
+
+**데이터셋 내용: 문서 21건, 전부 시드 더미 (실제 콘텐츠 0건)**
+```
+sermon 11 · post 5 · bulletin 3 · sermonSeries 3 · churchInfo 1
+```
+더미인 근거 — 제목에 오타가 박혀 있고(`2026년 4웙4일 주보`, `형대 에배라 안내`),
+설교 11건 모두 `youtubeId: null`이며 크롤링한 실제 설교 565건 중 같은 제목이 하나도 없다.
+**임포트 전 전량 삭제 대상.** 만든 것은 `scripts/seed-sanity.ts`로 보인다.
+
+`churchInfo`는 스키마 파일이 없어 Studio에서 편집 불가였고, 값에도 오류가 있다:
+- `establishedYear: 1953` — 연혁 첫 항목·`about` 페이지·`CLAUDE.md` 셋 다 **1962**
+- `youtubeUrl: youtube.com/@chungpa21` — **404**. 실제는 `channel/UC7Fk-mpsIQlgykLK4lW3t7g`
+
+**쓰기 인증: 없음.** `.env.local`에 `SANITY_API_WRITE_TOKEN`도 `SANITY_API_READ_TOKEN`도 없다.
+다만 `sanity` CLI가 `node_modules/.bin/`에 있고 `sanity dataset import`는 토큰이 아니라
+CLI 로그인 세션을 쓴다 → `npx sanity login` 한 번이면 임포트 가능. 자세한 건 `CONTENT_IMPORT.md` G섹션.
 
 **Sanity Studio 로컬 실행:**
 ```bash
-cd sanity && npm run dev  # → http://localhost:3333
+cd sanity && npm install && npm run dev  # → http://localhost:3333
 ```
+> `sanity/node_modules`가 없는 상태다. `npm install`을 먼저 해야 한다.
 
 **스키마 수정 후 배포:**
 ```bash
@@ -285,12 +490,35 @@ cd sanity && ./node_modules/.bin/sanity schema deploy
 - [ ] 내장 `/studio` 라우트 처리 결정 (제거 또는 리다이렉트)
 - [ ] 관리자 URL·로그인 방법을 목사님/담당자용 절차로 문서화
 
-### S5 — 실제 콘텐츠 (교회 자료 수령 필요) ⚠️ 외부 의존
-- [ ] **교회 사진 수령** → `public/images/` 추가 후 `ImagePlaceholder` 교체
-      (사용처 6곳: `HeroSection`, `NewHereSection`, `CommunitySection`, `about/page`, `community/page`)
-- [ ] **설교 YouTube ID 수령** → Sanity `sermon` 문서에 입력
-- [ ] 주보·공지 최신본 입력
-- [ ] 2024/2026 고정된 표어·뉴스·폴백 날짜가 현재 콘텐츠와 맞는지 확인
+### S5 — 실제 콘텐츠 → **자료 수령 불필요해짐. 계획서: [CONTENT_IMPORT.md](./CONTENT_IMPORT.md)**
+
+구 사이트에서 직접 수집해 "교회 자료 수령"은 더 이상 병목이 아니다. S5-a(위 세션 기록)가 준비를 끝냈다.
+
+**S5-b — 인증 후 실행**
+- [ ] `npx sanity login` (또는 `SANITY_API_WRITE_TOKEN` 발급)
+- [ ] 시드 문서 21건 백업 후 삭제
+- [ ] 신설 스키마 4종 배포 → `cd sanity && npx sanity schema deploy`
+- [ ] `sanity dataset import ... --replace` 로 827건 + 에셋 348건 투입
+      (가장 작은 `staff.ndjson` 12건부터 넣고 Studio에서 확인할 것)
+- [ ] `churchInfo` 값 교정 — 설립연도 1953→1962, youtubeUrl 채널ID 형식
+
+**S5-c — 인증 없이도 가능한 화면 작업**
+- [ ] `about/page.tsx` `HISTORY[]` 하드코딩 9개 → `churchHistory` 쿼리로 교체
+      (현재 "1970s 성장과 부흥" 같은 **근거 없이 지어낸 내용**이 올라가 있다)
+- [ ] `about/page.tsx` `STAFF[]` `{name:"교역자"}` 플레이스홀더 → `staff` 쿼리
+- [ ] `ImagePlaceholder` 5개소 → 실제 사진
+- [ ] `SermonsClient` 폴백 문구 교체 — 현재 "유튜브 영상 연동 예정…"이라는 개발용 문구가
+      영상 없는 설교 **278건 전부**에 뜨게 된다. 그 설교들은 연동 예정이 아니라 영상이 없다
+- [ ] 재생 가능/불가 목록에서 구분 (재생 버튼이 `youtubeId` 무관하게 항상 표시됨)
+- [ ] `thumbnail` 렌더링 — 스키마·타입·GROQ에 다 있는데 **어느 컴포넌트도 쓰지 않는다**.
+      썸네일 327장을 올려도 화면에 안 나온다
+- [ ] `getAllGalleries`·`getUpcomingEvents`·`getPostBySlug` 등 **미사용 쿼리 6종** 배선
+
+**S5-d — 결정 대기**
+- [ ] 앨범 카테고리 `etc` 62건 수동 분류 (`scripts/import/out/review-album.csv`)
+- [ ] 특별영상 193건을 어느 타입에 둘지 (gallery 부적합)
+- [ ] 교역자 개인 연락처 공개 범위 — 당사자 동의 확인
+- [ ] 예배시간·헌금계좌 문안 — 구 사이트가 이미지 1장이라 텍스트가 없다
 
 ### 🚫 도메인 연동 금지 (현재 방침)
 
@@ -346,8 +574,19 @@ src/components/
   features/                 # SermonsClient.tsx, VisitClient.tsx
   ui/                       # Button, SectionHeader, ImagePlaceholder
 src/lib/sanity/             # client.ts, queries.ts, types.ts
-sanity/schemas/             # CMS 스키마 정의
+sanity/schemas/             # CMS 스키마 10종
 public/images/              # logo.png (교체 예정 이미지들 여기에 추가)
+
+CONTENT_IMPORT.md           # 콘텐츠 임포트 계획 (S5)
+scripts/import/transform.mjs # 크롤 데이터 → NDJSON 변환 (읽기 전용)
+scripts/import/out/          # 생성물 — .gitignore의 out/ 규칙에 걸려 커밋 안 됨
+  *.ndjson                   #   임포트 페이로드 827건
+  review-*.csv               #   검수용 표
+
+../chungpa21-crawl/         # 구 사이트 자산 4,559건 / 1.14 GB (별도 디렉터리)
+  README.md                  #   수집 내역과 보존 상태
+  data/*.json                #   구조화 데이터
+  assets/                    #   사진·주보PDF·썸네일 실물
 ```
 
 ---
