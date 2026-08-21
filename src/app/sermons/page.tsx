@@ -5,6 +5,7 @@ import SermonsClient from "@/components/features/SermonsClient";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/sermons" },
   title: "설교 아카이브",
   description: "청파중앙교회 설교 말씀 아카이브입니다. 시리즈별, 날짜별로 검색하고 유튜브로 시청하세요.",
 };

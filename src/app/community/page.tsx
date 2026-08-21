@@ -8,6 +8,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/community" },
   title: "공동체 | 청파중앙교회",
   description: "청파중앙교회의 다양한 공동체를 소개합니다. 청년부 United, 청소년부, 선교, 소그룹/구역.",
 };

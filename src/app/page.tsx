@@ -5,7 +5,12 @@ import NewHereSection from "@/components/sections/NewHereSection";
 import LatestSermonSection from "@/components/sections/LatestSermonSection";
 import CommunitySection from "@/components/sections/CommunitySection";
 import LocationSection from "@/components/sections/LocationSection";
+import type { Metadata } from "next";
 import { getLatestSermons } from "@/lib/sanity/queries";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 // ISR: 1시간마다 정적 페이지 재생성
 export const revalidate = 3600;
