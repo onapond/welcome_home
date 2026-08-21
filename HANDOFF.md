@@ -134,19 +134,44 @@ vercel env pull   → .env.local 생성 (Sanity 3종 확인)
 | `+82` 국가번호 | 정상 통과 |
 | 검증 실패 5회 후 정상 제출 | 통과 (발송 상한 미소진) |
 
-**남은 작업 — 환경변수 3개만 넣으면 실동작**
+**확정된 수신 설정 (사용자 결정)**
+
+- `FORM_NOTIFY_TO` = `chungpa21@gmail.com` → **Vercel Production에 등록 완료**
+- 발신 도메인은 당분간 별도로 두지 않는다 (`chungpa21.org` 미사용 방침 유지)
+
+**Vercel Marketplace 경로는 쓸 수 없다**
+
+`vercel integration add resend/resend-email`은 메타데이터로 **소유한 도메인을
+필수 요구**한다 ("you must own a domain to be able to send").
+`welcomehome-seven.vercel.app`은 DNS 레코드를 추가할 수 없어 발신 도메인으로
+인증할 수 없다. 또한 플랜 선택(free/pro $20/scale $90)이 따라오므로
+임의 프로비저닝하지 않았다.
+
+→ **Resend에 직접 가입하는 경로를 쓴다.** 도메인 없이 기본 발신자
+`onboarding@resend.dev`로 발송하며, `FORM_NOTIFY_FROM`은 비워 둔다.
+
+> ⚠️ `onboarding@resend.dev`는 도메인 미인증 상태의 기본 발신자로,
+> **수신처가 Resend 계정 소유자 주소로 제한될 가능성이 크다.**
+> 공식 문서에서 명시 확인은 못 했으므로 실제 발송으로 판정한다.
+> 어느 쪽이든 안전하도록 **Resend 계정을 `chungpa21@gmail.com`으로 생성**할 것.
+> 그러면 제한이 있든 없든 수신이 성립한다.
+
+**남은 작업 — `RESEND_API_KEY` 하나만 넣으면 실동작**
+
+1. `resend.com`에 **`chungpa21@gmail.com`으로** 가입
+2. API Keys → 키 발급 (권한 `Sending access`면 충분)
+3. 등록:
 
 ```bash
-printf "값" | vercel env add RESEND_API_KEY production --scope onaponds-projects
-printf "값" | vercel env add FORM_NOTIFY_TO production --scope onaponds-projects
-printf "값" | vercel env add FORM_NOTIFY_FROM production --scope onaponds-projects
+printf "발급받은_키" | vercel env add RESEND_API_KEY production --scope onaponds-projects
+vercel --prod --yes --scope onaponds-projects   # 환경변수 반영에 재배포 필요
 ```
 
-- `FORM_NOTIFY_TO`: 접수 알림을 받을 실제 주소. 콤마로 여러 개 지정 가능.
-  ⚠️ `church@chungpa21.org`는 기존 서버와 함께 죽었을 가능성이 있어 확인 필요.
-- `FORM_NOTIFY_FROM`: Resend에서 **인증한 도메인**의 주소여야 한다.
-  미설정 시 `onboarding@resend.dev`로 나가는데, 이 테스트 발신자는
-  Resend 계정 소유자에게만 전달되므로 운영에는 쓸 수 없다.
+`FORM_NOTIFY_TO`는 등록 완료. `FORM_NOTIFY_FROM`은 비워 두면
+`onboarding@resend.dev`가 쓰인다.
+
+> 도메인 인증을 붙이면 발신자를 교회 주소로 바꿀 수 있다. S2에서 `chungpa21.org`를
+> 이전할 때 함께 처리하는 것이 자연스럽다.
 
 **프로덕션 배포 검증 완료** (2026-08-21)
 
