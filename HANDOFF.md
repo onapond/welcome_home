@@ -63,9 +63,42 @@ vercel env pull   → .env.local 생성 (Sanity 3종 확인)
 | env 변수명 통일 | `.env.example`, `.env.local.example` | `NEXT_PUBLIC_KAKAO_MAP_API_KEY`로 통일. 카카오 키가 **코드에서 미사용**임을 명시 |
 | metadata 분리 | `src/app/contact/page.tsx` → `src/components/features/ContactClient.tsx` | 서버 페이지 + 클라이언트 폼으로 분리해 `/contact` 페이지 metadata 확보 |
 
-검증: `tsc` 통과 / `lint` 통과 / `build` 성공. 생성된 `sitemap.xml`·`robots.txt`에서 URL과 경로 목록 육안 확인 완료.
+### S1-b — 페이지별 canonical 분리 (완료)
 
-> ⚠️ S1 변경사항은 아직 커밋·배포되지 않았다. 배포 시 Vercel에 `NEXT_PUBLIC_SITE_URL`을 함께 등록할지 결정할 것(미등록 시 코드 폴백값 사용).
+첫 배포 후 라이브 검증 중 발견한 별도 버그다.
+
+`layout.tsx`의 `alternates: { canonical: "/" }`가 모든 하위 페이지에 상속되어
+**8개 페이지 전부가 홈페이지를 정규 URL로 선언**하고 있었다. 검색엔진에
+하위 페이지를 홈의 중복으로 알리는 상태라, CLAUDE.md가 핵심 페이지로 지정한
+`/visit`을 포함해 주요 페이지가 색인되지 않을 수 있었다.
+
+- `layout.tsx`: 루트 canonical 제거 (재발 방지용 주석 기재)
+- 7개 페이지 metadata에 각자 경로의 canonical 추가
+- 홈(`src/app/page.tsx`)은 metadata export가 없어 신설
+
+### 검증 및 배포 결과
+
+```
+tsc --noEmit  → 통과
+lint          → 통과
+build         → 성공 (13페이지)
+vercel --prod → READY
+```
+
+라이브 확인 완료 (2026-08-21):
+- 주요 경로 8개 모두 HTTP 200
+- `sitemap.xml`: `/connect` 제거·`/visit/service-times` 추가·URL 교정 반영
+- `robots.txt`: Sitemap URL 교정 반영
+- canonical 8개 경로 전부 자기 경로로 정상 출력
+- `/contact` 페이지 title·og 태그 정상 생성
+
+`NEXT_PUBLIC_SITE_URL`은 **등록하지 않았다**. 미설정 시 `src/lib/site.ts`의
+폴백(vercel.app)이 쓰이며 현재 상태에 맞다. S2 도메인 이전 시 등록할 것.
+
+> ⚠️ **GitHub push 미완료**: 로컬에 커밋 2건(`27174d5`, `e21b895`)이 있으나
+> git 자격증명이 없어 `origin/main`에 반영하지 못했다. 배포는 Vercel CLI로
+> 직접 수행했으므로 **프로덕션이 GitHub main보다 앞서 있다.**
+> `gh auth login` 후 `git push origin main` 필요.
 
 ---
 
