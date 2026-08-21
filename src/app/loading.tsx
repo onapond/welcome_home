@@ -5,8 +5,9 @@
  * 스피너 대신 절제된 텍스트와 얇은 진행 표시만 쓴다.
  */
 export default function Loading() {
+  // 페이지의 main 랜드마크를 대체하지 않도록 div로 둔다
   return (
-    <main
+    <div
       className="flex flex-col items-center justify-center px-4 py-24"
       style={{ minHeight: "60vh", backgroundColor: "var(--color-bg)" }}
       aria-busy="true"
@@ -28,6 +29,6 @@ export default function Loading() {
           불러오는 중입니다
         </p>
       </div>
-    </main>
+    </div>
   );
 }
