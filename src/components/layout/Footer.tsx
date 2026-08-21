@@ -9,7 +9,7 @@ const FOOTER_LINKS = {
     { label: "새가족 안내", href: "/visit" },
     { label: "방문 예약", href: "/visit#reservation" },
     { label: "오시는 길", href: "/visit#location" },
-    { label: "예배 시간", href: "/visit#service-times" },
+    { label: "예배 시간", href: "/visit/service-times" },
   ],
   공동체: [
     { label: "청년부 United", href: "/community#youth" },

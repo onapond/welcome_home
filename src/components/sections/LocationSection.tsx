@@ -15,7 +15,7 @@ const TRANSPORT_ITEMS = [
 
 export default function LocationSection() {
   return (
-    <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-primary)" }}>
+    <section id="location" className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-primary)" }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
