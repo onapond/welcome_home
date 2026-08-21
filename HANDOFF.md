@@ -181,7 +181,20 @@ cd sanity && ./node_modules/.bin/sanity schema deploy
 - [ ] 주보·공지 최신본 입력
 - [ ] 2024/2026 고정된 표어·뉴스·폴백 날짜가 현재 콘텐츠와 맞는지 확인
 
-### S2 — 도메인 이전 (S5 완료 후)
+### 🚫 도메인 연동 금지 (현재 방침)
+
+**`chungpa21.org`는 S5 완료 전까지 연동하지 않는다.** 배포는 `welcomehome-seven.vercel.app` 에만 한다.
+
+현재 안전 상태 (2026-08-21 확인):
+- Vercel 계정 도메인 목록에 `chungpa21.org` 없음
+- DNS는 여전히 기존 서버 `116.125.124.67` 지목
+- `NEXT_PUBLIC_SITE_URL` 프로덕션 미등록 → 코드 폴백(vercel.app) 사용
+
+> ⚠️ `src/lib/site.ts`는 `NEXT_PUBLIC_SITE_URL`이 등록되는 즉시 canonical·OG·sitemap을
+> 그 값으로 바꾼다. **DNS 전환 전에 이 변수를 등록하면 사이트가 죽은 도메인을
+> 정규 URL로 선언하게 된다.** S2에서 DNS 전환과 함께 등록할 것.
+
+### S2 — 도메인 이전 (S5 완료 후, 현재 보류)
 - [ ] Vercel → Settings → Domains → `chungpa21.org` 추가
 - [ ] DNS를 기존 서버(`116.125.124.67`)에서 Vercel로 전환
 - [ ] `NEXT_PUBLIC_SITE_URL=https://chungpa21.org` 등록 후 재배포
