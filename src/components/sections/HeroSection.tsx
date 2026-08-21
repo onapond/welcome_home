@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
@@ -36,23 +35,25 @@ export default function HeroSection() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Slide Images */}
-      <AnimatePresence mode="sync">
-        <motion.div
-          key={current}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-          className="absolute inset-0"
+      {/*
+        슬라이드는 모두 렌더해두고 CSS opacity로 교차 전환한다.
+        JS가 죽어도 첫 슬라이드는 보인다.
+      */}
+      {SLIDES.map((slide, i) => (
+        <div
+          key={slide.id}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: i === current ? 1 : 0 }}
+          aria-hidden={i !== current}
         >
           <ImagePlaceholder
-            label={SLIDES[current].label}
+            label={slide.label}
             aspectRatio="16/9"
             className="w-full h-full rounded-none"
+            hideLabel
           />
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      ))}
 
       {/* Dark Gradient Overlay */}
       <div
@@ -65,12 +66,11 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex flex-col items-center gap-6"
-        >
+        {/*
+          표어와 CTA는 사이트의 첫인상이다. JS 실행 여부와 무관하게 보여야 하므로
+          기본 상태를 '보임'으로 두고, 등장 효과는 CSS 애니메이션으로만 얹는다.
+        */}
+        <div className="flex flex-col items-center gap-6 hero-enter">
           {/* Badge */}
           <span
             className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-[4px] uppercase"
@@ -122,23 +122,12 @@ export default function HeroSection() {
               href="https://www.youtube.com/channel/UC7Fk-mpsIQlgykLK4lW3t7g"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.12)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.22)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)")
-              }
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 hero-ghost-button"
             >
               온라인 예배
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Slide Indicators */}
@@ -152,9 +141,7 @@ export default function HeroSection() {
             style={{
               width: i === current ? "2.25rem" : "0.5rem",
               backgroundColor:
-                i === current
-                  ? "var(--color-primary)"
-                  : "rgba(255,255,255,0.4)",
+                i === current ? "var(--color-primary)" : "rgba(255,255,255,0.4)",
             }}
           />
         ))}

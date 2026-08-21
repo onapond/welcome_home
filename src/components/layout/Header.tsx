@@ -60,10 +60,10 @@ export default function Header() {
               aria-label="청파중앙교회 홈으로"
             >
               <Image
-                src="/images/logo.png"
+                src="/images/logo-mark.png"
                 alt="청파중앙교회"
-                width={120}
-                height={36}
+                width={262}
+                height={98}
                 className="h-9 w-auto transition-all duration-300"
                 style={
                   scrolled

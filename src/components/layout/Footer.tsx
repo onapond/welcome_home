@@ -56,10 +56,10 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-1">
             <Link href="/" aria-label="청파중앙교회 홈으로">
               <Image
-                src="/images/logo.png"
+                src="/images/logo-mark.png"
                 alt="청파중앙교회"
-                width={120}
-                height={36}
+                width={262}
+                height={98}
                 className="h-9 w-auto mb-5"
                 style={{ filter: "brightness(0) invert(1)" }}
               />

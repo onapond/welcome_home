@@ -54,50 +54,60 @@
 
 /* ──────────────────────────────────────────
    Base Reset & Typography
+
+   반드시 @layer base 안에 둘 것.
+
+   Tailwind v4는 유틸리티를 @layer utilities 에 넣는데, CSS 캐스케이드
+   규칙상 "레이어 밖 스타일"이 "레이어 안 스타일"을 특정도와 무관하게
+   이긴다. 아래 규칙들을 레이어 밖에 두면 h1~h3 의 color 선언이
+   text-white 같은 유틸리티를 눌러버려, 어두운 배경 위의 흰 제목이
+   전부 어두운 색으로 렌더링된다.
 ────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-}
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  background-color: var(--color-white);
-  color: var(--color-dark);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.75;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  body {
+    background-color: var(--color-white);
+    color: var(--color-dark);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-h1, h2, h3 {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--color-dark);
-}
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-dark);
+  }
 
-h4, h5, h6 {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  line-height: 1.4;
-}
+  h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    line-height: 1.4;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-img, video {
-  max-width: 100%;
-  height: auto;
-  display: block;
+  img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }
 
 /* ── 로딩 인디케이터 ─────────────────────────────────────────── */
@@ -113,5 +123,58 @@ img, video {
     animation: none !important;
     width: 100% !important;
     opacity: 0.5;
+  }
+}
+
+/* ── 히어로 ──────────────────────────────────────────────────── */
+
+/*
+  등장 효과. 기본 상태가 '보임'이라 애니메이션이 실행되지 않아도
+  콘텐츠는 정상적으로 표시된다.
+*/
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-enter {
+  animation: hero-enter 0.8s ease-out 0.2s backwards;
+}
+
+/* 온라인 예배 버튼 — 호버를 JS 핸들러 대신 CSS로 처리한다 */
+.hero-ghost-button {
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.hero-ghost-button:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter {
+    animation: none;
+  }
+}
+
+/* ── 순차 등장 (표어 타임라인 등) ────────────────────────────── */
+
+/*
+  기본 상태를 '보임'으로 두고 애니메이션만 얹는다.
+  JS나 애니메이션이 동작하지 않아도 내용은 항상 표시된다.
+*/
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rise-in {
+  animation: rise-in 0.55s ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
   }
 }
