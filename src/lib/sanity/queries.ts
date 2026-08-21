@@ -24,7 +24,7 @@ const SERMON_FIELDS = `
 export async function getLatestSermons(limit = 5): Promise<Sermon[]> {
   return safeFetch(
     `*[_type == "sermon"] | order(date desc) [0...$limit] { ${SERMON_FIELDS} }`,
-    { limit: limit - 1 },
+    { limit },
     []
   );
 }
@@ -68,7 +68,7 @@ export async function getUpcomingEvents(limit = 5): Promise<ChurchEvent[]> {
       _id, title, category, date, endDate, location, registrationUrl,
       "imageUrl": image.asset->url
     }`,
-    { limit: limit - 1 },
+    { limit },
     []
   );
 }

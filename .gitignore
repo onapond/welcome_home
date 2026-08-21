@@ -7,6 +7,9 @@ build/
 .env
 .env.local
 .env.*.local
+# 예시 파일은 추적 대상으로 유지한다
+!.env.example
+!.env.local.example
 
 # ─── 의존성 ───────────────────────────────────────────────────
 node_modules/
@@ -23,5 +26,3 @@ Thumbs.db
 *.tsbuildinfo
 .vercel
 .env.local.example.bak
-
-.vercel

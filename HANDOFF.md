@@ -1,6 +1,71 @@
 # 청파중앙교회 홈페이지 — 핸드오프 문서
 
-> 작성일: 2026-04-08 | 오픈 목표: 2026-05-01
+> 마지막 갱신: 2026-08-21 | 다음 작업자: Claude Code
+
+---
+
+## 2026-08-21 세션 기록
+
+### 검증으로 정정된 사실 (이전 메모의 추정 교체)
+
+| 이전 메모 주장 | 실제 확인 결과 |
+|---|---|
+| "배포 복구 필요" | **배포는 정상**. `welcomehome-seven.vercel.app` → HTTP 200. 최신 Production 배포 128일 전 Ready |
+| "chungpa21.org 502 — Vercel 확인 필요" | **Vercel과 무관**. DNS가 기존 WebChurch 서버 `116.125.124.67`을 가리키며 그 서버가 죽어 있음. 도메인은 아직 Vercel로 이전되지 않았다 |
+| "npm ci 미완료로 검증 불가" | Node v24.18.0에서 `npm ci` 정상 완료 (exit 0) |
+| `limit - 1` 버그 의심 | **버그 확정**. GROQ `[0...$limit]`는 exclusive end라 5 요청 시 4개 반환 |
+
+추가로 확인된 사항:
+- `.vercel` 링크가 없어 배포 불가 상태였음 → 재링크 완료
+- Production 환경변수에 Sanity 3종은 있으나 `NEXT_PUBLIC_SITE_URL`과 카카오맵 키는 **없음**
+- `src/app/api` 디렉토리 자체가 없음 — 폼 2개 모두 백엔드 전무
+- `public/images`에는 `logo.png` 하나뿐. 6개 파일이 `ImagePlaceholder` 사용 중
+- `sitemap.ts`가 **존재하지 않는 `/connect`를 등재**하고 실재하는 `/visit/service-times`는 누락
+
+### 확정된 방침 (사용자 결정)
+
+- **도메인**: 실제 콘텐츠(사진·설교)를 채운 뒤 `chungpa21.org`를 이전한다. 그때까지 기존 도메인은 죽은 상태로 둔다.
+- **폼 백엔드**: Resend 이메일 알림 방식으로 구현한다.
+
+### 세션 분할 계획
+
+| 세션 | 범위 | 완료 조건 | 상태 |
+|---|---|---|---|
+| S0 | 의존성 설치, lint/tsc/build 검증, Vercel 재링크 | 3개 명령 통과 기록 | ✅ 완료 |
+| S1 | 코드 버그 수정 (limit, SITE_URL 일원화, sitemap 경로, env명, contact metadata) | 검증 통과 + 배포 | ✅ 완료 (미배포) |
+| S3 | Resend 기반 폼 백엔드 (방문신청·문의) | 실제 제출 → 담당자 수신 확인 | ⬜ 다음 |
+| S4 | Sanity Studio 운영 방식 확정 (`sanity deploy`) | 관리자 URL + 사용 절차 문서화 | ⬜ |
+| S5 | 실제 콘텐츠 반영 (사진·설교 YouTube ID·주보) | ImagePlaceholder 0개 | ⬜ **교회 자료 수령 필요** |
+| S2 | chungpa21.org 도메인 이전 | 도메인 HTTP 200 | ⬜ S5 이후 |
+| S6 | 최종 운영 QA | QA 리포트 갱신 | ⬜ |
+
+> S5는 교회에서 사진·설교 링크·주보를 받아야 착수 가능하다. 다른 세션과 병렬로 미리 요청해 둘 것.
+
+### S0 — 기반 복구 (완료)
+
+```
+npm ci            → exit 0
+npx tsc --noEmit  → 통과 (에러 0)
+npm run lint      → 통과 (에러 0)
+npm run build     → 성공, 13개 페이지 생성
+vercel link       → onaponds-projects/welcome_home 연결
+vercel env pull   → .env.local 생성 (Sanity 3종 확인)
+```
+
+### S1 — 코드 버그 수정 (완료, 아직 미배포)
+
+| 수정 | 파일 | 내용 |
+|---|---|---|
+| GROQ slice 버그 | `src/lib/sanity/queries.ts` | `{ limit: limit - 1 }` → `{ limit }` (2곳). 요청 개수대로 반환되도록 수정 |
+| 사이트 URL 일원화 | `src/lib/site.ts` (신규) | `SITE_URL` 단일 소스 신설. `NEXT_PUBLIC_SITE_URL` 미설정 시 vercel.app 폴백 |
+| 하드코딩 제거 | `layout.tsx`, `robots.ts`, `sitemap.ts` | 죽은 `chungpa21.org`를 canonical/OG/sitemap에 박아두던 것을 `SITE_URL`로 교체 |
+| sitemap 경로 오류 | `src/app/sitemap.ts` | 미존재 `/connect` 제거, 누락된 `/visit/service-times` 추가 |
+| env 변수명 통일 | `.env.example`, `.env.local.example` | `NEXT_PUBLIC_KAKAO_MAP_API_KEY`로 통일. 카카오 키가 **코드에서 미사용**임을 명시 |
+| metadata 분리 | `src/app/contact/page.tsx` → `src/components/features/ContactClient.tsx` | 서버 페이지 + 클라이언트 폼으로 분리해 `/contact` 페이지 metadata 확보 |
+
+검증: `tsc` 통과 / `lint` 통과 / `build` 성공. 생성된 `sitemap.xml`·`robots.txt`에서 URL과 경로 목록 육안 확인 완료.
+
+> ⚠️ S1 변경사항은 아직 커밋·배포되지 않았다. 배포 시 Vercel에 `NEXT_PUBLIC_SITE_URL`을 함께 등록할지 결정할 것(미등록 시 코드 폴백값 사용).
 
 ---
 
@@ -49,28 +114,41 @@ cd sanity && ./node_modules/.bin/sanity schema deploy
 
 ---
 
-## 남은 작업 (5월 1일 전)
+## 남은 작업 (세션별)
 
-### 1순위 — 콘텐츠 실제화
-- [ ] **카카오맵 API 키 발급** → `NEXT_PUBLIC_KAKAO_MAP_API_KEY` 환경변수 등록
-  - 발급처: developers.kakao.com → 내 애플리케이션 → 앱 키 → JavaScript 키
-  - Vercel에 등록: `printf "키값" | vercel env add NEXT_PUBLIC_KAKAO_MAP_API_KEY production --scope onaponds-projects`
-- [ ] **실제 교회 사진 교체** → `public/images/` 에 사진 추가 후 ImagePlaceholder 컴포넌트 교체
-- [ ] **실제 설교 유튜브 연동** → Sanity Studio에서 sermon 문서에 `youtubeId` 필드 입력
+### S3 — 폼 백엔드 (Resend) ← 다음 세션
+- [ ] `src/app/api/` 신설, 방문신청·문의 제출 엔드포인트 구현
+- [ ] Resend API 키 발급 + 발신 도메인 인증 → Vercel 환경변수 등록
+- [ ] 스팸 방지(허니팟/레이트리밋), 중복 제출 방지, 실패 시 사용자에게 실제 실패 표시
+- [ ] 현재 두 폼은 `setSubmitted(true)`만 하고 "접수되었습니다"를 표시 — **연결 전까지 공개 도메인에 올리지 말 것**
 
-### 2순위 — 기능 보완
-- [ ] **방문 예약 폼 백엔드** — 현재 UI만 구현 (제출해도 저장 안 됨)
-  - 옵션 A: Resend + Vercel API Route (이메일 알림)
-  - 옵션 B: Google Sheets 연동
-- [ ] **문의 폼 백엔드** — `/contact` 도 동일 이슈
+### S4 — Sanity Studio 운영 확정
+- [ ] `cd sanity && npx sanity deploy` 로 공식 호스팅 배포
+- [ ] 내장 `/studio` 라우트 처리 결정 (제거 또는 리다이렉트)
+- [ ] 관리자 URL·로그인 방법을 목사님/담당자용 절차로 문서화
 
-### 3순위 — 목사님 요구사항
-- [ ] 수시 반영
+### S5 — 실제 콘텐츠 (교회 자료 수령 필요) ⚠️ 외부 의존
+- [ ] **교회 사진 수령** → `public/images/` 추가 후 `ImagePlaceholder` 교체
+      (사용처 6곳: `HeroSection`, `NewHereSection`, `CommunitySection`, `about/page`, `community/page`)
+- [ ] **설교 YouTube ID 수령** → Sanity `sermon` 문서에 입력
+- [ ] 주보·공지 최신본 입력
+- [ ] 2024/2026 고정된 표어·뉴스·폴백 날짜가 현재 콘텐츠와 맞는지 확인
 
-### 마지막 — 도메인 연결
-- [ ] Vercel Dashboard → 프로젝트 → Settings → Domains → `chungpa21.org` 추가
-- [ ] DNS 설정: CNAME `www` → `cname.vercel-dns.com`, A레코드 → Vercel IP
-- [ ] `NEXT_PUBLIC_SITE_URL` 환경변수 `https://chungpa21.org` 로 변경 후 재배포
+### S2 — 도메인 이전 (S5 완료 후)
+- [ ] Vercel → Settings → Domains → `chungpa21.org` 추가
+- [ ] DNS를 기존 서버(`116.125.124.67`)에서 Vercel로 전환
+- [ ] `NEXT_PUBLIC_SITE_URL=https://chungpa21.org` 등록 후 재배포
+- [ ] 전환 후 sitemap/robots/OG의 URL이 새 도메인으로 바뀌는지 확인 (`src/lib/site.ts` 경유)
+
+### S6 — 최종 QA
+- [ ] 모바일 실기기, 폼 제출, 지도/전화 링크
+- [ ] 배포 후 주요 경로 + `robots.txt`, `sitemap.xml`, 404
+- [ ] Sanity 콘텐츠 미설정 시 폴백 동작
+
+### 별도 판단 필요
+- [ ] **카카오맵**: 현재 SDK 미연동(외부 링크 방식)이며 `NEXT_PUBLIC_KAKAO_MAP_API_KEY`를 읽는 코드가 없다. SDK를 붙일지 링크로 유지할지 결정
+- [ ] **README 갱신**: `/community`, `/contact`, `/visit/service-times`, Studio 현황이 반영돼 있지 않음
+- [ ] **Footer 이메일**: `church@chungpa21.org` — 기존 서버가 죽어 있어 메일 수신 여부 확인 필요
 
 ---
 
@@ -105,10 +183,16 @@ public/images/              # logo.png (교체 예정 이미지들 여기에 추
 |------|------|--------|
 | `@sanity/client@6` + `next-sanity@9` peer dep 경고 | 무시 가능 | `.npmrc` legacy-peer-deps=true 적용됨 |
 | news 페이지 post.slug null 처리 | 수정됨 | `post.slug?.current ?? "#"` |
-| 방문/문의 폼 실제 저장 안 됨 | 미해결 | 백엔드 연동 필요 |
-| 지도 플레이스홀더 | 미해결 | 카카오 API 키 필요 |
-| 교회 사진 없음 | 미해결 | 사진 제공받아 교체 필요 |
-| **/studio 관리자 페이지 작동 안 함** | **미해결** | 아래 상세 참고 |
+| GROQ slice가 1개 적게 반환 | **S1에서 수정** | `queries.ts` `{ limit: limit - 1 }` → `{ limit }` |
+| canonical/OG/sitemap이 죽은 도메인 지목 | **S1에서 수정** | `src/lib/site.ts` `SITE_URL` 일원화 |
+| sitemap에 미존재 `/connect` 등재 | **S1에서 수정** | 제거 + `/visit/service-times` 추가 |
+| `/contact` 페이지 metadata 없음 | **S1에서 수정** | 서버 페이지 + `ContactClient` 분리 |
+| 카카오 env 변수명 2종 불일치 | **S1에서 수정** | `NEXT_PUBLIC_KAKAO_MAP_API_KEY`로 통일 |
+| 방문/문의 폼 실제 저장 안 됨 | 미해결 (S3) | Resend + API Route 연동 |
+| 지도 SDK 미연동 (외부 링크) | 미해결 | 링크 유지 여부 결정 필요 |
+| 교회 사진 없음 | 미해결 (S5) | 사진 제공받아 교체 |
+| chungpa21.org 도메인 미이전 | 미해결 (S2) | S5 완료 후 DNS 전환 |
+| **/studio 관리자 페이지 작동 안 함** | **미해결 (S4)** | 아래 상세 참고 |
 
 ---
 

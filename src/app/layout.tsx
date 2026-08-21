@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/layout/ClientLayout";
+import { SITE_URL } from "@/lib/site";
 
 const notoSerifKR = Noto_Serif_KR({
   variable: "--font-noto-serif-kr",
@@ -25,14 +26,14 @@ export const metadata: Metadata = {
     title: "청파중앙교회",
     description:
       "서울 용산구 청파동에 위치한 청파중앙교회입니다. 21세기 지도자를 길러내는 교회.",
-    url: "https://chungpa21.org",
+    url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
     title: "청파중앙교회",
     description: "서울 용산구 청파동에 위치한 청파중앙교회입니다.",
   },
-  metadataBase: new URL("https://chungpa21.org"),
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "/",
   },
