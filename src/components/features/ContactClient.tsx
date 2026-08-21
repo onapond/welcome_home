@@ -39,15 +39,21 @@ const CONTACT_INFO = [
   },
 ] as const;
 
+const EMPTY_CONTACT_FORM = {
+  name: "",
+  phone: "",
+  type: INQUIRY_TYPES[0] as string,
+  message: "",
+};
+
 export default function ContactClient() {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    type: INQUIRY_TYPES[0],
-    message: "",
-  });
+  const [form, setForm] = useState(EMPTY_CONTACT_FORM);
+  const [consent, setConsent] = useState(false);
+  // 허니팟 — 사람에게 보이지 않으므로 값이 차면 봇이다
+  const [website, setWebsite] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -57,11 +63,37 @@ export default function ContactClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return; // 중복 제출 방지
+
     setLoading(true);
-    // 실제 전송 로직은 추후 연동 — 현재는 UI 완성 상태
-    await new Promise((r) => setTimeout(r, 600));
-    setLoading(false);
-    setSubmitted(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, consent, website }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const fieldMessage = Array.isArray(data.errors) ? data.errors[0]?.message : null;
+        setError(
+          fieldMessage ??
+            data.message ??
+            "문의를 접수하지 못했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다."
+        );
+        return;
+      }
+
+      setSubmitted(true);
+      setForm(EMPTY_CONTACT_FORM);
+      setConsent(false);
+    } catch {
+      setError("네트워크 오류로 문의를 보내지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -202,7 +234,7 @@ export default function ContactClient() {
                     </p>
                   </div>
                   <button
-                    onClick={() => { setSubmitted(false); setForm({ name: "", phone: "", type: INQUIRY_TYPES[0], message: "" }); }}
+                    onClick={() => { setSubmitted(false); setForm(EMPTY_CONTACT_FORM); setConsent(false); setError(null); }}
                     className="mt-2 px-6 py-2 rounded-full text-sm font-semibold transition-all hover:brightness-110"
                     style={{ backgroundColor: "var(--color-bg-warm)", color: "var(--color-primary)", border: "1px solid rgba(43,58,140,0.12)" }}
                   >
@@ -211,6 +243,20 @@ export default function ContactClient() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                  {error && (
+                    <div
+                      role="alert"
+                      className="rounded-xl px-5 py-4 text-sm font-medium"
+                      style={{
+                        backgroundColor: "#FEF2F2",
+                        border: "1px solid #FCA5A5",
+                        color: "#B91C1C",
+                      }}
+                    >
+                      {error}
+                    </div>
+                  )}
+
                   {/* 이름 */}
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold mb-1.5" style={{ color: "var(--color-dark)" }}>
@@ -299,6 +345,37 @@ export default function ContactClient() {
                       }}
                     />
                   </div>
+
+                  {/* 허니팟 — 화면·스크린리더 모두에서 감춘다 */}
+                  <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
+                    <label htmlFor="contact-website">이 항목은 비워두세요</label>
+                    <input
+                      id="contact-website"
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                    />
+                  </div>
+
+                  <label className="flex items-start gap-3 text-sm cursor-pointer" style={{ color: "var(--color-dark-soft)" }}>
+                    <input
+                      type="checkbox"
+                      name="consent"
+                      checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)}
+                      required
+                      className="mt-0.5 flex-shrink-0"
+                      style={{ accentColor: "var(--color-primary)" }}
+                    />
+                    <span>
+                      답변 안내를 위해 이름과 연락처를 수집하는 데 동의합니다.
+                      수집한 정보는 문의 응대 목적으로만 사용하며, 응대가 끝나면 파기합니다.
+                      <span aria-hidden="true" style={{ color: "#e53e3e" }}> *</span>
+                    </span>
+                  </label>
 
                   <button
                     type="submit"
