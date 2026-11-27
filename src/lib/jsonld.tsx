@@ -8,6 +8,7 @@ import type { Service, Site } from "@/lib/content/schema";
 import { type ImageRef, type Video, videoEmbedUrl, videoThumb } from "@/lib/media";
 import { SITE_URL, absoluteUrl } from "@/lib/site";
 import { kakaoDirectionsUrl, naverMapUrl } from "@/lib/directions";
+import { parseTime, parseWeekdays } from "@/lib/schedule";
 
 type Json = Record<string, unknown>;
 
@@ -54,38 +55,24 @@ export function internationalPhone(phone: string): string {
 
 // ─── 예배 → Event + Schedule ─────────────────────────────────────────────────
 
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 const DAY_URLS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map(
   (d) => `https://schema.org/${d}`,
 );
 
+// Same reading as the hero's 「다음 예배」 and the visit form (lib/schedule), so
+// search engines never get a schedule the site itself could not compute.
+
 /** "매주 일요일" → [일], "월요일 ~ 토요일" → [월…토], "매일" → 7일. 못 읽으면 []. */
 export function serviceDays(day: string): string[] {
-  if (/매일/.test(day)) return DAY_URLS;
-  const range = /([일월화수목금토])요일\s*[~\-–]\s*([일월화수목금토])요일/.exec(day);
-  if (range) {
-    const a = DAYS.indexOf(range[1] as (typeof DAYS)[number]);
-    const b = DAYS.indexOf(range[2] as (typeof DAYS)[number]);
-    const out: string[] = [];
-    for (let i = a; ; i = (i + 1) % 7) {
-      out.push(DAY_URLS[i]);
-      if (i === b) break;
-    }
-    return out;
-  }
-  return [...day.matchAll(/([일월화수목금토])요일/g)].map((m) => DAY_URLS[DAYS.indexOf(m[1] as (typeof DAYS)[number])]);
+  return (parseWeekdays(day) ?? []).map((d) => DAY_URLS[d]);
 }
 
 /** "오전 11:00" → "11:00", "오후 7:30" → "19:30". 못 읽으면 null. */
 export function serviceStartTime(time: string): string | null {
-  const m = /(오전|오후)?\s*(\d{1,2})(?::|시\s*)(\d{2})?/.exec(time);
-  if (!m) return null;
-  let h = Number(m[2]);
-  const min = m[3] ?? "00";
-  if (h > 23 || Number(min) > 59) return null;
-  if (m[1] === "오후" && h < 12) h += 12;
-  if (m[1] === "오전" && h === 12) h = 0;
-  return `${String(h).padStart(2, "0")}:${min}`;
+  const minutes = parseTime(time);
+  if (minutes === null) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
 function serviceEvent(site: Site, s: Service): Json | null {

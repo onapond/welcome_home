@@ -8,10 +8,11 @@
 
 export const WEEKDAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
-/** "매주 일요일" → [0], "월요일 ~ 토요일" → [1..6], "매일" → [0..6]. 못 읽으면 null. */
+/** "매주 일요일" · "주일" → [0], "월요일 ~ 토요일" → [1..6], "매일" → [0..6]. 못 읽으면 null. */
 export function parseWeekdays(day: string): number[] | null {
   const s = day.replace(/\s+/g, "");
   if (/^매일$/.test(s)) return [0, 1, 2, 3, 4, 5, 6];
+  if (/^(?:매주)?주일$/.test(s)) return [0];
   const range = s.match(/^([일월화수목금토])요일~([일월화수목금토])요일$/);
   if (range) {
     const a = WEEKDAY_NAMES.indexOf(range[1] as (typeof WEEKDAY_NAMES)[number]);
@@ -28,13 +29,19 @@ export function parseWeekdays(day: string): number[] | null {
   return null;
 }
 
-/** "오전 11:00" → 660, "오후 7:30" → 1170 (자정부터 분). 못 읽으면 null. */
+/** "오전 11:00" → 660, "오후 7:30" → 1170, "19:30" → 1170 (자정부터 분). 못 읽으면 null. */
 export function parseTime(time: string): number | null {
-  const m = time.trim().match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2}))?/);
-  if (!m) return null;
-  let h = Number(m[2]) % 12;
-  if (m[1] === "오후") h += 12;
-  return h * 60 + Number(m[3] ?? 0);
+  const t = time.trim();
+  const m = t.match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2}))?/);
+  if (m) {
+    const h = Number(m[2]);
+    const min = Number(m[3] ?? 0);
+    if (h < 1 || h > 12 || min > 59) return null;
+    return ((h % 12) + (m[1] === "오후" ? 12 : 0)) * 60 + min;
+  }
+  const h24 = t.match(/^(\d{1,2}):(\d{2})(?!\d)/);
+  if (h24 && Number(h24[1]) <= 23 && Number(h24[2]) <= 59) return Number(h24[1]) * 60 + Number(h24[2]);
+  return null;
 }
 
 export interface KstNow {
@@ -121,11 +128,14 @@ export const VISIT_DATE_COUNT = 6;
 /**
  * 방문 희망일 선택지 — 화면(VisitClient)과 서버(api/visit)가 같은 함수로 계산한다.
  * 선택한 예배의 요일에 해당하고, 오늘 예배가 이미 시작했으면 오늘은 뺀다(한국 시간).
+ * 요일이나 시각 문구를 계산할 수 없으면 날짜를 내놓지 않는다 — 화면에는 「아직 정하지
+ * 않았어요」만 남고 서버도 그것만 받는다(잘못된 요일 · 이미 시작한 예배 날짜를 받지 않게).
  */
 export function visitDateChoices(
   service: { day: string; time: string },
   now: KstNow = kstNow(),
 ): string[] {
+  if (!parseWeekdays(service.day) || parseTime(service.time) === null) return [];
   return upcomingServiceDates(service.day, service.time, VISIT_DATE_COUNT, now);
 }
 

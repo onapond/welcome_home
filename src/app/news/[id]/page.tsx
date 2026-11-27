@@ -7,6 +7,7 @@ import Markdown from "@/components/ui/Markdown";
 import ShareButton from "@/components/features/ShareButton";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getNews, getSite } from "@/lib/content";
+import { bodyImageUrls } from "@/lib/content/body";
 import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
@@ -36,9 +37,11 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   if (!n) notFound();
 
   // `images` also feeds the list thumbnail and the share preview; a photo the
-  // body already shows (migrated posts keep it in place) is not drawn twice.
+  // body already draws (migrated posts keep it in place), as the original or
+  // as its thumb, is not drawn twice. A path merely mentioned in text is not.
+  const drawn = bodyImageUrls(n.body);
   const gallery = n.images.filter(
-    (img) => !n.body.includes(img.src) && !n.body.includes(encodeURI(img.src)),
+    (img) => !drawn.has(mediaUrl(img.src)) && !(img.thumb && drawn.has(mediaUrl(img.thumb))),
   );
 
   return (

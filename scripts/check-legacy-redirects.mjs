@@ -9,7 +9,7 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 process.chdir(repo);
 const { createJiti } = await import(createRequire(repo + "/").resolve("jiti"));
 const jiti = createJiti(import.meta.url, { alias: { "@": path.join(repo, "src") } });
-const { legacyTarget } = await jiti.import(path.join(repo, "src/lib/legacy-redirect.ts"));
+const { legacyTarget, oldSiteUrl } = await jiti.import(path.join(repo, "src/lib/legacy-redirect.ts"));
 const c = await jiti.import(path.join(repo, "src/lib/content/index.ts"));
 const all = [
   ["sermons", c.getSermons(), (i) => `/sermons/${i.id}`],
@@ -29,13 +29,20 @@ for (const [name, items, expect] of all) {
   for (const i of items) {
     if (!i.legacy?.url) continue;
     n++;
-    const u = new URL(i.legacy.url.replace(/^http:\/\/www\./i, "https://"));
+    const u = oldSiteUrl(i.legacy.url);
     const t = legacyTarget(u.pathname, u.searchParams);
     const k = `${name}:${t.permanent ? 308 : 302}`; byStatus[k] = (byStatus[k] || 0) + 1;
     const page = t.to.split("#")[0];
     let ok = t.permanent && built.has(page);
     if (expect) ok = ok && t.to === expect(i);
-    else ok = ok && t.to.startsWith("/news/bulletin/") && c.getBulletins().some((b) => `/news/bulletin/${b.id}` === t.to && b.legacy?.url === i.legacy.url);
+    else {
+      // A week with several bulletins shares one old link: the page it lands
+      // on must be one of them and must link to every one of them.
+      const week = c.getBulletins().filter((b) => b.legacy?.url === i.legacy.url);
+      const html = ok ? fs.readFileSync(`.next/server/app${page}.html`, "utf8") : "";
+      ok = ok && week.some((b) => `/news/bulletin/${b.id}` === t.to)
+        && (week.length === 1 || week.every((b) => html.includes(`href="/news/bulletin/${b.id}"`)));
+    }
     if (!ok) { bad++; if (bad < 8) console.log("BAD", name, i.id, i.legacy.url, t); }
   }
 }

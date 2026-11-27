@@ -218,7 +218,11 @@ export const legacySource = optional(
   z.strictObject({
     board: text,
     seq: z.union([text, z.number()]).transform(String),
-    url: optText,
+    // Read against the old site (src/lib/legacy-redirect.ts), so "/modu/…"
+    // without a host is fine; anything that is not a URL is caught here.
+    url: optional(
+      text.refine((v) => URL.canParse(v, "http://www.chungpa21.org/"), "옛 사이트 주소(url)가 주소 형식이 아닙니다"),
+    ),
   }),
 );
 

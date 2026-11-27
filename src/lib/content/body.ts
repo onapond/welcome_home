@@ -1,5 +1,5 @@
 import Markdown from "react-markdown";
-import { mediaPathProblem } from "@/lib/media";
+import { mediaPathProblem, mediaUrl } from "@/lib/media";
 
 // Minimal mdast shape (the Markdown syntax tree before HTML conversion).
 type MdNode = { type: string; url?: string; identifier?: string; value?: string; children?: MdNode[] };
@@ -55,4 +55,14 @@ export function bodyImageProblems(body: string): string[] {
     // JSON escaping makes tabs or line breaks in the path visible.
     return problem ? [`본문 사진 ${i + 1}번째 (${JSON.stringify(src).slice(1, -1)}): ${problem}`] : [];
   });
+}
+
+/**
+ * The URLs of the images a body actually draws (same parse and same mediaUrl
+ * as the renderer), for comparing against front-matter photos. Text that only
+ * mentions a path, or a link to the file, is not an image and is not listed.
+ */
+export function bodyImageUrls(body: string): Set<string> {
+  if (!body.includes("![")) return new Set();
+  return new Set(bodyImageSources(body).flatMap((f) => ("url" in f && f.url ? [mediaUrl(f.url)] : [])));
 }

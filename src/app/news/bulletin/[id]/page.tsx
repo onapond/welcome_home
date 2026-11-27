@@ -36,6 +36,11 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
   // link: an outside file may not be the PDF its name says.
   const embed = b.pdf ? isEmbeddableMedia(b.pdf) : false;
   const title = b.title ?? `${fmtDate(b.date)} 주보`;
+  // Some weeks have several PDFs (often with the same title) and one old
+  // weekly link; each page lists the whole week so none is a dead end.
+  const week = getBulletins()
+    .filter((x) => x.date === b.date)
+    .sort((x, y) => x.id.localeCompare(y.id));
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
@@ -59,6 +64,36 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
             {fmtDate(b.date)}
           </p>
         </header>
+
+        {week.length > 1 && (
+          <nav aria-label="이 주의 주보" className="mt-6">
+            <p className="text-sm" style={{ color: "var(--color-dark-soft)" }}>
+              이 주에는 주보가 {week.length}개 있습니다.
+            </p>
+            <ul className="flex flex-wrap gap-2 mt-2">
+              {week.map((w, i) => {
+                const current = w.id === b.id;
+                return (
+                  <li key={w.id}>
+                    <Link
+                      href={`/news/bulletin/${w.id}`}
+                      aria-current={current ? "page" : undefined}
+                      className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
+                      style={
+                        current
+                          ? { backgroundColor: "var(--color-primary)", color: "var(--color-white)" }
+                          : { border: "1px solid var(--color-primary)", color: "var(--color-primary)" }
+                      }
+                    >
+                      주보 {i + 1}
+                      {w.title && w.title !== title && <span className="font-normal"> · {w.title}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        )}
 
         {pdf && embed ? (
           <>
