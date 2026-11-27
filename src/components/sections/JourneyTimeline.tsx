@@ -1,6 +1,8 @@
-import { Home, Footprints, ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
+import { getSite } from "@/lib/content";
+import { getHomePage } from "@/lib/content/pages";
+import { getIcon } from "@/lib/icons";
 
 interface TimelineNode {
   year: string;
@@ -10,47 +12,39 @@ interface TimelineNode {
   active: boolean;
 }
 
-const NODES: TimelineNode[] = [
-  {
-    year: "2024",
-    slogan: "우리는 한 가족입니다",
-    subtitle: "소속감과 뿌리를 찾아서",
-    Icon: Home,
-    active: false,
-  },
-  {
-    year: "2025",
-    slogan: "우리는 여행하는 사람들입니다",
-    subtitle: "순례의 여정, 함께 걷는 길",
-    Icon: Footprints,
-    active: false,
-  },
-  {
-    year: "2026",
-    slogan: "일어나 함께가자",
-    subtitle: "행동하는 공동체, 동행의 시작",
-    Icon: ArrowUpRight,
-    active: true,
-  },
-];
-
 /** 노드별 등장 지연. 기본 상태가 '보임'이라 애니메이션이 없어도 내용은 표시된다. */
 const stagger = (i: number) => ({ animationDelay: `${i * 0.15}s` });
 
 export default function JourneyTimeline() {
+  const { journey } = getHomePage();
+  const mottos = [...getSite().mottos].sort((a, b) => a.year - b.year);
+  const latestYear = mottos.at(-1)?.year;
+
+  // 표어(site.yaml)와 연도로 짝지은 노드. 부제·아이콘이 없는 연도는 키워드로 대신한다.
+  const nodes: TimelineNode[] = mottos.map((m) => {
+    const note = journey.nodes.find((n) => n.year === m.year);
+    return {
+      year: String(m.year),
+      slogan: m.text,
+      subtitle: note?.subtitle ?? m.keyword,
+      Icon: getIcon(note?.icon ?? "map-pin"),
+      active: m.year === latestYear,
+    };
+  });
+
   return (
     <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          label="우리의 여정"
-          title="3년의 발걸음, 하나의 이야기"
+          label={journey.label}
+          title={journey.title}
           align="center"
           className="mb-16 lg:mb-20"
         />
 
         {/* ── Desktop: Horizontal ── */}
         <div className="hidden md:flex items-start">
-          {NODES.map((node, i) => (
+          {nodes.map((node, i) => (
             <div key={node.year} className="flex items-start flex-1">
               <div className="flex flex-col items-center flex-1 rise-in" style={stagger(i)}>
                 {/* Circle */}
@@ -102,7 +96,7 @@ export default function JourneyTimeline() {
               </div>
 
               {/* Connector Line (between nodes) */}
-              {i < NODES.length - 1 && (
+              {i < nodes.length - 1 && (
                 <div
                   className="flex-shrink-0 mt-7 h-0.5 w-16"
                   style={{
@@ -117,7 +111,7 @@ export default function JourneyTimeline() {
 
         {/* ── Mobile: Vertical ── */}
         <div className="flex flex-col md:hidden gap-0">
-          {NODES.map((node, i) => (
+          {nodes.map((node, i) => (
             <div key={node.year} className="flex gap-5 rise-in" style={stagger(i)}>
               {/* Left: Circle + Line */}
               <div className="flex flex-col items-center flex-shrink-0">
@@ -144,7 +138,7 @@ export default function JourneyTimeline() {
                 </div>
 
                 {/* Vertical connector */}
-                {i < NODES.length - 1 && (
+                {i < nodes.length - 1 && (
                   <div
                     className="w-0.5 flex-1 my-1"
                     style={{

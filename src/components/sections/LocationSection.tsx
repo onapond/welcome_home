@@ -1,19 +1,13 @@
-import { MapPin, Phone, Printer, Train } from "lucide-react";
-
-const TRANSPORT_ITEMS = [
-  {
-    Icon: Train,
-    label: "지하철",
-    description: "1호선 남영역 3번 출구 도보 8분",
-  },
-  {
-    Icon: MapPin,
-    label: "버스",
-    description: "청파동 정류장 하차 후 도보 3분",
-  },
-];
+import { MapPin, Phone, Printer } from "lucide-react";
+import { getSite } from "@/lib/content";
+import { getLocationInfo } from "@/lib/content/pages";
+import { getIcon } from "@/lib/icons";
+import { fullAddress, kakaoMapUrl } from "@/lib/site-summary";
 
 export default function LocationSection() {
+  const site = getSite();
+  const location = getLocationInfo();
+
   return (
     <section id="location" className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-primary)" }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,13 +18,13 @@ export default function LocationSection() {
             className="text-xs font-semibold uppercase tracking-[5px] mb-3"
             style={{ color: "var(--color-secondary)" }}
           >
-            오시는 길
+            {location.label}
           </p>
           <h2 className="font-serif text-3xl font-bold text-white mb-3">
-            청파중앙교회
+            {site.name}
           </h2>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-            서울특별시 용산구 청파로73길 58 (서계동)
+            {fullAddress(site.address)}
           </p>
         </div>
 
@@ -65,7 +59,7 @@ export default function LocationSection() {
             </p>
           </div>
           <a
-            href="https://map.kakao.com/?q=서울+용산구+청파로73길+58"
+            href={kakaoMapUrl(site.address)}
             target="_blank"
             rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 hover:brightness-110"
@@ -75,16 +69,18 @@ export default function LocationSection() {
               color: "white",
             }}
           >
-            카카오맵에서 보기
+            {location.mapButton}
           </a>
         </div>
 
         {/* Transport + Contact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Transport */}
-          {TRANSPORT_ITEMS.map(({ Icon, label, description }) => (
+          {location.transport.map(({ id, icon, label, text }) => {
+            const Icon = getIcon(icon);
+            return (
             <div
-              key={label}
+              key={id}
               className="flex items-start gap-4 rounded-xl px-5 py-4"
               style={{
                 backgroundColor: "rgba(255,255,255,0.06)",
@@ -109,11 +105,12 @@ export default function LocationSection() {
                   {label}
                 </p>
                 <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
-                  {description}
+                  {text}
                 </p>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Phone */}
           <div
@@ -141,12 +138,13 @@ export default function LocationSection() {
                 전화
               </p>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
-                02-714-0041~3
+                {site.phone}
               </p>
             </div>
           </div>
 
           {/* Fax */}
+          {site.fax && (
           <div
             className="flex items-start gap-4 rounded-xl px-5 py-4"
             style={{
@@ -172,10 +170,11 @@ export default function LocationSection() {
                 FAX
               </p>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
-                02-711-8166
+                {site.fax}
               </p>
             </div>
           </div>
+          )}
         </div>
 
       </div>
