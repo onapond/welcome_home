@@ -1,19 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Users, Clock, MapPin, CalendarDays } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import PhoneLinkText from "@/components/ui/PhoneLinkText";
 import { getIcon } from "@/lib/icons";
 import { VISIT_COUNT_OPTIONS } from "@/lib/forms";
-import {
-  formatKoreanDate,
-  kstNow,
-  upcomingServiceDates,
-  VISIT_DATE_UNDECIDED,
-  type KstNow,
-} from "@/lib/schedule";
+import { formatKoreanDate, visitDateChoices, VISIT_DATE_UNDECIDED } from "@/lib/schedule";
+import { useKstNow } from "@/lib/useKstNow";
 import type { Service } from "@/lib/content/schema";
 import type { VisitPage } from "@/lib/content/pages";
 
@@ -102,30 +97,6 @@ const FIELD_ID: Record<FieldName, string> = {
   memo: "visit-memo",
   consent: "visit-consent",
 };
-const VISIT_DATE_COUNT = 6;
-
-const noSubscribe = () => () => {};
-
-/**
- * 지금 한국 시간. 서버 HTML(빌드 시각)과 첫 렌더에는 null이라 날짜 선택지가 비어 있고,
- * 하이드레이션 뒤에 채워진다 — 날짜가 서버와 브라우저에서 달라 생기는 불일치를 막는다.
- */
-function useKstNow(): KstNow | null {
-  const key = useSyncExternalStore(
-    noSubscribe,
-    () => {
-      const n = kstNow();
-      return `${n.date}|${n.weekday}|${n.minutes}`;
-    },
-    () => "",
-  );
-  return useMemo(() => {
-    if (!key) return null;
-    const [date, weekday, minutes] = key.split("|");
-    return { date, weekday: Number(weekday), minutes: Number(minutes) };
-  }, [key]);
-}
-
 /** 서버와 같은 기준의 간단한 검사 — 서버(api/visit)가 최종 검증한다 */
 function checkVisitForm(form: { name: string; phone: string; date: string }, consent: boolean): FieldErrors {
   const errors: FieldErrors = {};
@@ -185,13 +156,18 @@ function VisitForm({
   const dateOptions = useMemo(
     () =>
       now && selected
-        ? upcomingServiceDates(selected.day, selected.time, VISIT_DATE_COUNT, now).map((d) => ({
+        ? visitDateChoices(selected, now).map((d) => ({
             value: d,
             label: formatKoreanDate(d),
           }))
         : [],
     [now, selected],
   );
+  // 폼을 열어 둔 사이 예배가 시작해 선택지에서 빠진 날짜는 고르지 않은 것으로 보고 다시 고르게 한다.
+  // (now는 분이 바뀔 때 · 화면으로 돌아올 때 갱신된다 — useKstNow)
+  const dateExpired =
+    !!now && !!form.date && form.date !== VISIT_DATE_UNDECIDED && !dateOptions.some((o) => o.value === form.date);
+  const dateValue = dateExpired ? "" : form.date;
 
   function clearFieldError(name: FieldName) {
     setFieldErrors((prev) => {
@@ -209,7 +185,7 @@ function VisitForm({
       // 예배를 바꾸면 그 예배 요일이 아닌 날짜는 다시 고르게 한다
       if (name === "service" && prev.date && prev.date !== VISIT_DATE_UNDECIDED) {
         const svc = serviceOptions.find((o) => o.value === value)?.service;
-        const ok = svc && now && upcomingServiceDates(svc.day, svc.time, VISIT_DATE_COUNT, now).includes(prev.date);
+        const ok = svc && now && visitDateChoices(svc, now).includes(prev.date);
         if (!ok) next.date = "";
       }
       return next;
@@ -231,7 +207,7 @@ function VisitForm({
     if (loading) return; // 중복 제출 방지
 
     setError(null);
-    const errors = checkVisitForm(form, consent);
+    const errors = checkVisitForm({ ...form, date: dateValue }, consent);
     if (Object.keys(errors).length > 0) {
       showErrors(errors);
       return;
@@ -243,7 +219,7 @@ function VisitForm({
       const res = await fetch("/api/visit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, consent, website }),
+        body: JSON.stringify({ ...form, date: dateValue, consent, website }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -284,8 +260,13 @@ function VisitForm({
   const labelClass = "text-sm font-semibold";
   const labelStyle = { color: "var(--color-primary)" };
   const errId = (f: FieldName) => `${FIELD_ID[f]}-error`;
+  // 칸 옆에 보이는 오류 — 서버 · 제출 검사 결과에 「선택한 날짜가 지났음」 안내를 더한다
+  const shownErrors: FieldErrors =
+    dateExpired && !fieldErrors.date
+      ? { ...fieldErrors, date: "고르신 날짜의 예배가 이미 시작했어요. 방문 희망일을 다시 골라 주세요." }
+      : fieldErrors;
   const aria = (f: FieldName) =>
-    fieldErrors[f] ? { "aria-invalid": true as const, "aria-describedby": errId(f) } : {};
+    shownErrors[f] ? { "aria-invalid": true as const, "aria-describedby": errId(f) } : {};
   const errorCount = Object.keys(fieldErrors).length;
 
   const Required = () => (
@@ -418,11 +399,11 @@ function VisitForm({
             <select
               id={FIELD_ID.date}
               name="date"
-              value={form.date}
+              value={dateValue}
               onChange={handleChange}
               aria-required="true"
               className={inputClass}
-              style={{ ...inputStyle(!!fieldErrors.date), paddingLeft: "2.5rem" }}
+              style={{ ...inputStyle(!!shownErrors.date), paddingLeft: "2.5rem" }}
               {...aria("date")}
             >
               <option value="">날짜를 골라 주세요</option>
@@ -432,7 +413,7 @@ function VisitForm({
               <option value={VISIT_DATE_UNDECIDED}>아직 정하지 않았어요</option>
             </select>
           </div>
-          <FieldError id={errId("date")} message={fieldErrors.date} />
+          <FieldError id={errId("date")} message={shownErrors.date} />
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -74,12 +74,17 @@ export async function POST(request: Request) {
   const service = requireChoice(body.service, "service", "예배", serviceOptions, errors);
   const count = requireChoice(normalizeVisitCount(body.count), "count", "인원수", COUNT_OPTIONS, errors);
   const memo = optionalText(body.memo, LIMITS.message);
-  // 방문 희망일: 오늘부터 90일 안의 날짜(YYYY-MM-DD) 또는 「아직 정하지 않음」
+  // 방문 희망일: 선택한 예배의 다가오는 날짜(화면과 같은 visitDateChoices · 한국 시간) 또는 「미정」.
+  // 예배 선택이 틀렸으면 날짜는 따로 탓하지 않는다(예배를 다시 고르면 날짜 목록이 바뀐다).
   const date = typeof body.date === "string" ? body.date.trim() : "";
+  const selectedService = services.find((s) => s.name === service);
   if (!date) {
     errors.push({ field: "date", message: "방문 희망일을 선택해 주세요." });
-  } else if (date !== VISIT_DATE_UNDECIDED && !isAcceptableVisitDate(date)) {
-    errors.push({ field: "date", message: "방문 희망일을 다시 선택해 주세요." });
+  } else if (selectedService && !isAcceptableVisitDate(date, selectedService)) {
+    errors.push({
+      field: "date",
+      message: "선택하신 날짜에는 이 예배가 없거나 이미 시작했습니다. 방문 희망일을 다시 선택해 주세요.",
+    });
   }
   const dateLabel = date === VISIT_DATE_UNDECIDED ? "미정" : date ? formatKoreanDate(date) : "";
   requireConsent(body.consent, errors);

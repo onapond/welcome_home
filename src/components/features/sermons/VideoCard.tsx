@@ -73,9 +73,10 @@ export default function VideoCard({ item }: { item: VideoItem }) {
               aria-hidden="true"
             />
           ) : (
+            // Opaque white: 7.24:1 on --color-primary-light (#3D4EAE), 16.59:1 on --color-dark (#1A1E2C) — AA for small text
             <span
               className="absolute inset-0 flex items-center justify-center font-serif px-4 text-center leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.35)", fontSize: "clamp(0.8rem, 2vw, 1rem)" }}
+              style={{ color: "var(--color-white)", fontSize: "clamp(0.8rem, 2vw, 1rem)" }}
             >
               {item.scripture ?? "영상 없음"}
             </span>

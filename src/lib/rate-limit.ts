@@ -10,23 +10,40 @@
 //    교회 홈페이지 트래픽 규모에서는 스팸 억제 목적으로 충분하다.
 //    엄격한 보장이 필요해지면 Upstash Redis 등 공유 저장소로 교체할 것.
 
-type Bucket = { count: number; resetAt: number };
+// 키에 접속 IP가 들어간다. 처리방침(content/pages/privacy.yaml 「보유 및 이용 기간」)은
+// 「10분이 지나면 메모리에서 지운다」고 약속하므로, 만료 시각에 지우는 타이머를 버킷마다 건다.
+//   - 타이머는 unref()로 걸어 서버리스 인스턴스가 끝나는 것을 붙잡지 않는다.
+//   - 인스턴스가 얼어 있던 동안에는 타이머가 돌지 못하므로, 요청마다 만료 버킷 전체를
+//     지우는 sweep()을 함께 둔다(다시 동작하는 첫 요청 때 지워진다).
+type Bucket = { count: number; resetAt: number; timer?: ReturnType<typeof setTimeout> };
 
 const buckets = new Map<string, Bucket>();
 
 /** 메모리 누수 방지 — 버킷이 과도하게 쌓이면 만료된 것부터 정리한다 */
 const MAX_BUCKETS = 5000;
 
+function drop(key: string, bucket: Bucket): void {
+  if (bucket.timer) clearTimeout(bucket.timer);
+  if (buckets.get(key) === bucket) buckets.delete(key);
+}
+
+function scheduleExpiry(key: string, bucket: Bucket, now: number): void {
+  const timer = setTimeout(() => drop(key, bucket), Math.max(0, bucket.resetAt - now));
+  // Node에서만 있는 메서드 — 열린 타이머가 프로세스 종료를 막지 않게 한다
+  (timer as { unref?: () => void }).unref?.();
+  bucket.timer = timer;
+}
+
 function sweep(now: number): void {
   for (const [key, bucket] of buckets) {
-    if (bucket.resetAt <= now) buckets.delete(key);
+    if (bucket.resetAt <= now) drop(key, bucket);
   }
   // 만료 정리 후에도 넘치면 오래된 순으로 버린다
   if (buckets.size > MAX_BUCKETS) {
     const excess = buckets.size - MAX_BUCKETS;
     let removed = 0;
-    for (const key of buckets.keys()) {
-      buckets.delete(key);
+    for (const [key, bucket] of buckets) {
+      drop(key, bucket);
       if (++removed >= excess) break;
     }
   }
@@ -50,7 +67,10 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
   const bucket = buckets.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
+    if (bucket) drop(key, bucket);
+    const fresh: Bucket = { count: 1, resetAt: now + windowMs };
+    buckets.set(key, fresh);
+    scheduleExpiry(key, fresh, now);
     return { ok: true, retryAfter: 0 };
   }
 

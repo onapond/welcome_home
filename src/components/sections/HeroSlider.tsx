@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronRight, Clock, Pause, Play } from "lucide-react";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 import { nextServiceWhen } from "@/lib/schedule";
+import { useKstNow } from "@/lib/useKstNow";
 
 export interface HeroSlide {
   label: string;
@@ -32,18 +33,14 @@ function subscribeReducedMotion(onChange: () => void) {
   return () => mq.removeEventListener("change", onChange);
 }
 
-const noSubscribe = () => () => {};
-
 /**
  * 서버 HTML과 첫 렌더는 「매주 일요일」처럼 site.yaml 문구 그대로, 하이드레이션 뒤에
  * 지금 한국 시간 기준 「이번 주일 · 오늘 · 다음 주일」로 바꾼다(하이드레이션 불일치 없음).
+ * 열어 둔 화면도 분이 바뀌거나 화면으로 돌아오면 다시 계산한다(useKstNow).
  */
 function useServiceWhen(service?: { day: string; time: string }): string | null {
-  return useSyncExternalStore(
-    noSubscribe,
-    () => (service ? nextServiceWhen(service.day, service.time) : null),
-    () => null,
-  );
+  const now = useKstNow();
+  return now && service ? nextServiceWhen(service.day, service.time, now) : null;
 }
 
 const INTERVAL_MS = 5000;
