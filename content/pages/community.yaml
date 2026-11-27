@@ -1,6 +1,6 @@
 # 공동체(/community) 문구 — 청년부 · 청소년부 · 선교 · 소그룹 소개와 하단 참여 안내.
 #   - groups 순서대로 페이지에 나오고, showOnHome: true 인 앞의 3개가 홈 화면 카드에 나온다.
-#   - id는 주소의 # 부분(/community#youth)이 되므로 바꾸면 바닥글 링크도 함께 고쳐야 한다.
+#   - id는 주소의 # 부분(/community#youth)이 된다. 바닥글 「공동체」 링크는 이 groups에서 자동으로 만든다(id는 서로 달라야 한다).
 #   - details 값에 {{phone}}처럼 적으면 site.yaml의 값으로 바뀐다.
 #   - showSnsLinks: true 면 site.yaml의 인스타그램 · 유튜브 버튼이 붙는다.
 #   - color: primary | secondary | accent | primary-light (정해진 브랜드 색 이름만)

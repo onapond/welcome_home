@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
@@ -60,9 +61,16 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
         {n.images.length > 0 && (
           <div className="mt-8 flex flex-col gap-5">
-            {n.images.map((src) => (
-              // eslint-disable-next-line @next/next/no-img-element -- photos come pre-sized from R2
-              <img key={src} src={mediaUrl(src)} alt="" loading="lazy" decoding="async" className="w-full h-auto rounded-xl" />
+            {n.images.map((img) => (
+              <Image
+                key={img.src}
+                src={mediaUrl(img.src)}
+                alt={img.alt}
+                width={1600}
+                height={1067}
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="w-full h-auto rounded-xl"
+              />
             ))}
           </div>
         )}

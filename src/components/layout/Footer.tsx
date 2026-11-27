@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Youtube, Instagram, Mail } from "lucide-react";
 import { useSite } from "./SiteProvider";
-import { FOOTER_LINK_GROUPS } from "@/lib/nav";
+import { footerLinkGroups } from "@/lib/nav";
 
 export default function Footer() {
   const site = useSite();
@@ -79,7 +79,7 @@ export default function Footer() {
           </div>
 
           {/* Columns 2–4 — Link Groups */}
-          {FOOTER_LINK_GROUPS.map(
+          {footerLinkGroups(site.communityLinks).map(
             ({ title: category, links }) => (
               <div key={category}>
                 <h3

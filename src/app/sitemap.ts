@@ -1,8 +1,13 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getAlbums, getBulletins, getNews, getSermons } from "@/lib/content";
+import { validateAllContent } from "@/lib/content/validate";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // sitemap is generated on every build, so this is where every content file
+  // (including ones no page shows yet, like events) gets validated.
+  validateAllContent();
+
   const lastModified = new Date();
 
   const routes: Array<{

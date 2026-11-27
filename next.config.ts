@@ -2,19 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      // YouTube 썸네일 (설교 영상 미리보기)
-      {
-        protocol: "https",
-        hostname: "i.ytimg.com",
-        pathname: "/vi/**",
-      },
-      {
-        protocol: "https",
-        hostname: "img.youtube.com",
-        pathname: "/vi/**",
-      },
-    ],
+    // Photos are resized and thumbnailed at upload time (R2), so next/image
+    // only renders <img> tags: no Vercel image-optimization quota is used and
+    // any https / R2 host works without editing this file.
+    unoptimized: true,
+  },
+  // API routes read content YAML at request time (church phone, inquiry
+  // types, page tokens). Make sure those files ship inside the functions.
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./content/site.yaml", "./content/pages/*.yaml"],
   },
 };
 
