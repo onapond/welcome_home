@@ -18,7 +18,7 @@
 2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
 3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림)
 4. 이전 준비 Codex 판정 — 3 · 4번째 「고칠 것 있음」 → 고침(`c9309e5` · `d29553c` · `7298e17`). **다섯 번째 판정** 11/27 저녁 돌림(요청서 `docs/reviews/2026-11-27-migration-prep-request-5.md`, 결과 `-codex-5.md`). 「고칠 것 있음」이면 고치고 다시 판정
-5. 교회 확인 사실 모으기(예배 시간 · 주차 · 점심 · 헌금 계좌 · 우편번호 · 좌표 · 큰 목사 사진). 옛 사이트 바닥글 메일은 `chungpa21c@gmail.com`(site.yaml은 `church@chungpa21.org` TODO) — 사용자 확인 후 교체
+5. 교회 확인 사실 모으기(예배 시간 · 주차 · 점심 · 헌금 계좌 · 우편번호 · 좌표 · 큰 목사 사진). 교회 메일은 `chungpa21c@gmail.com`으로 바꿈(사용자 11/27)
 6. Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함
 
 **끝난 것 (11/27 오후)**: 머리글 설명 대비 · 모바일 방문 단계 세로선(`8444e7a`), **m5 옛 주소 연결**(`67e0645` — `/modu/*` 라우트 핸들러, 게시물 1,498건 308, 검사 `node scripts/check-legacy-redirects.mjs`). 「3년의 발걸음」 섹션 흐림은 전체 캡처 착시(실제 정상).
@@ -635,7 +635,7 @@ cd sanity && ./node_modules/.bin/sanity schema deploy
 ### 별도 판단 필요
 - [ ] **카카오맵**: 현재 SDK 미연동(외부 링크 방식)이며 `NEXT_PUBLIC_KAKAO_MAP_API_KEY`를 읽는 코드가 없다. SDK를 붙일지 링크로 유지할지 결정
 - [ ] **README 갱신**: `/community`, `/contact`, `/visit/service-times`, Studio 현황이 반영돼 있지 않음
-- [ ] **Footer 이메일**: `church@chungpa21.org` — 기존 서버가 죽어 있어 메일 수신 여부 확인 필요
+- [x] **Footer 이메일**: `chungpa21c@gmail.com`으로 바꿈(사용자 11/27)
 
 ---
 
