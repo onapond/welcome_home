@@ -552,7 +552,8 @@ class Writer:
         self.public = public
         self.files = {}  # relative path -> text
         self.binaries = {}  # absolute dest -> source file
-        self.keep = set()  # absolute paths of existing files this run must not delete (PDF not obtained)
+        self.keep = set()  # absolute paths of existing files this run must not delete
+        self.hold = None  # temp folder with copies of previously linked bulletin PDFs (prior_bulletin_pdfs)
         self.used = defaultdict(set)
 
     def new_id(self, coll, base):
@@ -996,28 +997,54 @@ def conv_news(W, crawl_dir, photos, public):
 # ------------------------------------------------------------------ bulletins (PDF download)
 
 
-def existing_legacy_seq(W, coll, ident):
-    """`legacy.seq` of the content file a previous run wrote for `ident`, or None."""
-    fn = os.path.join(W.out, coll, ident + ".md")
-    if not os.path.isfile(fn):
-        return None
-    m = re.search(r'^legacy:\n(?:  .*\n)*?  seq: "?([^"\n]+)"?$', open(fn, encoding="utf-8").read(), re.M)
-    return m.group(1) if m else None
+def prior_bulletin_pdfs(W):
+    """legacy.seq -> a held copy of the PDF the existing bulletin file links to.
+
+    Only links written in the current front matter count (a leftover public file nothing links to
+    is never reused), and only complete PDFs. Copies go to a temp folder first, because this run
+    may delete or overwrite the public file before it is needed under its new id.
+    """
+    d = os.path.join(W.out, "bulletins")
+    if not os.path.isdir(d):
+        return {}
+    out = {}
+    for name in sorted(os.listdir(d)):
+        if not name.endswith(".md") or name.startswith("_"):
+            continue
+        text = open(os.path.join(d, name), encoding="utf-8").read()
+        pdf = re.search(r'^pdf: "?/bulletins/([0-9a-z-]+\.pdf)"?$', text, re.M)
+        seq = re.search(r'^legacy:\n(?:  .*\n)*?  seq: "?([^"\n]+)"?$', text, re.M)
+        src = pdf and os.path.join(W.public, "bulletins", pdf.group(1))
+        if not (pdf and seq and is_pdf_file(src)) or seq.group(1) in out:
+            continue
+        if W.hold is None:
+            W.hold = tempfile.mkdtemp(prefix="convert-pdf-")
+        held = os.path.join(W.hold, pdf.group(1))
+        shutil.copyfile(src, held)
+        out[seq.group(1)] = held
+    return out
 
 
 def pdf_complete(data):
-    """Starts like a PDF and has the end-of-file marker near the end (a cut-off body lacks it)."""
-    return data.startswith(b"%PDF-") and b"%%EOF" in data[-2048:]
+    """A whole PDF: starts with %PDF-, ends with `startxref N %%EOF`, and N points at a cross-reference
+    table or stream inside the file. A body cut short (even right after a printed "%%EOF") fails."""
+    if not data.startswith(b"%PDF-"):
+        return False
+    m = re.search(rb"startxref\s+(\d+)\s+%%EOF\s*$", data[-1024:])
+    if not m or int(m.group(1)) >= len(data):
+        return False
+    at = data[int(m.group(1)):int(m.group(1)) + 40]
+    return at.startswith(b"xref") or re.match(rb"\d+\s+\d+\s+obj\b", at) is not None
 
 
 def is_pdf_file(fn, want=None):
-    """A regular file (not a symlink) that starts like a PDF and, when `want` is given, has that size."""
+    """A regular file (not a symlink) holding a complete PDF and, when `want` is given, of that size."""
     if os.path.islink(fn) or not os.path.isfile(fn):
         return False
     if want and os.path.getsize(fn) != want:
         return False
     with open(fn, "rb") as f:
-        return f.read(5) == b"%PDF-"
+        return pdf_complete(f.read())
 
 
 def save_json_atomic(path, obj):
@@ -1074,9 +1101,8 @@ def download_pdfs(crawl_dir, items, delay, offline=False):
             state[u] = {"status": "failed", "error": str(e)[:200], "at": crawl.now()}
             missing.append(u)
             continue
-        # Same bar as the cache: a short or cut-off body never replaces a good file.
-        sized = bool(want) and want == len(data)
-        if st != 200 or not data.startswith(b"%PDF-") or not (sized or pdf_complete(data)):
+        # Same bar as the cache (is_pdf_file): a short or cut-off body never replaces a good file.
+        if st != 200 or not pdf_complete(data):
             state[u] = {"status": "failed", "error": "HTTP %s, %d bytes (expected %s), not a complete PDF"
                         % (st, len(data), want or "?"), "at": crawl.now()}
             missing.append(u)
@@ -1111,6 +1137,7 @@ def conv_bulletins(W, crawl_dir, args):
     items = load_board(crawl_dir, board)
     items.sort(key=lambda it: (it.get("date") or "", it.get("file") or ""))
     local, _missing = download_pdfs(crawl_dir, items, args.delay, offline=args.no_download)
+    prior = prior_bulletin_pdfs(W)
     for it in items:
         R.board(board)["in"] += 1
         if not it.get("ok") or not is_date(it.get("date")):
@@ -1129,19 +1156,17 @@ def conv_bulletins(W, crawl_dir, args):
             front.append("pdf: /bulletins/%s.pdf" % ident)
             W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = src
         else:
-            # No PDF in this run (offline without a cache, or the fetch failed): an existing public
-            # copy is a previous run's good file — keep it (even with --replace) and keep linking it,
-            # but only when that run wrote this same old PDF under this id. Ids are date + order, so
-            # a newly added earlier bulletin shifts them and the file may belong to a neighbour.
-            old = os.path.join(W.public, "bulletins", ident + ".pdf")
-            kept = (ident not in PDF_HOLD and is_pdf_file(old)
-                    and existing_legacy_seq(W, "bulletins", ident) == seq)
+            # No PDF in this run (offline without a cache, or the fetch failed): reuse the PDF a
+            # previous run linked to this same old PDF (legacy.seq), wherever it sat. Ids are date +
+            # order, so a newly added earlier bulletin moves the neighbours' files to new ids.
+            held = None if ident in PDF_HOLD else prior.get(seq)
+            kept = bool(held)
             R.pdf_missing.append((ident, kept))
-            if kept:
-                W.keep.add(old)
+            if held:
+                W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = held
                 front.append("pdf: /bulletins/%s.pdf" % ident)
-                print("warning: %s: PDF not obtained in this run; keeping the existing public/bulletins/%s.pdf "
-                      "(not re-checked against the old site)" % (ident, ident), file=sys.stderr)
+                print("warning: %s: PDF not obtained in this run; reusing the PDF a previous run linked to "
+                      "this bulletin (not re-checked against the old site)" % ident, file=sys.stderr)
             else:
                 R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
         url = OLD_BASE + it["detail_url"] if (it.get("detail_url") or "").startswith("/") else it.get("detail_url", "")
@@ -1429,7 +1454,11 @@ def main():
     conv_bulletins(W, args.crawl, args)
     conv_history(W, args.crawl, public_names)
     conv_staff(W, args.crawl, photos)
-    W.flush(args.replace)
+    try:
+        W.flush(args.replace)
+    finally:
+        if W.hold:
+            shutil.rmtree(W.hold, ignore_errors=True)
     write_report(report, args, W)
     total = sum(c["written"] for c in R.counts.values())
     print("convert: %d items -> %s (%d files, %d PDFs); report %s"
