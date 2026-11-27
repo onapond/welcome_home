@@ -6,6 +6,33 @@
 > 임포트 준비를 끝냈습니다. 작업 내역은 아래 [S5-a](#s5-a--구-사이트-자산-수집--임포트-준비-완료),
 > 다음에 할 일은 [CONTENT_IMPORT.md](./CONTENT_IMPORT.md)에 있습니다.
 > 남은 선행 조건은 **쓰기 인증 하나**(`npx sanity login`)입니다.
+>
+> ⚠️ 2026-11-27: 위 안내는 낡았다. 바로 아래 「지금 상태」가 최신이다.
+
+---
+
+## 지금 상태 — 2026-11-27
+
+**사용자 결정 (11/27)**: **Sanity CMS는 걷어낸다. Vercel + Supabase로만 운영한다.**
+→ 아래 기록의 Sanity 관련 계획(S4 Studio, S5 NDJSON 임포트, `npx sanity login`)은 재설계 대상. CLAUDE.md 기술 스택의 `CMS: Sanity`도 아직 안 고쳤다.
+
+**이 폴더 상태 (조사로 확인)**
+- `.git` 없음. 내용은 GitHub `onapond/welcome_home` main `15a2239`과 같다(내려받은 사본으로 보임).
+- `node_modules` 없음 → 점검 전 `npm ci` 필요. `.env.local` 없음.
+- 이 문서가 가리키는 `CONTENT_IMPORT.md` · `scripts/import/` · `../chungpa21-crawl/`(구 사이트 자산 1.14GB)은 **이 컴퓨터에도 원격에도 없다** — 8/21 작업한 다른 컴퓨터에만 있을 수 있음. 다시 만들기 전에 그쪽부터 찾을 것.
+
+**끝난 것: 하네스 셋업 (11/27)**
+- git: 기존 원격에 연결(`git init` → origin `onapond/welcome_home` → `reset --mixed origin/main`). 원격 대비 차이는 이 커밋뿐. **push는 안 했다.**
+- `.claude/harness.conf` — 인계 = 이 절(`HANDOFF_SECTION=지금 상태`), CHECK = `npx tsc --noEmit && npm run lint && npm run build`
+- `docs/검토규칙.md` — 20개 규칙(디자인 시스템 · 도메인/URL · S7 렌더링 · 운영), 전부 출처 표기. Sanity 의존 추가 금지 포함
+- CLAUDE.md — 「하네스」 절 추가, 기술 스택 CMS 줄을 「Sanity 제거 예정 → Supabase」로 수정
+- CHECK 첫 실행: `npm ci` 후 tsc 0 · lint 0 · build 성공(15페이지). `.env.local` 없어 `NEXT_PUBLIC_SANITY_PROJECT_ID` 경고만 뜸
+- 마지막 대립 검토 = 없음
+
+**다음 할 일**
+1. push 여부 사용자에게 확인 (이 커밋은 로컬에만 있음)
+2. Sanity 제거 → Supabase 이전 설계 (설계 일이라 계획 모드 · Opus 여부 먼저 묻기)
+3. 빠진 자료(`../chungpa21-crawl/` 등) 위치 사용자에게 확인
 
 ---
 

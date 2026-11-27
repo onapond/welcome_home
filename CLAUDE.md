@@ -33,7 +33,7 @@
 - **프레임워크**: Next.js 14+ (App Router)
 - **스타일링**: Tailwind CSS
 - **언어**: TypeScript
-- **CMS**: Sanity (콘텐츠 관리용, 주보/설교/공지 등)
+- **CMS**: ~~Sanity~~ → **제거 예정 · Vercel + Supabase로 이전** (사용자 결정 2026-11-27. 기존 Sanity 코드는 이전 전까지 남아 있음 — 새 의존 추가 금지)
 - **배포**: Vercel
 - **지도**: Kakao Maps API
 - **영상**: YouTube embed (설교 아카이브)
@@ -211,6 +211,17 @@ src/
 - 접근성: aria-label, alt 텍스트, 키보드 내비게이션
 - SEO: 메타태그, OG 태그, 구조화된 데이터 (Church schema)
 - 반응형: 모바일(~768px) / 태블릿(~1024px) / 데스크톱(1024px~)
+
+## 하네스
+
+- 세션 순서: `/harness:start` → 작업 → `/harness:wrap` (설정: `.claude/harness.conf`)
+- 먼저 읽을 것: `HANDOFF.md`의 「지금 상태」 절(최신) → 필요할 때 아래 세션 기록
+- 검토 기준: `docs/검토규칙.md` (`/harness:review`)
+
+| 명령 | 용도 |
+|---|---|
+| `npx tsc --noEmit && npm run lint && npm run build` | 점검(CHECK) |
+| `vercel --prod --yes --scope onaponds-projects` | 배포 — 유일한 경로(push는 배포 안 됨) |
 
 ## 에이전트 지시사항
 
