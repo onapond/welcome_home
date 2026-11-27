@@ -13,6 +13,12 @@
 
 ## 지금 상태 — 2026-11-27
 
+**다음 할 일 (11/28)** — 사용자 「내가 직접해야할 건, 내일 할거니까」
+1. 사용자: Cloudflare R2 켜기(카드) → 버킷 `chungpa-media` → r2.dev 공개 주소 허용 → 버킷 한정 「객체 읽기 및 쓰기」 API 토큰 → `! aws configure --profile chungpa-r2`(region `auto`, 키는 Claude에게 안 보임) → r2.dev 주소 · 계정 ID 전달
+2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
+3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림)
+4. 세 번째 Codex 판정(두 번째 지적 수정분 + 랜딩 사진)
+
 **목표 (사용자 11/27)**: 리팩토링해 실제로 쓸 수 있는 수준으로 만든 뒤, **교회 관리자가 Claude Code로 내용을 고치게** 한다. 관리자는 GitHub 팀으로 초대하고, Supabase · Vercel 등은 결국 교회 계정에서 관리한다.
 - 계정: 지금은 사용자 개인 계정 여러 곳에 섞여 있음(`onapond` 아래 `church` 청년부 교적 · `onfamily` 전교인 출석 등). **우선 사용자 계정으로 작업**하고, 정리 · 이전은 나중에 한 곳으로 몰아서 한다. 함께 작업할 사람 = 교회 직원 계정 1 + 교회 직원 개인 계정 1.
 - **배포 단계에 비용이 생기면 안 된다**(사용자 11/27).
