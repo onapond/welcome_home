@@ -5,7 +5,7 @@ Input : <out>/boards/*.json, <out>/binaries.json   (written by crawl.py)
 Output: <out>/media/original/<key stem>.<ext>       originals as downloaded (untrusted data)
         <out>/media/out/<key>                        main webp (long edge <= 1600 px)
         <out>/media/out/<key stem>-480.webp          thumbnail (long edge <= 480 px)
-        <out>/media/manifest.json                    original URL -> key, sizes, references, status
+        <out>/media/manifest.json                    original URL -> key, sizes, sha256, references, status
         <out>/media/state/                           resumable state (downloads, resize results, jobs)
 
 Scope: photos referenced by the migrated boards (BOARDS below). s_board_2 (새가족소개) and
@@ -16,11 +16,20 @@ Key: <collection>/<board_key>-<seq>/<nnn>.webp, nnn = 1-based position of the ph
 (images in page order, then photo attachments). A URL used by several items gets ONE key, from the
 first item in BOARDS order / file order; every reference is recorded in the manifest.
 
-Stages (default: all): plan download resize manifest verify
+Resume is bound to identity, not to "a file of the right size is there": a download record holds
+the URL, key, file and sha256; it is reused only when the current plan maps the URL to that same
+file and the file still hashes the same. A resize result holds the sha256 of the original it was
+made from; it is reused only when that equals the current download's sha256.
+
+Stages (default: all): plan download resize manifest verify   (+ prune, report)
+Exit codes: 0 ok; 1 verify found problems (report written first); 2 refused (output inside the repo,
+stale manifest for prune). Download/resize failures are recorded in the manifest, not exit codes.
 Run with `python3 -I photos.py` (downloaded files are untrusted; -I keeps cwd/script dir off sys.path,
 crawl.py is loaded by explicit path).
 """
 import argparse
+import functools
+import hashlib
 import importlib.util
 import json
 import os
@@ -29,7 +38,6 @@ import re
 import subprocess
 import sys
 import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -65,6 +73,48 @@ def sniff(b):
     return None
 
 
+def refuse(msg, code=2):
+    print("오류: " + msg, file=sys.stderr, flush=True)
+    sys.exit(code)
+
+
+# ------------------------------------------------------------------ never write inside the repo
+
+
+@functools.lru_cache(maxsize=1)
+def repo_roots():
+    """Real paths of the git checkout(s) holding this script: the worktree and, for a worktree, the main checkout."""
+    roots = set()
+    for args in (["rev-parse", "--show-toplevel"], ["rev-parse", "--path-format=absolute", "--git-common-dir"]):
+        try:
+            res = subprocess.run(["git", "-C", HERE] + args, capture_output=True, text=True, check=True).stdout.strip()
+        except Exception:
+            continue
+        if res:
+            roots.add(os.path.realpath(os.path.dirname(res) if "--git-common-dir" in args else res))
+    if not roots:  # no git: fall back to the nearest parent holding .git
+        d = HERE
+        while True:
+            if os.path.exists(os.path.join(d, ".git")):
+                roots.add(os.path.realpath(d))
+                break
+            nd = os.path.dirname(d)
+            if nd == d:
+                break
+            d = nd
+    return tuple(sorted(roots))
+
+
+def guard(path):
+    """Refuse (exit 2) if `path` resolves (symlinks followed) into the repo."""
+    rp = os.path.realpath(path)
+    for root in repo_roots():
+        if rp == root or rp.startswith(root + os.sep):
+            refuse("쓰기 대상이 저장소 안입니다: %s (실제 경로 %s, 저장소 %s). 원본 사진(GPS 포함)과 옛 주소 목록이 "
+                   "저장소나 public/ 에 들어가면 안 되므로 멈춥니다. 저장소 밖 폴더를 --out 으로 주세요." % (path, rp, root))
+    return path
+
+
 def jload(fn, default):
     if os.path.exists(fn):
         with open(fn, encoding="utf-8") as f:
@@ -73,6 +123,7 @@ def jload(fn, default):
 
 
 def jsave(fn, obj, indent=None):
+    guard(fn)
     os.makedirs(os.path.dirname(fn), exist_ok=True)
     tmp = fn + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -80,24 +131,58 @@ def jsave(fn, obj, indent=None):
     os.replace(tmp, fn)
 
 
+def sha256_file(fn):
+    h = hashlib.sha256()
+    with open(fn, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def unlink(fn):
+    if os.path.lexists(fn):
+        guard(fn)
+        os.remove(fn)
+        return True
+    return False
+
+
+# ------------------------------------------------------------------ URLs
+
+
+def is_asp_link(path_lower):
+    return "view_img.asp" in path_lower or "download.asp" in path_lower
+
+
+def src_name(u):
+    """File name of the photo a URL points at: the `filename=` of view_img.asp / download.asp, else the path's last part."""
+    sp = urlsplit(u)
+    if is_asp_link(sp.path.lower()):
+        fn = parse_qs(sp.query).get("filename", [""])[0]
+        return unquote(fn.split("?")[0])
+    return unquote(sp.path).rsplit("/", 1)[-1]
+
+
+def is_photo(u):
+    if "view_img.asp" in unquote(urlsplit(u).path).lower():
+        return True
+    return src_name(u).lower().endswith(crawl.BIN_PHOTO)
+
+
 def photo_urls(item):
     urls = []
     for p in item.get("images") or []:
-        if crawl.is_binary_path(p) and crawl.bin_class(p) == "photo" and p not in urls:
+        if crawl.is_binary_path(p) and is_photo(p) and p not in urls:
             urls.append(p)
     for a in item.get("attachments") or []:
         u = a["url"] if isinstance(a, dict) else a
-        if crawl.bin_class(u) == "photo" and u not in urls:
+        if is_photo(u) and u not in urls:  # download.asp?filename=x.jpg counts; the bytes are sniffed after download
             urls.append(u)
     return urls
 
 
 def url_ext(u):
-    sp = urlsplit(u)
-    name = unquote(sp.path).rsplit("/", 1)[-1]
-    if "view_img.asp" in sp.path.lower() or "download.asp" in sp.path.lower():
-        fn = parse_qs(sp.query).get("filename", [""])[0]
-        name = unquote(fn.split("?")[0])
+    name = src_name(u)
     ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
     ext = {"jpeg": "jpg"}.get(ext, ext)
     return ext if re.fullmatch(r"[a-z0-9]{2,5}", ext) else "bin"
@@ -105,8 +190,8 @@ def url_ext(u):
 
 class Paths:
     def __init__(self, out):
-        self.out = out
-        self.media = os.path.join(out, "media")
+        self.out = os.path.abspath(os.path.expanduser(out))  # absolute once, at entry; everything derives from it
+        self.media = os.path.join(self.out, "media")
         self.original = os.path.join(self.media, "original")
         self.outdir = os.path.join(self.media, "out")
         self.state = os.path.join(self.media, "state")
@@ -114,6 +199,8 @@ class Paths:
         self.downloads = os.path.join(self.state, "downloads.json")
         self.resized = os.path.join(self.state, "resized.json")
         self.manifest = os.path.join(self.media, "manifest.json")
+        for p in (self.out, self.media, self.original, self.outdir, self.state, self.manifest, os.path.join(self.out, "cache")):
+            guard(p)
 
     def orig_file(self, rec):
         return os.path.join(self.original, rec["key"][: -len(".webp")] + "." + rec["ext"])
@@ -179,21 +266,53 @@ def load_plan(P):
 # ------------------------------------------------------------------ download
 
 
+def download_valid(P, u, rec, d, claims):
+    """True if the download record `d` of URL `u` still proves that the original file of `rec` is u's bytes.
+    Records from before sha256 was stored are accepted once (genuine download records carry `format`)
+    and get their sha256 filled in."""
+    fn = P.orig_file(rec)
+    rel = os.path.relpath(fn, P.media)
+    if d.get("status") != "ok" or d.get("file") != rel or claims.get(rel) != [u]:
+        return False
+    if not os.path.isfile(fn) or os.path.getsize(fn) != d.get("bytes"):
+        return False
+    if not d.get("sha256") and not d.get("format"):
+        return False  # written by the old "right size on disk" shortcut, never proven
+    h = sha256_file(fn)
+    if d.get("sha256") and d["sha256"] != h:
+        return False
+    d["sha256"] = h
+    d["key"] = rec["key"]
+    return True
+
+
 def run_download(P, args):
     plan = load_plan(P)
     state = jload(P.downloads, {})
-    lock = threading.Lock()
-    tl = threading.local()
-    todo = []
+    claims = {}  # original file -> URLs whose ok record points at it
+    for v, d in state.items():
+        if d.get("status") == "ok" and d.get("file"):
+            claims.setdefault(d["file"], []).append(v)
+    todo, invalidated = [], 0
     for u, rec in plan.items():
-        fn = P.orig_file(rec)
-        want = (state.get(u) or {}).get("bytes") or rec.get("expected_bytes")
-        if os.path.exists(fn) and want and os.path.getsize(fn) == want:
-            if u not in state or state[u].get("status") != "ok":
-                state[u] = {"status": "ok", "bytes": want, "file": os.path.relpath(fn, P.media), "at": crawl.now()}
+        if download_valid(P, u, rec, state.get(u) or {}, claims):
             continue
         todo.append(u)
-    log("download: %d planned, %d already on disk, %d to fetch" % (len(plan), len(plan) - len(todo), len(todo)))
+        # the file / outputs at this key are not proven to be u's: drop them before fetching u
+        rel = os.path.relpath(P.orig_file(rec), P.media)
+        for v in claims.get(rel, []):
+            if v != u:
+                state[v] = dict(state[v], status="superseded", superseded_by=u, superseded_at=crawl.now())
+        removed = [unlink(f) for f in (P.orig_file(rec), P.main_file(rec), P.thumb_file(rec))]
+        if any(removed):
+            invalidated += 1
+        if (state.get(u) or {}).get("status") == "ok":
+            state[u] = dict(state[u], status="stale")
+    jsave(P.downloads, state)
+    log("download: %d planned, %d verified on disk (url+key+sha256), %d to fetch (%d stale files/outputs removed)"
+        % (len(plan), len(plan) - len(todo), len(todo), invalidated))
+    lock = threading.Lock()
+    tl = threading.local()
     counter = {"n": 0, "bytes": 0}
 
     def fetcher():
@@ -205,7 +324,7 @@ def run_download(P, args):
     def one(u):
         rec = plan[u]
         fn = P.orig_file(rec)
-        res = {"at": crawl.now()}
+        res = {"at": crawl.now(), "key": rec["key"]}
         try:
             st, hl, data = fetcher().raw("GET", u)
             h = {k.lower(): v for k, v in hl}
@@ -215,13 +334,17 @@ def run_download(P, args):
             elif not kind:
                 res.update(status="failed", error="not an image (content-type %s, %d bytes)" % (h.get("content-type", ""), len(data)))
             else:
+                guard(fn)
                 os.makedirs(os.path.dirname(fn), exist_ok=True)
                 with open(fn + ".part", "wb") as f:
                     f.write(data)
                 os.replace(fn + ".part", fn)
-                res.update(status="ok", bytes=len(data), format=kind, file=os.path.relpath(fn, P.media))
+                res.update(status="ok", bytes=len(data), format=kind, sha256=hashlib.sha256(data).hexdigest(),
+                           file=os.path.relpath(fn, P.media))
                 if rec.get("expected_bytes") and rec["expected_bytes"] != len(data):
                     res["note"] = "size differs from HEAD (%s)" % rec["expected_bytes"]
+        except SystemExit:
+            raise
         except Exception as e:
             res.update(status="failed", error=str(e)[:300])
         with lock:
@@ -236,7 +359,8 @@ def run_download(P, args):
         list(ex.map(one, todo))
     jsave(P.downloads, state)
     bad = [u for u in plan if (state.get(u) or {}).get("status") != "ok"]
-    log("download done: %d ok, %d failed" % (len(plan) - len(bad), len(bad)))
+    log("download done: %d ok, %d failed, %d fetched this run (%.1f MB)" % (len(plan) - len(bad), len(bad), len(todo), counter["bytes"] / 1e6))
+    return {"fetched": len(todo), "bytes": counter["bytes"], "failed": len(bad)}
 
 
 # ------------------------------------------------------------------ resize
@@ -275,33 +399,51 @@ def run_node(mode, payload, P, name):
     return jload(jout, {})
 
 
+def resize_valid(P, rec, d, r):
+    """A resize result counts only if it was made from the current original (same sha256) for the same key."""
+    return (bool(r.get("ok")) and bool(d.get("sha256")) and r.get("srcSha256") == d.get("sha256") and r.get("key") == rec["key"]
+            and os.path.isfile(P.main_file(rec)) and os.path.isfile(P.thumb_file(rec)))
+
+
 def run_resize(P, args):
     plan = load_plan(P)
     dl = jload(P.downloads, {})
     done = jload(P.resized, {})
     jobs = []
     for u, rec in plan.items():
-        if (dl.get(u) or {}).get("status") != "ok":
+        d = dl.get(u) or {}
+        if d.get("status") != "ok":
             continue
-        r = done.get(u)
-        if r and r.get("ok") and os.path.exists(P.main_file(rec)) and os.path.exists(P.thumb_file(rec)) and not args.force_resize:
+        if resize_valid(P, rec, d, done.get(u) or {}) and not args.force_resize:
             continue
-        jobs.append({"id": u, "in": P.orig_file(rec), "main": P.main_file(rec), "thumb": P.thumb_file(rec)})
+        job = {"id": u, "in": P.orig_file(rec), "main": P.main_file(rec), "thumb": P.thumb_file(rec)}
+        for f in (job["main"], job["thumb"]):
+            guard(os.path.dirname(f))
+            guard(f)
+        jobs.append(job)
     log("resize: %d jobs" % len(jobs))
     step = 500
     for i in range(0, len(jobs), step):
         res = run_node("resize", jobs[i:i + step], P, "resize")
-        done.update(res)
+        for u, r in res.items():
+            rec, d = plan[u], dl.get(u) or {}
+            r["key"] = rec["key"]
+            if r.get("ok") and r.get("srcSha256") != d.get("sha256"):
+                r = {"ok": False, "key": rec["key"], "error": "original changed (sha256 %s != download %s)" % (r.get("srcSha256"), d.get("sha256"))}
+                for f in (P.main_file(rec), P.thumb_file(rec)):
+                    unlink(f)
+            done[u] = r
         jsave(P.resized, done)
         log("resize %d/%d" % (min(i + step, len(jobs)), len(jobs)))
-    bad = [u for u, r in done.items() if not r.get("ok")]
-    log("resize done: %d ok, %d failed" % (len(done) - len(bad), len(bad)))
+    ok = sum(1 for u, rec in plan.items() if resize_valid(P, rec, dl.get(u) or {}, done.get(u) or {}))
+    log("resize done: %d ok, %d of %d downloaded not ok" % (ok, sum(1 for u in plan if (dl.get(u) or {}).get("status") == "ok") - ok, len(plan)))
+    return len(jobs)
 
 
 # ------------------------------------------------------------------ manifest + report
 
 
-def run_manifest(P):
+def build_manifest(P):
     plan = load_plan(P)
     dl = jload(P.downloads, {})
     rz = jload(P.resized, {})
@@ -309,43 +451,115 @@ def run_manifest(P):
     for u, rec in plan.items():
         d = dl.get(u) or {}
         r = rz.get(u) or {}
-        m = {"key": rec["key"], "thumbKey": rec["thumbKey"], "references": rec["references"],
-             "originalBytes": d.get("bytes"), "originalFormat": d.get("format")}
+        m = {"key": rec["key"], "thumbKey": rec["thumbKey"], "references": rec["references"]}
         if rec.get("excluded_board_refs"):
             m["excludedBoardRefs"] = rec["excluded_board_refs"]
         if d.get("status") != "ok":
             m["status"] = "download_failed"
-            f = {"url": u, "key": rec["key"], "stage": "download", "error": d.get("error", "not attempted")}
-            # view_img.asp?filename=X is an alternate link; the same file is often also linked as /file/.../X
-            fname = unquote(parse_qs(urlsplit(u).query).get("filename", [""])[0].split("?")[0])
-            if fname:
-                for u2, rec2 in plan.items():
-                    if u2 != u and unquote(urlsplit(u2).path).endswith("/" + fname) and (dl.get(u2) or {}).get("status") == "ok":
-                        m["sameFileAs"] = f["sameFileAs"] = rec2["key"]
-                        break
-            failures.append(f)
-        elif not r.get("ok"):
-            m["status"] = "resize_failed"
-            failures.append({"url": u, "key": rec["key"], "stage": "resize", "error": r.get("error", "not resized")})
+            failures.append({"url": u, "key": rec["key"], "stage": "download", "error": d.get("error", "not attempted")})
         else:
-            m.update(status="ok", width=r["width"], height=r["height"], bytes=r["bytes"],
-                     thumbWidth=r["thumbWidth"], thumbHeight=r["thumbHeight"], thumbBytes=r["thumbBytes"])
+            m.update(originalBytes=d.get("bytes"), originalFormat=d.get("format"), sha256=d.get("sha256"))
+            if not resize_valid(P, rec, d, r):
+                m["status"] = "resize_failed"
+                err = r.get("error") or ("not resized from the current original" if r.get("ok") else "not resized")
+                failures.append({"url": u, "key": rec["key"], "stage": "resize", "error": err})
+            else:
+                m.update(status="ok", width=r["width"], height=r["height"], bytes=r["bytes"],
+                         thumbWidth=r["thumbWidth"], thumbHeight=r["thumbHeight"], thumbBytes=r["thumbBytes"])
         items[u] = m
+
+    # identical bytes: point later ok entries at the first ok entry with the same sha256
+    first_by_hash = {}
+    for u, m in items.items():
+        if m["status"] == "ok":
+            if m["sha256"] in first_by_hash:
+                m["sameContentAs"] = items[first_by_hash[m["sha256"]]]["key"]
+            else:
+                first_by_hash[m["sha256"]] = u
+
+    # sameFileAs: a failed download (e.g. view_img.asp?filename=X) is the same photo as another URL of the
+    # SAME item whose file name is exactly X - only if every such candidate is ok and all have one sha256.
+    # Candidates: every /file/... path with that name (a failed one is a separate file we cannot compare ->
+    # unresolved), plus view_img/download.asp aliases of that name only when they downloaded (a failed alias
+    # names the file by `filename=` only, like the failed URL itself, so it is not another file).
+    by_item_name = {}
+    for u, rec in plan.items():
+        for ref in rec["references"]:
+            lst = by_item_name.setdefault((src_name(u), ref["board_key"], str(ref["seq"])), [])
+            if u not in lst:
+                lst.append(u)
+    for f in failures:
+        if f["stage"] != "download":
+            continue
+        u, nm = f["url"], src_name(f["url"])
+        if not nm:
+            continue
+        cands = []
+        for ref in plan[u]["references"]:
+            cands += [v for v in by_item_name.get((nm, ref["board_key"], str(ref["seq"])), []) if v != u and v not in cands
+                      and (items[v]["status"] != "download_failed" or not is_asp_link(urlsplit(v).path.lower()))]
+        if not cands:
+            continue
+        hashes = {items[v].get("sha256") for v in cands}
+        if all(items[v]["status"] == "ok" for v in cands) and len(hashes) == 1:
+            target = first_by_hash[hashes.pop()]
+            items[u]["sameFileAs"] = f["sameFileAs"] = items[target]["key"]
+        else:
+            f["sameFileCandidates"] = [{"key": items[v]["key"], "status": items[v]["status"], "sha256": items[v].get("sha256")} for v in cands]
+            f["unresolved"] = "several different or not-ok candidates; check by hand"
+
     ok = [m for m in items.values() if m["status"] == "ok"]
     totals = {
         "photos": len(items),
         "ok": len(ok),
         "failed": len(failures),
+        "failedSameFileAs": sum(1 for f in failures if f.get("sameFileAs")),
+        "failedUnresolved": sum(1 for f in failures if not f.get("sameFileAs")),
+        "okSameContentAs": sum(1 for m in ok if m.get("sameContentAs")),
         "originalBytes": sum(m.get("originalBytes") or 0 for m in items.values()),
         "mainBytes": sum(m["bytes"] for m in ok),
         "thumbBytes": sum(m["thumbBytes"] for m in ok),
     }
-    jsave(P.manifest, {"generated_at": crawl.now(), "generator": "scripts/migrate/photos.py",
-                       "keyScheme": "<collection>/<board_key>-<seq>/<nnn>.webp (+ -480 thumb)",
-                       "boards": [b for b, _ in BOARDS], "excludedBoards": EXCLUDED,
-                       "totals": totals, "photos": items, "failures": failures}, indent=1)
-    log("manifest: %s" % json.dumps(totals))
-    return items, failures, totals
+    return {"generator": "scripts/migrate/photos.py",
+            "keyScheme": "<collection>/<board_key>-<seq>/<nnn>.webp (+ -480 thumb)",
+            "boards": [b for b, _ in BOARDS], "excludedBoards": EXCLUDED,
+            "totals": totals, "photos": items, "failures": failures}
+
+
+def run_manifest(P):
+    man = build_manifest(P)
+    jsave(P.manifest, dict({"generated_at": crawl.now()}, **man), indent=1)
+    log("manifest: %s" % json.dumps(man["totals"]))
+    return man["photos"], man["failures"], man["totals"]
+
+
+MANIFEST_FIELDS = ("key", "thumbKey", "status", "sha256", "width", "height", "bytes", "thumbBytes", "sameFileAs")
+
+
+def manifest_drift(P, man):
+    """Entries where the saved manifest disagrees with what plan + state say now."""
+    want = build_manifest(P)["photos"]
+    have = man.get("photos", {})
+    diff = sorted(set(want) ^ set(have))
+    diff += [u for u in want if u in have and any(want[u].get(k) != have[u].get(k) for k in MANIFEST_FIELDS)]
+    return diff
+
+
+def walk_out(P):
+    """Every file / symlink under media/out, as key-style relative paths."""
+    found = []
+    for root, dirs, files in os.walk(P.outdir):
+        for n in files + [d for d in dirs if os.path.islink(os.path.join(root, d))]:
+            found.append(os.path.relpath(os.path.join(root, n), P.outdir).replace(os.sep, "/"))
+    return found
+
+
+def extra_outputs(P, man):
+    keep = set()
+    for m in man.get("photos", {}).values():
+        if m["status"] == "ok":
+            keep.update((m["key"], m["thumbKey"]))
+    return sorted(set(walk_out(P)) - keep)
 
 
 def check_one(r, m):
@@ -354,6 +568,8 @@ def check_one(r, m):
         return [r["error"]]
     dw, dh = r["displayed"]["width"], r["displayed"]["height"]
     errs = []
+    if r.get("originalSha256") != m.get("sha256"):
+        errs.append("original sha256 %s != manifest %s" % (r.get("originalSha256"), m.get("sha256")))
     for which, lim in (("main", 1600), ("thumb", 480)):
         o = r[which]
         if o["format"] != "webp":
@@ -371,10 +587,16 @@ def check_one(r, m):
 
 
 def run_verify(P, args):
-    """Checks EVERY ok output (sharp metadata), prints a random sample in detail."""
+    """Checks EVERY ok output (sharp metadata + original sha256), the manifest against current state, and that
+    media/out holds nothing but the manifest's ok keys. Prints a random sample in detail. Returns problem count."""
     plan = load_plan(P)
-    man = jload(P.manifest, None) or {"photos": run_manifest(P)[0]}
-    ok = [u for u, m in man["photos"].items() if m["status"] == "ok"]
+    man = jload(P.manifest, None)
+    if man is None:
+        run_manifest(P)
+        man = jload(P.manifest, {})
+    drift = manifest_drift(P, man)
+    extras = extra_outputs(P, man)
+    ok = [u for u, m in man["photos"].items() if m["status"] == "ok" and u in plan]
     lst = [{"id": u, "original": P.orig_file(plan[u]), "main": P.main_file(plan[u]), "thumb": P.thumb_file(plan[u])} for u in ok]
     res = run_node("verify", lst, P, "verify")
     bad = {}
@@ -398,34 +620,63 @@ def run_verify(P, args):
             "FAIL" if u in bad else "OK", m["key"], r["displayed"]["width"], r["displayed"]["height"], r["original"]["exif"],
             r["original"]["gps"], r["original"]["orientation"], r["main"]["width"], r["main"]["height"], r["main"]["exif"],
             r["main"]["icc"], r["main"]["xmp"], r["thumb"]["width"], r["thumb"]["height"], r["thumb"]["exif"], "; ".join(bad.get(u, []))))
-    summary = {"checked": len(ok), "problems": len(bad), "originalsWithExif": sum(1 for o in orig if o["exif"]),
+    summary = {"checked": len(ok), "problems": len(bad) + len(extras) + len(drift),
+               "badOutputs": len(bad), "extraOutputs": len(extras), "manifestDrift": len(drift),
+               "originalsWithExif": sum(1 for o in orig if o["exif"]),
                "originalsWithGps": sum(1 for o in orig if o["gps"]), "originalsRotated": len(rotated),
-               "outputsWithMetadata": sum(1 for e in bad.values() if any("metadata" in x for x in e))}
+               "outputsWithMetadata": sum(1 for e in bad.values() if any("metadata" in x for x in e)),
+               "failedSameFileAs": sum(1 for f in man.get("failures", []) if f.get("sameFileAs")),
+               "failedUnresolved": sum(1 for f in man.get("failures", []) if not f.get("sameFileAs"))}
     print("verify all outputs: %s" % json.dumps(summary))
     for u, e in list(bad.items())[:20]:
         print("  PROBLEM", man["photos"][u]["key"], "; ".join(e))
+    for x in extras[:20]:
+        print("  PROBLEM extra file in media/out (not an ok key of the manifest; run `prune`):", x)
+    if drift:
+        print("  PROBLEM manifest out of date for %d photos (run `manifest`), e.g. %s" % (len(drift), drift[:3]))
     jsave(os.path.join(P.state, "verify-summary.json"), {"at": crawl.now(), "seed": args.seed, "summary": summary,
-                                                        "problems": {u: e for u, e in bad.items()}}, indent=1)
-    return len(bad)
+                                                        "problems": {u: e for u, e in bad.items()},
+                                                        "extraOutputs": extras, "manifestDrift": drift}, indent=1)
+    return summary["problems"]
+
+
+def run_prune(P):
+    """Delete files under media/out that are not an ok key/thumbKey of the (current) manifest."""
+    man = jload(P.manifest, None)
+    if man is None:
+        refuse("manifest.json 이 없습니다. manifest 단계를 먼저 실행하세요.")
+    drift = manifest_drift(P, man)
+    if drift:
+        refuse("manifest.json 이 현재 상태와 %d건 다릅니다. manifest 단계를 먼저 실행하세요 (지울 목록을 옛 manifest로 정하지 않음)." % len(drift))
+    extras = extra_outputs(P, man)
+    for x in extras:
+        unlink(os.path.join(P.outdir, x))
+    for root, dirs, files in os.walk(P.outdir, topdown=False):
+        if root != P.outdir and not os.listdir(root):
+            os.rmdir(root)
+    log("prune: removed %d files from media/out" % len(extras))
+    return len(extras)
 
 
 def report(P):
     man = jload(P.manifest, {})
     t = man.get("totals", {})
     dl = jload(P.downloads, {})
-    nd = sum(1 for d in dl.values() if d.get("status") == "ok")
-    print("originals: %d files, %.1f MB" % (nd, sum(d.get("bytes", 0) for d in dl.values() if d.get("status") == "ok") / 1e6))
+    plan = load_plan(P)
+    okd = [dl[u] for u in plan if (dl.get(u) or {}).get("status") == "ok"]
+    print("originals: %d files, %.1f MB" % (len(okd), sum(d.get("bytes", 0) for d in okd) / 1e6))
     print("outputs: %d main (%.1f MB) + %d thumbs (%.1f MB)" % (t.get("ok", 0), t.get("mainBytes", 0) / 1e6, t.get("ok", 0), t.get("thumbBytes", 0) / 1e6))
-    print("failures: %d" % len(man.get("failures", [])))
+    print("failures: %d (%d with sameFileAs, %d unresolved)" % (len(man.get("failures", [])), t.get("failedSameFileAs", 0), t.get("failedUnresolved", 0)))
     for f in man.get("failures", []):
-        print("  %s %s %s: %s" % (f["stage"], f["key"], f["url"][:90], f["error"]))
+        print("  %s %s %s: %s%s" % (f["stage"], f["key"], f["url"][:90], f["error"],
+                                   " -> sameFileAs " + f["sameFileAs"] if f.get("sameFileAs") else " (unresolved)"))
     ok = sorted((m for m in man.get("photos", {}).values() if m["status"] == "ok"), key=lambda m: -m["bytes"])
     print("largest main outputs:")
     for m in ok[:5]:
         print("  %s %.0f KB %dx%d" % (m["key"], m["bytes"] / 1024, m["width"], m["height"]))
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("stages", nargs="*", default=["plan", "download", "resize", "manifest", "verify"])
     ap.add_argument("--out", default=crawl.DEFAULT_OUT)
@@ -434,11 +685,14 @@ def main():
     ap.add_argument("--force-resize", action="store_true")
     ap.add_argument("--verify-n", type=int, default=10)
     ap.add_argument("--seed", type=int, default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     args.workers = max(1, min(args.workers, 4))
     if args.seed is None:
         args.seed = random.randrange(1 << 30)
-    P = Paths(args.out)
+    for st in args.stages:
+        if st not in ("plan", "download", "resize", "manifest", "verify", "prune", "report"):
+            sys.exit("unknown stage " + st)
+    P = Paths(args.out)  # absolute + refuses a target inside the repo before anything is written
     for st in args.stages:
         if st == "plan":
             run_plan(P)
@@ -448,13 +702,15 @@ def main():
             run_resize(P, args)
         elif st == "manifest":
             run_manifest(P)
+        elif st == "prune":
+            run_prune(P)
         elif st == "verify":
-            run_verify(P, args)
+            problems = run_verify(P, args)
             report(P)
+            if problems:
+                refuse("검증 실패: 문제 %d건 (%s). 이 상태로 올리지 마세요." % (problems, os.path.join(P.state, "verify-summary.json")), code=1)
         elif st == "report":
             report(P)
-        else:
-            sys.exit("unknown stage " + st)
 
 
 if __name__ == "__main__":
