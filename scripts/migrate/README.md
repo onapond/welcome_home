@@ -48,3 +48,35 @@ history/weekly ajax endpoints answer 500.
 - `failures.json`, `inventory.md` (the summary), `notes.md` (hand-written, appended to the report if present).
 
 Private data (staff phone/e-mail, author IPs) is kept in the JSON but flagged in `inventory.md`.
+
+# photos.py — download + resize the old photos (migration m3)
+
+Stdlib Python + `resize.mjs` (node, the repo's existing `sharp`; no new deps). Everything is
+written OUTSIDE the repo under `<out>/media/`; downloaded files are untrusted data, so run with `-I`.
+
+```bash
+python3 -I scripts/migrate/photos.py                    # plan download resize manifest verify
+python3 -I scripts/migrate/photos.py download           # resumable; re-run to retry failures
+python3 -I scripts/migrate/photos.py manifest verify    # rebuild manifest, re-check all outputs
+```
+
+Options: `--out DIR`, `--workers 4` (max 4 connections), `--delay 0.3` (per connection),
+`--force-resize`, `--verify-n 10`, `--seed N`.
+
+- Scope: photos (`images` + photo attachments) of `media_1..3`, `s_board_1/3/5/6`, `history`, `staff`.
+  `s_board_2` (새가족소개) and `s_board_4` (중보기도) are not migrated: a URL used only there is skipped.
+  PDFs (weekly) are not handled here.
+- Download: one `crawl.Fetcher` per worker (same lessons: fresh connection every 60 requests,
+  reconnect on HTTP 400, retries with backoff). A file already on disk with the expected size is skipped.
+  Anything that is not HTTP 200 + image magic bytes is recorded as a failure.
+- Key: `<collection>/<board_key>-<seq>/<nnn>.webp`, nnn = position of the photo in its item
+  (e.g. `albums/s_board_1-917/003.webp`, thumb `albums/s_board_1-917/003-480.webp`). Collections:
+  sermons (media_1, media_2), praise, videos (s_board_3), albums (s_board_1), events, news, history, staff.
+  A URL used by several items gets one key (first item in that board order) and all references.
+- Resize: EXIF orientation applied, then all metadata dropped (EXIF/GPS/XMP/IPTC/ICC); main long edge
+  <= 1600 px, thumb <= 480 px, webp q80, never upscaled. Animated GIFs keep the first frame only.
+- Output: `media/original/<key stem>.<ext>`, `media/out/<key>`, `media/manifest.json`
+  (URL -> key, thumbKey, width, height, bytes, references, status + `failures`),
+  `media/state/` (resume state, `verify-summary.json`).
+- `verify` reads every output with sharp: webp, no metadata, long edge = min(original, limit),
+  orientation kept; prints a random sample (always including EXIF-rotated photos if any).
