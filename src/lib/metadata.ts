@@ -5,7 +5,9 @@
 // ──────────────────────────────────────────
 
 import type { Metadata } from "next";
-import { getSite } from "@/lib/content";
+import { getSite, type Site } from "@/lib/content";
+import { latestMotto } from "@/lib/content/site-format";
+import { DEFAULT_OG_IMAGE } from "@/lib/jsonld";
 
 export interface PageMetadataInput {
   /** 페이지 제목만. 비우면 홈 — 교회 이름이 제목이 된다. */
@@ -21,6 +23,11 @@ export interface PageMetadataInput {
   type?: "website" | "article";
 }
 
+/** <link rel="alternate" type="application/rss+xml"> (src/app/rss.xml/route.ts) */
+export function rssAlternate(site: Site) {
+  return { types: { "application/rss+xml": [{ url: "/rss.xml", title: `${site.name} 소식 · 설교` }] } };
+}
+
 export function pageMetadata({
   title,
   description,
@@ -32,12 +39,24 @@ export function pageMetadata({
   const site = getSite();
   const shareTitle = title ? `${title} | ${site.name}` : site.name;
   const shareDescription = ogDescription ?? description;
-  const images = image ? [{ url: image }] : undefined;
+  // No image → the default share image (src/app/opengraph-image.tsx). It has to
+  // be named here: a page's openGraph replaces the parent's as a whole, so the
+  // root file image is not inherited once openGraph is set.
+  const images = image
+    ? [{ url: image }]
+    : [
+        {
+          url: DEFAULT_OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: `${site.name} — ${latestMotto(site)?.text ?? site.description}`,
+        },
+      ];
 
   return {
     ...(title ? { title } : {}),
     description,
-    alternates: { canonical: path },
+    alternates: { canonical: path, ...rssAlternate(site) },
     openGraph: {
       type,
       locale: "ko_KR",
@@ -45,13 +64,13 @@ export function pageMetadata({
       title: shareTitle,
       description: shareDescription,
       url: path,
-      ...(images ? { images } : {}),
+      images,
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: shareTitle,
       description: shareDescription,
-      ...(images ? { images } : {}),
+      images,
     },
   };
 }

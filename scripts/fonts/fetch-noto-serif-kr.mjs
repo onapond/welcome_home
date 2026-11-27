@@ -35,10 +35,14 @@ const TS_FILE = path.join(repo, "src/app/fonts/noto-serif-kr.ts");
 const PRELOAD_FILE = "noto-serif-kr-latin.woff2";
 const PUBLIC_PREFIX = "/fonts/noto-serif-kr";
 
-// Keep in sync with the weights the site uses (h1-h3 are 700; font-serif
-// elements also use 400 / 600 / 900 via Tailwind font-* utilities).
-const WEIGHTS = ["400", "600", "700", "900"];
-const CSS_URL = `https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@${WEIGHTS.join(";")}&display=swap`;
+// Weights the site sets on serif text: 700 (h1-h3, font-serif font-bold),
+// 600 (footer h3 labels), 400 (font-serif without a weight). Noto Serif KR is
+// a variable font: Google serves the same file per subset for every weight, so
+// asking for the range gives one @font-face per subset ("font-weight: 400 700")
+// instead of one per subset per weight (the CSS is 1/4 the size, files are
+// unchanged). Widen the range if a new serif weight is used.
+const WEIGHT_RANGE = "400..700";
+const CSS_URL = `https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@${WEIGHT_RANGE}&display=swap`;
 const OFL_URL = "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifkr/OFL.txt";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";

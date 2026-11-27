@@ -38,10 +38,10 @@ export default function Footer({ buildYear }: { buildYear: number }) {
           <div className="md:col-span-2 lg:col-span-1">
             <Link href="/" aria-label={`${site.name} 홈으로`}>
               <Image
-                src="/images/logo-mark.png"
+                src="/images/logo-mark-h80.webp"
                 alt={site.name}
-                width={262}
-                height={98}
+                width={214}
+                height={80}
                 className="h-9 w-auto mb-5"
                 style={{ filter: "brightness(0) invert(1)" }}
               />

@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import PhotoGrid from "@/components/features/gallery/PhotoGrid";
+import VideoFacade from "@/components/features/VideoFacade";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getSite, getVideos } from "@/lib/content";
+import { JsonLd, breadcrumbJsonLd, videoJsonLd } from "@/lib/jsonld";
 import { mediaUrl, thumbUrl, videoEmbedAllow, videoEmbedUrl, videoThumb } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -42,6 +44,26 @@ export default async function VideoPostPage({ params }: { params: Promise<{ id: 
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "홈", path: "/" },
+            { name: "영상", path: "/news/videos" },
+            { name: v.title, path: `/news/videos/${v.id}` },
+          ]),
+          ...(v.video
+            ? [
+                videoJsonLd({
+                  name: v.title,
+                  description: plainExcerpt(v.body),
+                  date: v.date,
+                  video: v.video,
+                  thumbnail: v.thumbnail,
+                }),
+              ]
+            : []),
+        ]}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news/videos" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
@@ -58,17 +80,12 @@ export default async function VideoPostPage({ params }: { params: Promise<{ id: 
 
         {v.video && (
           <div className="mt-8 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--color-dark)" }}>
-            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-              <iframe
-                src={videoEmbedUrl(v.video)}
-                title={`${v.title} 영상`}
-                loading="lazy"
-                allow={videoEmbedAllow(v.video)}
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-                className="absolute inset-0 w-full h-full border-0"
-              />
-            </div>
+            <VideoFacade
+              embedUrl={videoEmbedUrl(v.video)}
+              allow={videoEmbedAllow(v.video)}
+              title={v.title}
+              thumbnail={videoThumb(v.video, v.thumbnail, "full")}
+            />
           </div>
         )}
 

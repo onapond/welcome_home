@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, Calendar, ChevronLeft, ChevronRight, ExternalLink, Layers, User } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
-import { fmtDate } from "@/components/features/news/shared";
+import VideoFacade from "@/components/features/VideoFacade";
+import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getSermons, getSite } from "@/lib/content";
+import { JsonLd, breadcrumbJsonLd, videoJsonLd } from "@/lib/jsonld";
 import { videoEmbedAllow, videoEmbedUrl, videoThumb } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -44,8 +46,30 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ i
     { Icon: Layers, value: s.series },
   ].filter((m): m is { Icon: typeof Calendar; value: string } => !!m.value);
 
+  const summary = [s.scripture, s.preacher, fmtDate(s.date)].filter(Boolean).join(" · ");
+
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "홈", path: "/" },
+            { name: "설교", path: "/sermons" },
+            { name: s.title, path: `/sermons/${s.id}` },
+          ]),
+          ...(s.video
+            ? [
+                videoJsonLd({
+                  name: s.title,
+                  description: plainExcerpt(s.body) || summary,
+                  date: s.date,
+                  video: s.video,
+                  thumbnail: s.thumbnail,
+                }),
+              ]
+            : []),
+        ]}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/sermons" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
@@ -71,17 +95,12 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ i
 
         <div className="mt-8 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--color-dark)" }}>
           {s.video ? (
-            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-              <iframe
-                src={videoEmbedUrl(s.video)}
-                title={`${s.title} 영상`}
-                loading="lazy"
-                allow={videoEmbedAllow(s.video)}
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-                className="absolute inset-0 w-full h-full border-0"
-              />
-            </div>
+            <VideoFacade
+              embedUrl={videoEmbedUrl(s.video)}
+              allow={videoEmbedAllow(s.video)}
+              title={s.title}
+              thumbnail={videoThumb(s.video, s.thumbnail, "full")}
+            />
           ) : (
             <div
               className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center"

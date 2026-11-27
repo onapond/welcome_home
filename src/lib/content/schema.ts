@@ -243,6 +243,18 @@ export const serviceSchema = z.strictObject({
 
 const httpsUrl = z.url({ protocol: /^https$/, error: "https:// 로 시작하는 주소여야 합니다" });
 
+// YAML reads 04305 as the number 4305, so a number is padded back to 5 digits.
+const postalCode = z.preprocess(
+  (v) => (typeof v === "number" && Number.isInteger(v) ? String(v).padStart(5, "0") : v),
+  z.string().trim().regex(/^\d{5}$/, "우편번호는 숫자 5자리입니다. 따옴표로 감싸 적어 주세요 (예: \"04300\")"),
+);
+
+// Search-console verification code: only the content="…" value of the meta tag.
+const verificationCode = text.regex(
+  /^[A-Za-z0-9_-]+$/,
+  "인증 코드는 영문 · 숫자 · - · _ 만 씁니다. <meta …> 태그 전체가 아니라 content=\"…\" 안의 값만 붙여 넣어 주세요",
+);
+
 export const siteSchema = z.strictObject({
   name: text,
   nameEn: text,
@@ -255,7 +267,23 @@ export const siteSchema = z.strictObject({
     road: text,
     detail: optText,
     mapQuery: text,
+    postalCode: optional(postalCode),
   }),
+  // Map position for search engines (decimal degrees). Leave out until the
+  // church has checked the exact point; a wrong pin is worse than none.
+  geo: optional(
+    z.strictObject({
+      lat: z.number({ error: "위도(lat)는 숫자로 적어야 합니다 (예: 37.5)" }).min(33, "위도(lat)는 33~39 사이입니다").max(39, "위도(lat)는 33~39 사이입니다"),
+      lng: z.number({ error: "경도(lng)는 숫자로 적어야 합니다 (예: 126.9)" }).min(124, "경도(lng)는 124~132 사이입니다").max(132, "경도(lng)는 124~132 사이입니다"),
+    }),
+  ),
+  // Search console ownership codes (Google Search Console · Naver Search Advisor).
+  verification: optional(
+    z.strictObject({
+      google: optional(verificationCode),
+      naver: optional(verificationCode),
+    }),
+  ),
   phone: text,
   fax: optText,
   email: optional(z.email({ error: "이메일 형식이 올바르지 않습니다" })),

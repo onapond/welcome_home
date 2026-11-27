@@ -5,6 +5,7 @@ import { ChevronLeft, Download, ExternalLink } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { getBulletins, getSite } from "@/lib/content";
+import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { isEmbeddableMedia, mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -38,6 +39,13 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "홈", path: "/" },
+          { name: "주보", path: "/news/bulletin" },
+          { name: title, path: `/news/bulletin/${b.id}` },
+        ])}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news/bulletin" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />

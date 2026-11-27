@@ -1,8 +1,8 @@
-// Helpers for scripts/fonts/fetch-noto-serif-kr.mjs: check a downloaded font
-// set, give it a content-versioned folder and swap it in without ever leaving
-// the site with a CSS file that points at missing font files.
+// Helpers for scripts/fonts/fetch-noto-serif-kr.mjs and fetch-pretendard.mjs:
+// check a downloaded font set, give it a content-versioned folder and swap it
+// in without ever leaving the site with a CSS file that points at missing font files.
 //
-// Layout (fontRoot = public/fonts/noto-serif-kr):
+// Layout (fontRoot = public/fonts/noto-serif-kr or public/fonts/pretendard):
 //   <fontRoot>/<version>/*.woff2 + OFL.txt   version = short sha256 of the set
 // The URL changes whenever any file changes, so /fonts/* can be cached
 // forever (next.config.ts) and a returning visitor never mixes a new CSS with
