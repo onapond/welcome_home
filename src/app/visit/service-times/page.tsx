@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Link from "next/link";
 import { Clock, MapPin, Users, ChevronRight, Calendar } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -9,16 +10,12 @@ import { ICONS } from "@/lib/icons";
 
 export function generateMetadata(): Metadata {
   const { meta } = getServiceTimesPage();
-  const site = getSite();
-  return {
-    alternates: { canonical: "/visit/service-times" },
+  return pageMetadata({
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: `${meta.title} | ${site.name}`,
-      description: meta.ogDescription ?? meta.description,
-    },
-  };
+    ogDescription: meta.ogDescription,
+    path: "/visit/service-times",
+  });
 }
 
 // ─── 서브 컴포넌트 ────────────────────────────────────────────────────────────

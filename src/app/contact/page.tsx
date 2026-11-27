@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import ContactClient from "@/components/features/ContactClient";
 import { getSite } from "@/lib/content";
 import { getContactPage, getLocationInfo } from "@/lib/content/pages";
@@ -6,16 +7,12 @@ import { fullAddress, kakaoMapUrl, telHref } from "@/lib/site-summary";
 
 export function generateMetadata(): Metadata {
   const { meta } = getContactPage();
-  const site = getSite();
-  return {
-    alternates: { canonical: "/contact" },
+  return pageMetadata({
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: `${meta.title} | ${site.name}`,
-      description: meta.ogDescription ?? meta.description,
-    },
-  };
+    ogDescription: meta.ogDescription,
+    path: "/contact",
+  });
 }
 
 export default function ContactPage() {

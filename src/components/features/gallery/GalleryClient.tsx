@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Images } from "lucide-react";
 import { CARD_BORDER, EmptyState, MoreButton, chipStyle, fmtDate } from "@/components/features/news/shared";
@@ -55,8 +56,13 @@ export default function GalleryClient({ items }: { items: AlbumItem[] }) {
               style={{ backgroundColor: "var(--color-white)", border: CARD_BORDER }}
             >
               <span className="block relative" style={{ aspectRatio: "4/3", backgroundColor: "var(--color-bg-warm)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized thumbnails from R2 */}
-                <img src={a.cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
+                <Image
+                  src={a.cover}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                  className="object-cover"
+                />
                 <span
                   className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
                   style={{ backgroundColor: "rgba(26,30,44,0.7)", color: "var(--color-white)" }}

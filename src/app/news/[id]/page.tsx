@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
-import { getNews } from "@/lib/content";
+import { getNews, getSite } from "@/lib/content";
 import { mediaUrl } from "@/lib/media";
+import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
 
@@ -21,11 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const n = getNews().find((x) => x.id === id);
   if (!n) return {};
-  return {
-    alternates: { canonical: `/news/${id}` },
+  return pageMetadata({
     title: n.title,
-    description: plainExcerpt(n.body) || `${n.category} · ${fmtDate(n.date)} — 청파중앙교회`,
-  };
+    description: plainExcerpt(n.body) || `${n.category} · ${fmtDate(n.date)} — ${getSite().name}`,
+    path: `/news/${id}`,
+    type: "article",
+  });
 }
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,7 +37,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           소식 목록

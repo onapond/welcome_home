@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
@@ -15,16 +16,12 @@ import { mediaUrl } from "@/lib/media";
 
 export function generateMetadata(): Metadata {
   const { meta } = getAboutPage();
-  const site = getSite();
-  return {
-    alternates: { canonical: "/about" },
+  return pageMetadata({
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: `${meta.title} | ${site.name}`,
-      description: meta.ogDescription ?? meta.description,
-    },
-  };
+    ogDescription: meta.ogDescription,
+    path: "/about",
+  });
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────

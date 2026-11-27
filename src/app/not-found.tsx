@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Home, BookOpen, Clock } from "lucide-react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "페이지를 찾을 수 없습니다",
 };
 
@@ -15,7 +16,7 @@ const QUICK_LINKS = [
 export default function NotFound() {
   return (
     <main
-      className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center"
+      className="min-h-[70vh] flex flex-col items-center justify-center px-4 pt-28 pb-16 text-center"
       style={{ backgroundColor: "var(--color-bg)" }}
     >
       {/* 404 Number */}

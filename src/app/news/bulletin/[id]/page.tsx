@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, Download } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
-import { getBulletins } from "@/lib/content";
+import { getBulletins, getSite } from "@/lib/content";
 import { mediaUrl } from "@/lib/media";
+import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
 
@@ -17,11 +18,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const b = getBulletins().find((x) => x.id === id);
   if (!b) return {};
-  return {
-    alternates: { canonical: `/news/bulletin/${id}` },
+  return pageMetadata({
     title: b.title ?? `${fmtDate(b.date)} 주보`,
-    description: `청파중앙교회 ${fmtDate(b.date)} 주보입니다.`,
-  };
+    description: `${getSite().name} ${fmtDate(b.date)} 주보입니다.`,
+    path: `/news/bulletin/${id}`,
+    type: "article",
+  });
 }
 
 export default async function BulletinDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +35,7 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news/bulletin" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           주보 목록

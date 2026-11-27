@@ -30,7 +30,7 @@ export function generateMetadata(): Metadata {
       siteName: site.name,
       title: site.name,
       description: site.description,
-      url: SITE_URL,
+      // og:url은 페이지마다 pageMetadata()가 자기 경로로 넣는다(src/lib/metadata.ts).
     },
     twitter: {
       card: "summary_large_image",
@@ -55,7 +55,8 @@ export default function RootLayout({
           <Header />
           {/* Pages render their own <main>; a second one here would nest landmarks. */}
           <div className="flex-1">{children}</div>
-          <Footer />
+          {/* 빌드한 해를 넘겨 서버 HTML과 첫 클라이언트 렌더의 연도를 맞춘다 */}
+          <Footer buildYear={new Date().getFullYear()} />
         </SiteProvider>
       </body>
     </html>

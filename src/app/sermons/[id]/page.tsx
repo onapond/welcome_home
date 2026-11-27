@@ -5,6 +5,8 @@ import { BookOpen, Calendar, ChevronLeft, ChevronRight, ExternalLink, Layers, Us
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { getSermons, getSite } from "@/lib/content";
+import { youtubeThumb } from "@/lib/media";
+import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
 
@@ -16,11 +18,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const s = getSermons().find((x) => x.id === id);
   if (!s) return {};
-  return {
-    alternates: { canonical: `/sermons/${id}` },
+  return pageMetadata({
     title: s.title,
-    description: [s.scripture, s.preacher, fmtDate(s.date)].filter(Boolean).join(" · ") + " — 청파중앙교회 설교",
-  };
+    description: `${[s.scripture, s.preacher, fmtDate(s.date)].filter(Boolean).join(" · ")} — ${getSite().name} 설교`,
+    path: `/sermons/${id}`,
+    image: s.youtube ? youtubeThumb(s.youtube) : undefined,
+    type: "article",
+  });
 }
 
 export default async function SermonDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,7 +46,7 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ i
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/sermons" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           설교 목록
