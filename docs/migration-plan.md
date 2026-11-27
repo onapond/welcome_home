@@ -27,7 +27,8 @@
 1. **m1 스키마 (끝 · 11/27)** — `video:`(유튜브 · 비메오) · `thumb:` · `content/videos/`(`/news/videos`).
 2. **m2 변환기** `scripts/migrate/convert.py` — `boards/*.json` → `content/` 파일. 사진은 m3 목록(`../chungpa21-crawl/media/manifest.json`)의 키(`<묶음>/<board>-<seq>/<nnn>.webp`, 썸네일 `…-480.webp` → `thumb:`)로만 적는다. `sameFileAs`가 있는 실패 항목은 건너뛴다. Vimeo 영상은 `video:`를 비운다(⑱). 개인정보 거르기(IP 제거, 전화번호 가림, 연락처 비공개) 후 `npm run check:content` 통과.
 3. **m3 사진 (끝 · 11/27)** — 4,141장 받음(1,030MB), 1600px 271MB + 480px 86MB, EXIF · GPS 전부 제거 확인. 결과 `../chungpa21-crawl/media/out/`, 목록 `media/manifest.json`. 스크립트 `scripts/migrate/photos.py` · `resize.mjs`.
-4. **m4 R2 업로드** — 사용자 Cloudflare 계정 필요(버킷 생성 · 인증은 사용자). `NEXT_PUBLIC_MEDIA_BASE_URL`은 R2 커스텀 도메인이 생긴 뒤(P6 DNS 전환 때) 등록.
+4. **m4 R2 업로드** — 사용자 Cloudflare 계정 필요(R2 켜기 · 버킷 · API 토큰 · `aws configure --profile chungpa-r2`는 사용자). **결정(사용자 11/27)**: 정식 사이트가 아닌 지금은 r2.dev 임시 주소로 먼저 연결(`NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소, Production). r2.dev는 속도 제한이 있어 P6 DNS 전환 때 R2 커스텀 도메인으로 환경 변수만 바꾼다. 업로드 = `aws s3 sync ../chungpa21-crawl/media/out s3://<버킷> --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`.
+   - 랜딩용 사진(히어로 · 새가족 · 공동체 · 담임목사 8장)은 저장소 `public/images/site/`에 둔다(11/27).
 5. **m5 옛 주소 연결** — `legacy`로 옛 게시판 주소 → 새 주소. 방식은 m2 뒤 건수를 보고 정한다(설정 리디렉션 한도 · 함수 호출 비용 확인).
 6. **m6 확인** — 브라우저로 게시판별 표본 확인, Codex 판정.
 
