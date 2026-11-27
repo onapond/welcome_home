@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { X } from "lucide-react";
-import { NAV_LINKS } from "./Header";
+import { NAV_CTA, NAV_ITEMS } from "@/lib/nav";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -55,16 +55,32 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
             {/* Nav Links */}
             <ul className="flex-1 overflow-y-auto py-4">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
+              {NAV_ITEMS.map((item) => (
+                <li key={item.href}>
                   <Link
-                    href={link.href}
+                    href={item.href}
                     onClick={onClose}
                     className="flex items-center px-6 py-4 text-base font-medium border-b border-gray-50 transition-colors hover:bg-gray-50"
                     style={{ color: "var(--color-dark)" }}
                   >
-                    {link.label}
+                    {item.label}
                   </Link>
+                  {item.children && (
+                    <ul className="bg-gray-50/60">
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <Link
+                            href={child.href}
+                            onClick={onClose}
+                            className="flex items-center pl-10 pr-6 py-3 text-sm border-b border-gray-50 transition-colors hover:bg-gray-50"
+                            style={{ color: "var(--color-dark-soft)" }}
+                          >
+                            {child.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>
@@ -72,12 +88,12 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             {/* CTA */}
             <div className="p-6 border-t border-gray-100">
               <Link
-                href="/visit#reservation"
+                href={NAV_CTA.href}
                 onClick={onClose}
                 className="block w-full text-center px-6 py-3 rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:brightness-110"
                 style={{ backgroundColor: "var(--color-primary)" }}
               >
-                처음 오시나요?
+                {NAV_CTA.label}
               </Link>
             </div>
       </nav>

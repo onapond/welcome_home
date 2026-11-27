@@ -1,0 +1,32 @@
+# 예배 안내(/visit/service-times) 문구 — 머리글 · 섹션 제목 · 하단 방문 안내.
+#   예배 이름 · 시간 · 장소 · 설명 · 특별 예배 목록 자체는 site.yaml(services · specialServices)을 고친다.
+#
+# TODO(이전): 옛 사이트 확인 전 — 머리글 · 하단 안내 문구는 교회 입력 없이 쓴 임시 문구다.
+
+meta:
+  title: 예배 안내
+  description: "{{name}} 예배 시간 안내. 주일예배({{service.sunday.time}}), 수요예배({{service.wednesday.time}}), 금요기도회({{service.friday.time}}), 새벽기도({{service.dawn.time}}). 누구나 환영합니다."
+  ogDescription: "{{name}} 모든 예배의 시간, 장소, 대상을 안내합니다. 처음 오시는 분도 편안하게 참석하실 수 있습니다."
+
+hero:
+  badge: 예배 안내
+  title: 하나님 앞에 나아오세요
+  lines:
+    - "{{name}}는 매주 다양한 예배를 통해"
+    - 하나님과 만나는 자리를 마련하고 있습니다.
+
+regular:
+  label: 정기 예배
+  title: 매주 드리는 예배
+
+special:
+  label: 특별 예배
+  title: 절기 및 특별 예배
+
+cta:
+  title: 처음 방문하시나요?
+  lines:
+    - 미리 방문 신청을 해주시면 담당 사역자가
+    - 편안하게 안내해 드립니다.
+  primary: { label: 방문 신청하기, href: /visit#reservation }
+  secondary: { label: 새가족 안내 보기, href: /visit }

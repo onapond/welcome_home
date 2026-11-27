@@ -11,15 +11,8 @@ import {
 } from "@/lib/forms";
 import { mailConfigured, notificationHtml, sendFormNotification } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-
-/** ContactClient의 INQUIRY_TYPES와 반드시 동일하게 유지할 것 */
-const INQUIRY_TYPES = [
-  "예배 및 행사 문의",
-  "새가족 등록",
-  "공동체 참여",
-  "시설 대관",
-  "기타 문의",
-] as const;
+import { getSite } from "@/lib/content";
+import { getContactPage } from "@/lib/content/pages";
 
 // 레이트리밋은 두 단계로 나눈다.
 //
@@ -33,6 +26,9 @@ const RATE_WINDOW_MS = 10 * 60 * 1000;
 
 export async function POST(request: Request) {
   const ip = clientIp(request);
+  // 문의 유형은 content/pages/contact.yaml — ContactClient가 보여 주는 값과 같은 출처다.
+  const inquiryTypes = getContactPage().form.inquiryTypes;
+  const churchPhone = getSite().phone;
 
   const flood = rateLimit(`inquiry:flood:${ip}`, FLOOD_LIMIT, RATE_WINDOW_MS);
   if (!flood.ok) {
@@ -63,7 +59,7 @@ export async function POST(request: Request) {
   const errors: FieldError[] = [];
   const name = requireText(body.name, "name", "이름", LIMITS.name, errors);
   const phone = requirePhone(body.phone, errors);
-  const type = requireChoice(body.type, "type", "문의 유형", INQUIRY_TYPES, errors);
+  const type = requireChoice(body.type, "type", "문의 유형", inquiryTypes, errors);
   const message = requireText(body.message, "message", "문의 내용", LIMITS.message, errors);
   requireConsent(body.consent, errors);
 
@@ -89,7 +85,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         message:
-          "현재 온라인 문의 접수가 일시 중단되었습니다. 02-714-0041로 전화 주시면 안내해 드리겠습니다.",
+          `현재 온라인 문의 접수가 일시 중단되었습니다. ${churchPhone}로 전화 주시면 안내해 드리겠습니다.`,
       },
       { status: 503 }
     );
@@ -111,7 +107,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         message:
-          "문의 접수 중 문제가 발생했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다.",
+          `문의 접수 중 문제가 발생했습니다. ${churchPhone}로 전화 주시면 도와드리겠습니다.`,
       },
       { status: 502 }
     );

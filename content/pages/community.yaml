@@ -1,0 +1,99 @@
+# 공동체(/community) 문구 — 청년부 · 청소년부 · 선교 · 소그룹 소개와 하단 참여 안내.
+#   - groups 순서대로 페이지에 나오고, showOnHome: true 인 앞의 3개가 홈 화면 카드에 나온다.
+#   - id는 주소의 # 부분(/community#youth)이 되므로 바꾸면 바닥글 링크도 함께 고쳐야 한다.
+#   - details 값에 {{phone}}처럼 적으면 site.yaml의 값으로 바뀐다.
+#   - showSnsLinks: true 면 site.yaml의 인스타그램 · 유튜브 버튼이 붙는다.
+#   - color: primary | secondary | accent | primary-light (정해진 브랜드 색 이름만)
+#   - image에 사진 경로를 적으면 자리표시 대신 나온다.
+#
+# TODO(이전): 옛 사이트 확인 전 — 모든 공동체 소개 · 시간 · 장소 · 인원 · 문의 번호는 교회 입력 없이 쓴 임시 문구다.
+#   특히 청소년부 문의 번호(02-714-0042)와 청년부 예배 시간(주일 오후 1시)을 옛 사이트와 대조할 것.
+
+meta:
+  title: 공동체
+  description: "{{name}}의 다양한 공동체를 소개합니다. 청년부 United, 청소년부, 선교, 소그룹/구역."
+
+hero:
+  badge: 공동체
+  title: 함께 걸어가는 사람들
+  lines:
+    - 나이와 형편이 달라도 같은 믿음 안에서 하나가 됩니다.
+    - "{{name}}의 다양한 공동체에 함께하세요."
+
+groups:
+  - id: youth
+    label: 청년부
+    title: 청년부 United
+    subtitle: "@chungpa_united"
+    summary: 20-30대 청년들이 함께 예배하고 교제하며 신앙 안에서 성장해가는 공동체입니다.
+    tag: "@chungpa_united"
+    description: >-
+      20~30대 청년들이 함께 예배하고, 말씀 안에서 성장하며, 서로를 세워가는 공동체입니다.
+      주일 2부 예배(오후 1시)와 다양한 소모임을 통해 함께 합니다.
+    tags: ["주일 1PM", 소모임, 수련회]
+    color: primary
+    showSnsLinks: true
+    details:
+      - { label: 예배 시간, value: 주일 오후 1:00 }
+      - { label: 장소, value: 청년부 예배실 }
+      - { label: 대상, value: 20~30대 청년 }
+      - { label: 문의, value: "{{phone}}" }
+
+  - id: students
+    label: 청소년부
+    title: 청소년부
+    subtitle: 중·고등학생 공동체
+    summary: 중·고등학생들이 말씀과 기도로 뿌리를 내리고 다음 세대 지도자로 세워지는 곳입니다.
+    tag: 매주 주일
+    description: >-
+      중학생·고등학생이 함께하는 청소년부입니다.
+      말씀과 찬양, 또래 친구들과의 교제를 통해 하나님을 알아가며 건강한 신앙을 키웁니다.
+    tags: ["주일 11AM", 캠프, 전도]
+    color: secondary
+    details:
+      - { label: 예배 시간, value: 주일 오전 11:00 }
+      - { label: 장소, value: 청소년부 예배실 }
+      - { label: 대상, value: 중·고등학생 }
+      - { label: 문의, value: 02-714-0042 }
+
+  - id: mission
+    label: 선교
+    title: 선교
+    subtitle: 국내·해외 선교
+    summary: 국내외 선교 현장을 지원하며 복음의 땅 끝까지 나아가는 청파중앙교회의 사명입니다.
+    tag: 해외선교
+    description: >-
+      청파중앙교회는 여러 선교사님과 함께 국내외 선교를 지원합니다.
+      단기 선교팀 파송, 선교 헌금, 기도 파트너십을 통해 복음을 전합니다.
+    tags: [해외선교, 단기팀, 기도]
+    color: accent
+    details:
+      - { label: 파송 선교사, value: 다수 }
+      - { label: 지역, value: 아시아·아프리카 }
+      - { label: 단기 선교, value: 연 1~2회 }
+      - { label: 문의, value: "{{phone}}" }
+
+  - id: groups
+    label: 소그룹
+    title: 소그룹 / 구역
+    subtitle: 함께 나누는 삶
+    summary: 지역별·연령별 소그룹(구역)에서 말씀을 나누고 서로의 삶을 돌봅니다.
+    tag: 주중 모임
+    showOnHome: false
+    description: >-
+      교회 내 지역별·연령별 소그룹(구역)에서 말씀을 나누고 서로의 삶을 돌봅니다.
+      매주 각 가정에서 모여 기도하고 교제합니다.
+    tags: [주중 모임, 가정 방문, 중보기도]
+    color: primary-light
+    details:
+      - { label: 모임 주기, value: 매주 }
+      - { label: 장소, value: 각 가정 }
+      - { label: 인원, value: 6~12명 }
+      - { label: 문의, value: "{{phone}}" }
+
+cta:
+  label: 함께해요
+  title: 공동체에 참여하기
+  text: 어느 공동체든 처음이라면 담당 사역자가 따뜻하게 안내해 드립니다.
+  primary: { label: 방문 예약하기, href: /visit#reservation }
+  secondary: { label: 문의하기, href: /contact }

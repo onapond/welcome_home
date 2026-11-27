@@ -1,0 +1,87 @@
+# 교회소개(/about) 문구 — 소개 머리글 · 비전 · 담임목사 소개 · 신앙고백 · 각 섹션 제목.
+#   - 연혁은 content/history.yaml, 교역자 명단은 content/staff.yaml, 담임목사 이름은 site.yaml(pastor)에서 읽는다.
+#   - 문구 안의 {{founded}} {{denomination}} {{phone}} 같은 표시는 site.yaml의 값으로 바뀐다.
+#   - meta는 검색 결과 · 공유 미리보기에 보이는 제목과 설명이다.
+#   - icon 값은 정해진 이름만(목록은 home.yaml 위쪽 설명 참고).
+#
+# TODO(이전): 옛 사이트 확인 전 — 비전 · 목사 소개 · 약력 · 신앙고백은 교회 입력 없이 쓴 임시 문구다.
+#   옛 사이트(chungpa21.org)의 교회소개 · 목사 인사말 · 신앙고백으로 교체한다.
+
+meta:
+  title: 교회소개
+  description: "{{founded}}년 서울 용산구에서 설립된 {{name}}를 소개합니다. 담임목사 소개, 교회 역사, 비전, 신앙고백을 확인하세요."
+  ogDescription: "{{founded}}년 설립의 {{name}}. {{vision}} {{denomination}} 교회입니다."
+
+hero:
+  badge: 교회소개
+  title: "{{name}}를 소개합니다"
+  lines:
+    - "{{founded}}년 서울 용산에서 시작된"
+    - "{{denomination}} 교회입니다."
+
+vision:
+  label: 비전 & 미션
+  title: "{{vision}}"
+  intro: >-
+    청파중앙교회는 말씀과 기도, 공동체와 선교를 통해 이 시대에 필요한 지도자를 세우고,
+    하나님 나라의 확장을 위해 함께 나아가는 공동체입니다.
+  items:
+    - icon: target
+      title: 사명
+      text: 다음 세대의 지도자를 말씀과 기도로 세워 세상을 변화시키는 일꾼을 길러내는 것이 청파중앙교회의 사명입니다.
+    - icon: users
+      title: 공동체
+      text: 함께 걸어가는 공동체로서 서로를 섬기고 사랑하며, 그리스도의 몸 된 교회를 이루어 가고자 합니다.
+    - icon: book-open
+      title: 말씀
+      text: 성경 말씀을 삶의 기준으로 삼고, 하나님의 뜻을 분별하며 순종하는 성도를 세워가는 교회입니다.
+    - icon: shield
+      title: 선교
+      text: 서울 용산에서 시작해 땅 끝까지, 복음의 능력으로 세상을 변화시키는 선교적 공동체를 꿈꿉니다.
+
+pastor:
+  label: 담임목사
+  roleLine: 담임목사 · 당회장
+  # photo: /images/pastor.jpg   # 사진 경로를 적으면 자리표시 대신 나온다
+  bioLabel: 목사 소개
+  bio: >-
+    {{pastor}}님은 하나님의 말씀으로 성도들을 세우고,
+    공동체가 함께 그리스도의 형상을 닮아가도록 이끄시는 담임목사님입니다.
+    “{{vision}}”라는 비전 아래 청파중앙교회를 섬기고 계십니다.
+  career:
+    - { label: 학력, value: 신학대학원 졸업 (M.Div.) }
+    - { label: 약력, value: 청파중앙교회 담임목사 }
+    - { label: 교단, value: "{{denomination}}" }
+    - { label: 연락처, value: "{{phone}}" }
+  quote:
+    text: 일어나 함께가자 — 우리는 혼자가 아닙니다. 하나님이 부르신 길 위에서 함께 걸어가는 공동체가 청파중앙교회입니다.
+    by: "{{pastor}}"
+
+history:
+  label: 교회 역사
+  title: "{{founded}}년부터 지금까지"
+  allLabel: 연혁 전체
+
+beliefs:
+  label: 신앙고백
+  title: 우리가 믿는 것
+  intro: >-
+    청파중앙교회는 대한예수교 장로회 신앙고백을 따르며
+    성경의 권위 위에 세워진 교회입니다.
+  items:
+    - title: 성경
+      text: 신구약 66권 성경은 하나님의 말씀으로서 신앙과 행위의 유일한 표준입니다.
+    - title: 삼위일체 하나님
+      text: 하나님은 성부·성자·성령 삼위일체이시며, 영원하시고 전능하신 창조주이십니다.
+    - title: 예수 그리스도
+      text: 예수 그리스도는 하나님의 독생자이시며, 동정녀에게서 나시고 죽으시고 부활하셔서 우리의 구원자가 되셨습니다.
+    - title: 성령
+      text: 성령은 신자 안에 내주하시며 성화의 사역을 이루시고 교회를 세우시는 하나님이십니다.
+    - title: 구원
+      text: 구원은 오직 믿음으로 말미암아 은혜로 받는 것이며, 행위로 얻을 수 없습니다 (엡 2:8-9).
+    - title: 교회와 성례
+      text: 교회는 그리스도의 몸이며, 세례와 성찬은 그리스도께서 제정하신 두 가지 성례입니다.
+
+staff:
+  label: 교역자
+  title: 교역자 소개
