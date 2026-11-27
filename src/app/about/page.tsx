@@ -62,7 +62,7 @@ export default function AboutPage() {
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-tight">
             {page.hero.title}
           </h1>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--color-white)" }}>
             {page.hero.lines.map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}

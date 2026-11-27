@@ -20,16 +20,24 @@ function VisitSteps({ steps }: { steps: NonNullable<VisitPage["steps"]> }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader label={steps.label} title={steps.title} align="center" className="mb-12 lg:mb-16" />
         <ol className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-6">
-          {/* 단계를 잇는 선 — 휴대폰은 세로, 넓은 화면은 가로 */}
+          {/* 넓은 화면: 첫 원과 마지막 원의 중심을 잇는 가로선 */}
           <span
             aria-hidden="true"
-            className="absolute left-6 top-6 bottom-6 w-px lg:left-[10%] lg:right-[10%] lg:top-6 lg:bottom-auto lg:w-auto lg:h-px"
+            className="hidden lg:block absolute left-[10%] right-[10%] top-6 h-px"
             style={{ backgroundColor: "rgba(43,58,140,0.15)" }}
           />
           {steps.items.map((step, i) => {
             const Icon = getIcon(step.icon);
             return (
               <li key={step.title} className="relative flex lg:flex-col items-start lg:items-center gap-5 lg:gap-4 lg:text-center">
+                {/* 휴대폰: 이 원 아래에서 다음 원까지만 잇는 세로선(gap-8 = 2rem) — 마지막 단계 뒤로 넘치지 않는다 */}
+                {i < steps.items.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="lg:hidden absolute left-6 top-12 -bottom-8 w-px"
+                    style={{ backgroundColor: "rgba(43,58,140,0.15)" }}
+                  />
+                )}
                 <span
                   className="relative flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full"
                   style={{ backgroundColor: "var(--color-primary)" }}
@@ -564,7 +572,7 @@ export default function VisitClient({
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-tight">
             {page.hero.title}
           </h1>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--color-white)" }}>
             {page.hero.lines.map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}
