@@ -24,9 +24,9 @@
 
 ## 순서 (m 단위)
 
-1. **m1 스키마** — Vimeo 영상 · 썸네일 필드(진행 중), `videos` 묶음 추가, 표본 콘텐츠 삭제 목록 확정.
-2. **m2 변환기** `scripts/migrate/convert.py` — `boards/*.json` → `content/` 파일. 사진은 보관소 키(`albums/<seq>/<nnn>.webp`)로만 적는다. 개인정보 거르기(IP 제거, 전화번호 가림, 연락처 비공개) 후 `npm run check:content` 통과.
-3. **m3 사진** — 옛 사이트에서 내려받아(약 1GB, 저장소 밖) `sharp`로 긴 변 1600px webp + 썸네일. 결과도 저장소 밖.
+1. **m1 스키마 (끝 · 11/27)** — `video:`(유튜브 · 비메오) · `thumb:` · `content/videos/`(`/news/videos`).
+2. **m2 변환기** `scripts/migrate/convert.py` — `boards/*.json` → `content/` 파일. 사진은 m3 목록(`../chungpa21-crawl/media/manifest.json`)의 키(`<묶음>/<board>-<seq>/<nnn>.webp`, 썸네일 `…-480.webp` → `thumb:`)로만 적는다. `sameFileAs`가 있는 실패 항목은 건너뛴다. Vimeo 영상은 `video:`를 비운다(⑱). 개인정보 거르기(IP 제거, 전화번호 가림, 연락처 비공개) 후 `npm run check:content` 통과.
+3. **m3 사진 (끝 · 11/27)** — 4,141장 받음(1,030MB), 1600px 271MB + 480px 86MB, EXIF · GPS 전부 제거 확인. 결과 `../chungpa21-crawl/media/out/`, 목록 `media/manifest.json`. 스크립트 `scripts/migrate/photos.py` · `resize.mjs`.
 4. **m4 R2 업로드** — 사용자 Cloudflare 계정 필요(버킷 생성 · 인증은 사용자). `NEXT_PUBLIC_MEDIA_BASE_URL`은 R2 커스텀 도메인이 생긴 뒤(P6 DNS 전환 때) 등록.
 5. **m5 옛 주소 연결** — `legacy`로 옛 게시판 주소 → 새 주소. 방식은 m2 뒤 건수를 보고 정한다(설정 리디렉션 한도 · 함수 호출 비용 확인).
 6. **m6 확인** — 브라우저로 게시판별 표본 확인, Codex 판정.
