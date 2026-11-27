@@ -34,6 +34,33 @@ export function notFolderProblem(folder: string): string | null {
     : null;
 }
 
+/**
+ * A file-system error (unreadable file, missing folder …) as a problem line
+ * with the path, or null when `e` is not one. EACCES/EPERM get a permission hint.
+ */
+export function fsProblem(e: unknown, file?: string): string | null {
+  const err = e as NodeJS.ErrnoException;
+  if (typeof err?.code !== "string") return null;
+  const where = typeof err.path === "string" ? err.path : file;
+  if (!where) return null;
+  const hint =
+    err.code === "EACCES" || err.code === "EPERM"
+      ? "읽기 권한을 확인해 주세요 (파일 권한을 바꾸거나 저장소에서 다시 받아 옵니다)"
+      : "파일 · 폴더가 제자리에 있는지 확인해 주세요";
+  return `${rel(where)} → 파일을 읽지 못했습니다 (${err.code}). ${hint}`;
+}
+
+/** fs.readFileSync(file, "utf8"), but a read error becomes a ContentError naming the file. */
+function readText(file: string): string {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch (e) {
+    const problem = fsProblem(e, file);
+    if (!problem) throw e;
+    throw new ContentError([problem]);
+  }
+}
+
 function formatIssues(file: string, error: z.ZodError): string[] {
   return error.issues.map((i) => {
     const where = i.path.length ? i.path.join(".") : "(파일 전체)";
@@ -112,9 +139,10 @@ export function loadYaml<S extends z.ZodType>(name: string, schema: S): z.output
     if (!fs.statSync(file).isFile()) {
       throw new ContentError([`${rel(file)} 가 파일이 아닙니다. 파일을 복구해 주세요`]);
     }
+    const source = readText(file);
     let data: unknown;
     try {
-      data = parseYaml(fs.readFileSync(file, "utf8"));
+      data = parseYaml(source);
     } catch (e) {
       throw new ContentError([`${rel(file)} → YAML 문법 오류: ${(e as Error).message}`]);
     }
@@ -184,9 +212,11 @@ export function loadCollection<S extends z.ZodType>(
         continue;
       }
 
+      // A read error (e.g. no permission) is reported for this file and the
+      // rest of the folder is still checked.
       let parsed: { data: unknown; body: string };
       try {
-        parsed = splitFrontMatter(fs.readFileSync(file, "utf8"), file);
+        parsed = splitFrontMatter(readText(file), file);
       } catch (e) {
         if (!(e instanceof ContentError)) throw e;
         problems.push(...e.problems);

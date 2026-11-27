@@ -16,8 +16,11 @@ export const MEDIA_BASE_URL = configured || "/media";
  * - "/images/logo.png"          — site path served from /public (not "//")
  * - "https://…"                 — absolute https URL
  * Protocol-relative "//host", "http://", and any other scheme are rejected.
- * No form may hold whitespace or control characters (a browser strips some of
- * them, so the URL it opens would differ from the text that was checked).
+ * No form may hold whitespace, separators, control or format (invisible)
+ * characters (Unicode Z, Cc, Cf — a browser strips some of them, so the URL it
+ * opens would differ from the text that was checked); the error names the
+ * character as U+XXXX. "{" and "}" are rejected too: {{token}} substitution
+ * never applies to media paths, so a path stays exactly the text checked here.
  * Store keys and site paths are file names only: "?", "#" and "%" are
  * rejected, so the path is percent-encoded exactly once by mediaUrl() and a
  * Markdown body (which arrives already encoded) can be decoded back to the key.
@@ -28,8 +31,13 @@ export function mediaPathProblem(src: string): string | null {
   const GENERIC =
     "사진·파일 경로는 보관소 경로(예: albums/2026-11-23/001.webp), / 로 시작하는 사이트 경로, https:// 주소 중 하나여야 합니다 (http:// · // 는 쓸 수 없습니다)";
   if (!src || src.includes("\\")) return GENERIC;
-  if (/[\s\u0000-\u001f\u007f]/.test(src)) {
-    return "경로에 공백 · 탭 · 줄바꿈 같은 빈칸 글자를 쓸 수 없습니다. 파일 이름의 공백은 하이픈(-)으로 바꿉니다 (예: news/주일-예배.webp)";
+  const blank = /[\s\p{Z}\p{Cc}\p{Cf}]/u.exec(src);
+  if (blank) {
+    const code = (blank[0].codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, "0");
+    return `경로에 공백 · 탭 · 줄바꿈이나 보이지 않는 글자(U+${code})를 쓸 수 없습니다. 파일 이름의 공백은 하이픈(-)으로 바꾸고, 앞뒤 빈칸은 지웁니다 (예: news/주일-예배.webp)`;
+  }
+  if (/[{}]/.test(src)) {
+    return "사진 · 파일 경로에는 자리표시({{ }})를 쓸 수 없습니다. { · } 없이 실제 파일 이름을 그대로 적어 주세요 (예: news/주일-예배.webp)";
   }
   if (src.startsWith("//")) return GENERIC;
   if (src.startsWith("https://")) {

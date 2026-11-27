@@ -134,8 +134,10 @@ export const youtubeId = z.preprocess(
 
 // Media key in the photo store (R2), e.g. "albums/2024-05-12-sports/001.webp",
 // a site path under /public, e.g. "/images/logo.png", or an https:// URL.
-export const mediaPath = text.superRefine((v, ctx) => {
-  const problem = mediaPathProblem(v);
+// Checked on the raw value (no trim), exactly like a body image destination:
+// leading/trailing spaces are an error, never silently removed.
+export const mediaPath = z.string().superRefine((v, ctx) => {
+  const problem = v.trim() === "" ? "비어 있을 수 없습니다" : mediaPathProblem(v);
   // continue: false — later checks (e.g. the .pdf check) only run on a valid path.
   if (problem) ctx.addIssue({ code: "custom", message: problem, continue: false });
 });

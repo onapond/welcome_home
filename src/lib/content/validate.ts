@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CONTENT_DIR, ContentError, notFolderProblem, rel } from "./load";
+import { CONTENT_DIR, ContentError, fsProblem, notFolderProblem, rel } from "./load";
 import {
   getAlbums,
   getBulletins,
@@ -68,13 +68,8 @@ export function validateAllContent(): void {
       // A file-system error (e.g. a file where a folder should be, an
       // unreadable file) is still a content problem: report it with the path
       // instead of a stack trace, and keep collecting the others.
-      const fsError = e as NodeJS.ErrnoException;
-      const found =
-        e instanceof ContentError
-          ? e.problems
-          : typeof fsError?.code === "string" && typeof fsError.path === "string"
-            ? [`${rel(fsError.path)} → 파일을 읽지 못했습니다 (${fsError.code}). 파일 · 폴더가 제자리에 있는지 확인해 주세요`]
-            : null;
+      const fsError = fsProblem(e);
+      const found = e instanceof ContentError ? e.problems : fsError ? [fsError] : null;
       if (!found) throw e;
       for (const p of found) if (!problems.includes(p)) problems.push(p);
     }
