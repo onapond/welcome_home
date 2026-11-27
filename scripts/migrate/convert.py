@@ -710,8 +710,9 @@ def front_title(title, where):
 # ------------------------------------------------------------------ boards
 
 
-# "220814 - ", "2016-01-03 ", "20-02-16 " at the start of sermon / praise titles (the date is in `date:`).
-DATE_PREFIX = re.compile(r"^(?:\d{6}|\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{2})(?:\s*[-–]\s*|\s+)")
+# "220814 - ", "230730_", "2016-01-03 ", "2018-12-2 ", "20-02-16 " at the start of sermon / praise
+# titles (the date is in `date:`).
+DATE_PREFIX = re.compile(r"^(?:\d{6}|\d{4}-\d{1,2}-\d{1,2}|\d{2}-\d{2}-\d{2})(?:\s*[-–_]\s*|\s+)")
 
 
 def strip_date_prefix(title):
@@ -719,22 +720,44 @@ def strip_date_prefix(title):
 
 
 def sermon_fields(item):
+    # The post title is what the old list and page showed; the body's
+    # `▶ 설교제목` is only a fallback (it can disagree — m6 review).
     bf = item.get("body_fields") or {}
-    title = clean_title(bf.get("설교제목") or item.get("title") or item.get("title_raw"))
+    title = clean_title(item.get("title") or item.get("title_raw") or bf.get("설교제목"))
     title = strip_date_prefix(title)
     preacher = clean_title(item.get("author") or bf.get("설교자") or "")
     scripture = clean_title(item.get("chapter") or bf.get("성경본문") or "")
     return title, preacher, scripture
 
 
-FIELD_LINE = re.compile(r"^▶\s*(설교일|설교자|설교제목|성경본문)\s*:")
+FIELD_LINE = re.compile(r"^▶\s*(설교일|설교자|설교제목|성경본문)\s*:\s*(.*)$")
 
 
-def strip_field_lines(md):
-    """Drop the old `▶ 설교자 : …` lines (their values are in the front matter)."""
+def field_date(v):
+    """`2023.12. 17` → `2023-12-17`, or None."""
+    m = re.match(r"^(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})\.?$", v.strip())
+    return "%s-%02d-%02d" % (m.group(1), int(m.group(2)), int(m.group(3))) if m else None
+
+
+def strip_field_lines(md, shown):
+    """Drop an old `▶ 설교자 : …` line only when the front matter shows the same
+    value (`shown`: label → value; 설교일 as an ISO date). A line that differs
+    (another title, the sermon day when it was posted later) stays in the body,
+    so nothing the old page showed is lost or silently replaced."""
+    def same(line):
+        m = FIELD_LINE.match(line.strip())
+        if not m:
+            return False
+        label, value = m.group(1), m.group(2).strip()
+        if label == "설교일":
+            return field_date(value) == shown.get(label)
+        if label == "설교제목":
+            value = strip_date_prefix(clean_title(value))
+        return bool(value) and value == shown.get(label)
+
     paras = []
     for p in md.split("\n\n"):
-        lines = [l for l in p.split("\\\n") if l.strip() and not FIELD_LINE.match(l.strip())]
+        lines = [l for l in p.split("\\\n") if l.strip() and not same(l)]
         if lines:
             paras.append("\\\n".join(lines))
     return "\n\n".join(paras)
@@ -774,7 +797,8 @@ def conv_sermons(W, crawl_dir, photos, public):
         if yts:
             front.append("video: https://youtu.be/%s" % yts[0])
         front += legacy_lines(board, it["seq"], legacy_url(it))
-        body = strip_field_lines(body_md(it, board, photos, where, title))
+        shown = {"설교제목": title, "설교일": date, "설교자": preacher, "성경본문": scripture}
+        body = strip_field_lines(body_md(it, board, photos, where, title), shown)
         extra = extra_video_links(yts)
         body = "\n\n".join(x for x in (body, extra) if x)
         record_names(board, where, title + "\n" + body, public)
