@@ -748,7 +748,8 @@ def strip_field_lines(md, shown):
         m = FIELD_LINE.match(line.strip())
         if not m:
             return False
-        label, value = m.group(1), m.group(2).strip()
+        # compare the text as shown: Markdown escapes ("\\>") are not part of the value
+        label, value = m.group(1), re.sub(r"\\(.)", r"\1", m.group(2)).strip()
         if label == "설교일":
             return field_date(value) == shown.get(label)
         if label == "설교제목":
