@@ -4,6 +4,7 @@ import VisitClient from "@/components/features/VisitClient";
 import LocationSection from "@/components/sections/LocationSection";
 import { getSite } from "@/lib/content";
 import { getVisitPage } from "@/lib/content/pages";
+import { JsonLd, faqJsonLd } from "@/lib/jsonld";
 
 export function generateMetadata(): Metadata {
   const { meta } = getVisitPage();
@@ -17,12 +18,17 @@ export function generateMetadata(): Metadata {
 
 export default function VisitPage() {
   const site = getSite();
+  const page = getVisitPage();
   return (
-    <VisitClient
-      page={getVisitPage()}
-      services={site.services}
-      phone={site.phone}
-      locationSlot={<LocationSection />}
-    />
+    <>
+      {/* VisitClient renders <main>; the FAQ data sits next to it (head-agnostic JSON-LD). */}
+      <JsonLd data={faqJsonLd(page.faq.items)} />
+      <VisitClient
+        page={page}
+        services={site.services}
+        phone={site.phone}
+        locationSlot={<LocationSection />}
+      />
+    </>
   );
 }

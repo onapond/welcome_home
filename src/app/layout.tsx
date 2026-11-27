@@ -12,6 +12,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { SiteProvider } from "@/components/layout/SiteProvider";
 import { getSite } from "@/lib/content";
+import { JsonLd, websiteJsonLd } from "@/lib/jsonld";
+import { rssAlternate } from "@/lib/metadata";
 import { SITE_URL } from "@/lib/site";
 import { buildSiteSummary } from "@/lib/site-summary";
 
@@ -22,6 +24,7 @@ const SERIF_PRELOAD = NOTO_SERIF_KR_PRELOAD;
 
 export function generateMetadata(): Metadata {
   const site = getSite();
+  const codes = site.verification;
   return {
     title: {
       default: site.name,
@@ -43,6 +46,16 @@ export function generateMetadata(): Metadata {
       description: site.description,
     },
     metadataBase: new URL(SITE_URL),
+    // RSS only; pages add the same link next to their canonical (pageMetadata).
+    alternates: rssAlternate(site),
+    ...(codes?.google || codes?.naver
+      ? {
+          verification: {
+            ...(codes.google ? { google: codes.google } : {}),
+            ...(codes.naver ? { other: { "naver-site-verification": codes.naver } } : {}),
+          },
+        }
+      : {}),
     // canonical은 페이지마다 달라야 하므로 여기에 두지 않는다.
     // 루트에 두면 모든 하위 페이지가 홈을 canonical로 선언해 색인에서 빠진다.
   };
@@ -66,6 +79,7 @@ export default function RootLayout({
           {/* 빌드한 해를 넘겨 서버 HTML과 첫 클라이언트 렌더의 연도를 맞춘다 */}
           <Footer buildYear={new Date().getFullYear()} />
         </SiteProvider>
+        <JsonLd data={websiteJsonLd(getSite())} />
       </body>
     </html>
   );

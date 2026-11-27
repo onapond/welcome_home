@@ -8,9 +8,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // (including ones no page shows yet, like events) gets validated.
   validateAllContent();
 
-  // No lastModified anywhere: the real edit date of a page is unknown (build
-  // time would mark untouched pages as changed, and a publish date is not an
-  // edit date), and a wrong value is worse than none.
+  // lastModified only on dated posts (sermons, news, videos, albums): their
+  // `date` is when the post appeared and they are rarely edited later. List
+  // pages and bulletins get none — build time would mark untouched pages as
+  // changed, and a wrong value is worse than none.
 
   const routes: Array<{
     path: string;
@@ -37,19 +38,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority,
   }));
 
-  const detail = (base: string, items: { id: string }[], priority: number) =>
+  const detail = (base: string, items: { id: string; date?: string }[], priority: number, dated = false) =>
     items.map((i) => ({
       url: `${SITE_URL}${base}/${i.id}`,
+      ...(dated && i.date ? { lastModified: `${i.date}T00:00:00+09:00` } : {}),
       changeFrequency: "yearly" as const,
       priority,
     }));
 
   return [
     ...list,
-    ...detail("/sermons", getSermons(), 0.5),
-    ...detail("/news", getNews(), 0.5),
+    ...detail("/sermons", getSermons(), 0.5, true),
+    ...detail("/news", getNews(), 0.5, true),
     ...detail("/news/bulletin", getBulletins(), 0.3),
-    ...detail("/news/gallery", getAlbums(), 0.3),
-    ...detail("/news/videos", getVideos(), 0.3),
+    ...detail("/news/gallery", getAlbums(), 0.3, true),
+    ...detail("/news/videos", getVideos(), 0.3, true),
   ];
 }

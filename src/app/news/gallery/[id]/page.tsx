@@ -6,6 +6,7 @@ import PhotoGrid from "@/components/features/gallery/PhotoGrid";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { albumCover, getAlbums, getSite } from "@/lib/content";
+import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { mediaUrl, thumbUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -43,6 +44,13 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "홈", path: "/" },
+          { name: "갤러리", path: "/news/gallery" },
+          { name: a.title, path: `/news/gallery/${a.id}` },
+        ])}
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news/gallery" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
