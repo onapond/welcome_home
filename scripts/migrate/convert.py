@@ -996,6 +996,20 @@ def conv_news(W, crawl_dir, photos, public):
 # ------------------------------------------------------------------ bulletins (PDF download)
 
 
+def existing_legacy_seq(W, coll, ident):
+    """`legacy.seq` of the content file a previous run wrote for `ident`, or None."""
+    fn = os.path.join(W.out, coll, ident + ".md")
+    if not os.path.isfile(fn):
+        return None
+    m = re.search(r'^legacy:\n(?:  .*\n)*?  seq: "?([^"\n]+)"?$', open(fn, encoding="utf-8").read(), re.M)
+    return m.group(1) if m else None
+
+
+def pdf_complete(data):
+    """Starts like a PDF and has the end-of-file marker near the end (a cut-off body lacks it)."""
+    return data.startswith(b"%PDF-") and b"%%EOF" in data[-2048:]
+
+
 def is_pdf_file(fn, want=None):
     """A regular file (not a symlink) that starts like a PDF and, when `want` is given, has that size."""
     if os.path.islink(fn) or not os.path.isfile(fn):
@@ -1038,10 +1052,11 @@ def download_pdfs(crawl_dir, items, delay, offline=False):
         if not u or u in result or u in missing:
             continue
         fn = os.path.join(d, hashlib.sha1(u.encode()).hexdigest()[:16] + ".pdf")
-        want = (bins.get(u) or {}).get("size")
         rec = state.get(u) or {}
-        if not want and rec.get("status") == "ok":
-            want = rec.get("bytes")
+        # The size this run last accepted wins over the crawl's HEAD size, so a
+        # source PDF that legitimately changed is not rejected on every rerun.
+        want = rec.get("bytes") if rec.get("status") == "ok" else None
+        want = want or (bins.get(u) or {}).get("size")
         if is_pdf_file(fn, want):
             result[u] = fn
             continue
@@ -1059,8 +1074,11 @@ def download_pdfs(crawl_dir, items, delay, offline=False):
             state[u] = {"status": "failed", "error": str(e)[:200], "at": crawl.now()}
             missing.append(u)
             continue
-        if st != 200 or not data.startswith(b"%PDF-"):
-            state[u] = {"status": "failed", "error": "HTTP %s, %d bytes, not a PDF" % (st, len(data)), "at": crawl.now()}
+        # Same bar as the cache: a short or cut-off body never replaces a good file.
+        sized = bool(want) and want == len(data)
+        if st != 200 or not data.startswith(b"%PDF-") or not (sized or pdf_complete(data)):
+            state[u] = {"status": "failed", "error": "HTTP %s, %d bytes (expected %s), not a complete PDF"
+                        % (st, len(data), want or "?"), "at": crawl.now()}
             missing.append(u)
             continue
         fd, tmp = tempfile.mkstemp(dir=d, prefix="." + os.path.basename(fn) + ".", suffix=".part")
@@ -1103,6 +1121,7 @@ def conv_bulletins(W, crawl_dir, args):
         front = ["date: %s" % it["date"]]
         if title:
             front.append("title: %s" % q(title))
+        seq = hashlib.sha1((it.get("file") or "").encode()).hexdigest()[:10]
         src = local.get(it.get("file") or "")
         if src and ident in PDF_HOLD:
             R.pdf_held.append((ident, PDF_HOLD[ident]))
@@ -1111,9 +1130,12 @@ def conv_bulletins(W, crawl_dir, args):
             W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = src
         else:
             # No PDF in this run (offline without a cache, or the fetch failed): an existing public
-            # copy is a previous run's good file — keep it (even with --replace) and keep linking it.
+            # copy is a previous run's good file — keep it (even with --replace) and keep linking it,
+            # but only when that run wrote this same old PDF under this id. Ids are date + order, so
+            # a newly added earlier bulletin shifts them and the file may belong to a neighbour.
             old = os.path.join(W.public, "bulletins", ident + ".pdf")
-            kept = ident not in PDF_HOLD and is_pdf_file(old)
+            kept = (ident not in PDF_HOLD and is_pdf_file(old)
+                    and existing_legacy_seq(W, "bulletins", ident) == seq)
             R.pdf_missing.append((ident, kept))
             if kept:
                 W.keep.add(old)
@@ -1122,7 +1144,6 @@ def conv_bulletins(W, crawl_dir, args):
                       "(not re-checked against the old site)" % (ident, ident), file=sys.stderr)
             else:
                 R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
-        seq = hashlib.sha1((it.get("file") or "").encode()).hexdigest()[:10]
         url = OLD_BASE + it["detail_url"] if (it.get("detail_url") or "").startswith("/") else it.get("detail_url", "")
         front += legacy_lines(board, q(seq) if seq[0].isdigit() else seq, url)
         W.md("bulletins", ident, front, "")
