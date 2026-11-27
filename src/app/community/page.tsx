@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Youtube, ChevronRight, MapPin } from "lucide-react";
@@ -10,11 +11,12 @@ import { mediaUrl } from "@/lib/media";
 
 export function generateMetadata(): Metadata {
   const { meta } = getCommunityPage();
-  return {
-    alternates: { canonical: "/community" },
-    title: `${meta.title} | ${getSite().name}`,
+  return pageMetadata({
+    title: meta.title,
     description: meta.description,
-  };
+    ogDescription: meta.ogDescription,
+    path: "/community",
+  });
 }
 
 /** content의 색 이름 → 브랜드 색 변수 */

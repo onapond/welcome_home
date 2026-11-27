@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pause, Play } from "lucide-react";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export interface HeroSlide {
@@ -32,7 +32,12 @@ export default function HeroSlider({
   slides,
 }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // 자동 전환은 세 경우에 멈춘다: 사용자가 멈춤 버튼을 눌렀을 때, 마우스가 올라와 있을 때,
+  // 키보드 포커스가 슬라이드 안에 있을 때(WCAG 2.2.2 일시정지).
+  const [userPaused, setUserPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const paused = userPaused || hovered || focused;
 
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
@@ -51,8 +56,12 @@ export default function HeroSlider({
       className="relative w-full overflow-hidden"
       style={{ height: "100svh", minHeight: "600px" }}
       aria-label="히어로 섹션"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+      }}
     >
       {/*
         슬라이드는 모두 렌더해두고 CSS opacity로 교차 전환한다.
@@ -162,14 +171,29 @@ export default function HeroSlider({
         </div>
       </div>
 
-      {/* Slide Indicators */}
+      {/* Slide Indicators + 자동 전환 멈춤/재생 */}
       {slides.length > 1 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setUserPaused((p) => !p)}
+            aria-label={userPaused ? "슬라이드 자동 전환 다시 시작" : "슬라이드 자동 전환 멈추기"}
+            className="mr-2 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200 hover:bg-white/25"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--color-white)" }}
+          >
+            {userPaused ? (
+              <Play className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+            ) : (
+              <Pause className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+            )}
+          </button>
           {slides.map((slide, i) => (
             <button
               key={`${slide.label}-${i}`}
+              type="button"
               onClick={() => setCurrent(i)}
               aria-label={`슬라이드 ${i + 1}로 이동`}
+              aria-current={i === current ? "true" : undefined}
               className="h-2 rounded-full transition-all duration-500"
               style={{
                 width: i === current ? "2.25rem" : "0.5rem",

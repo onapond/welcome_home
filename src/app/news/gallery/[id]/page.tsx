@@ -5,8 +5,9 @@ import { ChevronLeft } from "lucide-react";
 import PhotoGrid from "@/components/features/gallery/PhotoGrid";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
-import { getAlbums } from "@/lib/content";
+import { getAlbums, getSite } from "@/lib/content";
 import { mediaUrl, thumbUrl } from "@/lib/media";
+import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
 
@@ -18,11 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const a = getAlbums().find((x) => x.id === id);
   if (!a) return {};
-  return {
-    alternates: { canonical: `/news/gallery/${id}` },
+  return pageMetadata({
     title: a.title,
-    description: `${fmtDate(a.date)} ${a.category} 사진 ${a.photos.length}장 — 청파중앙교회 갤러리`,
-  };
+    description: `${fmtDate(a.date)} ${a.category} 사진 ${a.photos.length}장 — ${getSite().name} 갤러리`,
+    path: `/news/gallery/${id}`,
+    image: thumbUrl(a.cover ?? a.photos[0].src),
+    type: "article",
+  });
 }
 
 export default async function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,7 +43,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
         <Link href="/news/gallery" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
           <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           갤러리

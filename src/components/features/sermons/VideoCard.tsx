@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BookOpen, Calendar, Play, User } from "lucide-react";
@@ -51,15 +52,12 @@ export default function VideoCard({ item }: { item: VideoItem }) {
           }}
         >
           {item.thumb ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external YouTube thumbnail
-            <img
+            <Image
               src={item.thumb}
               alt=""
-              width={480}
-              height={360}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover"
+              fill
+              sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover"
             />
           ) : (
             <span

@@ -1,4 +1,4 @@
-import { MapPin, Phone, Printer } from "lucide-react";
+import { ExternalLink, MapPin, Phone, Printer } from "lucide-react";
 import { getSite } from "@/lib/content";
 import { getLocationInfo } from "@/lib/content/pages";
 import { getIcon } from "@/lib/icons";
@@ -7,6 +7,13 @@ import { fullAddress, kakaoMapUrl } from "@/lib/site-summary";
 export default function LocationSection() {
   const site = getSite();
   const location = getLocationInfo();
+  const directions = [
+    { label: location.mapButton, href: kakaoMapUrl(site.address) },
+    {
+      label: "네이버 지도에서 보기",
+      href: `https://map.naver.com/p/search/${encodeURIComponent(site.address.mapQuery)}`,
+    },
+  ];
 
   return (
     <section id="location" className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-primary)" }}>
@@ -28,13 +35,12 @@ export default function LocationSection() {
           </p>
         </div>
 
-        {/* Map Placeholder */}
+        {/* Directions — 지도 앱의 검색 결과로 바로 연결한다 */}
         <div
-          className="rounded-2xl overflow-hidden mb-8 flex flex-col items-center justify-center py-16 gap-4"
+          className="rounded-2xl mb-8 flex flex-col items-center justify-center px-6 py-12 gap-5 text-center"
           style={{
             backgroundColor: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.1)",
-            minHeight: "280px",
           }}
         >
           <div
@@ -45,32 +51,35 @@ export default function LocationSection() {
               className="w-6 h-6"
               style={{ color: "var(--color-secondary)" }}
               strokeWidth={1.75}
+              aria-hidden="true"
             />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-white mb-1">
-              카카오맵 연동 영역
-            </p>
-            <p
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.45)" }}
-            >
-              실제 구현 시 Kakao Maps JavaScript API로 교체됩니다
+          <div>
+            <p className="text-sm font-medium text-white mb-1">길찾기</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
+              지도 앱에서 교회 위치를 확인하고 길찾기를 이용하실 수 있습니다.
             </p>
           </div>
-          <a
-            href={kakaoMapUrl(site.address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 hover:brightness-110"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "white",
-            }}
-          >
-            {location.mapButton}
-          </a>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {directions.map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 hover:brightness-110"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "white",
+                }}
+              >
+                {label}
+                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="sr-only">(새 창)</span>
+              </a>
+            ))}
+          </div>
         </div>
 
         {/* Transport + Contact */}
@@ -100,7 +109,7 @@ export default function LocationSection() {
               <div>
                 <p
                   className="text-xs font-semibold tracking-widest uppercase mb-0.5"
-                  style={{ color: "var(--color-accent)" }}
+                  style={{ color: "var(--color-secondary-light)" }}
                 >
                   {label}
                 </p>
@@ -133,7 +142,7 @@ export default function LocationSection() {
             <div>
               <p
                 className="text-xs font-semibold tracking-widest uppercase mb-0.5"
-                style={{ color: "var(--color-accent)" }}
+                style={{ color: "var(--color-secondary-light)" }}
               >
                 전화
               </p>
@@ -165,7 +174,7 @@ export default function LocationSection() {
             <div>
               <p
                 className="text-xs font-semibold tracking-widest uppercase mb-0.5"
-                style={{ color: "var(--color-accent)" }}
+                style={{ color: "var(--color-secondary-light)" }}
               >
                 FAX
               </p>

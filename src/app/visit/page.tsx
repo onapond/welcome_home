@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import VisitClient from "@/components/features/VisitClient";
 import LocationSection from "@/components/sections/LocationSection";
 import { getSite } from "@/lib/content";
@@ -6,16 +7,12 @@ import { getVisitPage } from "@/lib/content/pages";
 
 export function generateMetadata(): Metadata {
   const { meta } = getVisitPage();
-  const site = getSite();
-  return {
-    alternates: { canonical: "/visit" },
+  return pageMetadata({
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: `${meta.title} | ${site.name}`,
-      description: meta.ogDescription ?? meta.description,
-    },
-  };
+    ogDescription: meta.ogDescription,
+    path: "/visit",
+  });
 }
 
 export default function VisitPage() {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export interface PhotoItem {
@@ -16,21 +17,40 @@ const iconBtn: React.CSSProperties = {
   color: "var(--color-white)",
 };
 
+/** Size hint for the full-size photo when the content file has no width/height. */
+const FALLBACK_WIDTH = 1600;
+const FALLBACK_HEIGHT = 1200;
+
 /**
  * Photo grid + lightbox. The lightbox uses a native modal <dialog>, which
- * provides the focus trap, Esc to close and focus restore; arrow keys are
- * handled here.
+ * provides the focus trap and Esc to close. Arrow keys are handled here, and
+ * on close focus goes back to the thumbnail that opened it.
  */
 export default function PhotoGrid({ photos, albumTitle }: { photos: PhotoItem[]; albumTitle: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const openedFrom = useRef<number | null>(null);
   const [index, setIndex] = useState<number | null>(null);
   const total = photos.length;
 
   const open = (i: number) => {
+    openedFrom.current = i;
     setIndex(i);
-    dialogRef.current?.showModal();
   };
   const close = () => dialogRef.current?.close();
+
+  // Show the modal after the photo has rendered so autoFocus lands inside it.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (index !== null && dialog && !dialog.open) dialog.showModal();
+  }, [index]);
+
+  const handleClose = () => {
+    setIndex(null);
+    const from = openedFrom.current;
+    openedFrom.current = null;
+    if (from !== null) thumbRefs.current[from]?.focus();
+  };
 
   const step = useCallback(
     (delta: number) => setIndex((i) => (i === null ? i : (i + delta + total) % total)),
@@ -42,7 +62,7 @@ export default function PhotoGrid({ photos, albumTitle }: { photos: PhotoItem[];
     if (index === null) return;
     [index - 1, index + 1].forEach((n) => {
       const p = photos[(n + total) % total];
-      if (p) new Image().src = p.full;
+      if (p) new window.Image().src = p.full;
     });
   }, [index, photos, total]);
 
@@ -54,21 +74,21 @@ export default function PhotoGrid({ photos, albumTitle }: { photos: PhotoItem[];
         {photos.map((p, i) => (
           <li key={`${p.full}-${i}`}>
             <button
+              ref={(el) => {
+                thumbRefs.current[i] = el;
+              }}
               type="button"
               onClick={() => open(i)}
               aria-label={`사진 ${i + 1} / ${total} 크게 보기${p.caption ? `: ${p.caption}` : ""}`}
-              className="block w-full overflow-hidden rounded-lg"
+              className="relative block w-full overflow-hidden rounded-lg"
               style={{ aspectRatio: "4/3", backgroundColor: "var(--color-bg-warm)" }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized thumbnails from R2 */}
-              <img
+              <Image
                 src={p.thumb}
                 alt={p.caption ?? `${albumTitle} 사진 ${i + 1}`}
-                width={p.width && p.height ? 400 : undefined}
-                height={p.width && p.height ? Math.round((400 * p.height) / p.width) : undefined}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                className="object-cover"
               />
             </button>
           </li>
@@ -78,7 +98,7 @@ export default function PhotoGrid({ photos, albumTitle }: { photos: PhotoItem[];
       <dialog
         ref={dialogRef}
         aria-label={`${albumTitle} 사진 보기`}
-        onClose={() => setIndex(null)}
+        onClose={handleClose}
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
@@ -98,14 +118,14 @@ export default function PhotoGrid({ photos, albumTitle }: { photos: PhotoItem[];
             <p className="sr-only" aria-live="polite">
               {index! + 1} / {total}
             </p>
-            {/* eslint-disable-next-line @next/next/no-img-element -- full-size photo from R2 */}
-            <img
+            <Image
+              key={current.full}
               src={current.full}
               alt={current.caption ?? `${albumTitle} 사진 ${index! + 1}`}
-              width={current.width}
-              height={current.height}
-              decoding="async"
-              className="max-w-full max-h-full object-contain"
+              width={current.width ?? FALLBACK_WIDTH}
+              height={current.height ?? FALLBACK_HEIGHT}
+              sizes="100vw"
+              className="w-auto h-auto max-w-full max-h-full object-contain"
             />
             {current.caption && (
               <p className="mt-3 text-sm text-center" style={{ color: "rgba(255,255,255,0.85)" }}>

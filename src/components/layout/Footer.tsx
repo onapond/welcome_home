@@ -1,14 +1,25 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Youtube, Instagram, Mail } from "lucide-react";
 import { useSite } from "./SiteProvider";
 import { FOOTER_LINK_GROUPS } from "@/lib/nav";
 
-export default function Footer() {
+const noSubscribe = () => () => {};
+
+/**
+ * 서버 HTML과 첫 클라이언트 렌더는 빌드한 해(buildYear)를 쓰고, 하이드레이션 뒤에
+ * 지금 연도로 바꾼다. 연말에 만든 HTML을 새해에 열어도 하이드레이션이 어긋나지 않는다.
+ */
+function useCurrentYear(buildYear: number): number {
+  return useSyncExternalStore(noSubscribe, () => new Date().getFullYear(), () => buildYear);
+}
+
+export default function Footer({ buildYear }: { buildYear: number }) {
   const site = useSite();
-  const currentYear = new Date().getFullYear();
+  const currentYear = useCurrentYear(buildYear);
 
   // 주소·SNS는 site.yaml에 값이 있는 것만 보인다.
   const snsLinks = [

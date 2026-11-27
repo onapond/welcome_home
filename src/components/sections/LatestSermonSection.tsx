@@ -7,6 +7,8 @@ export interface LatestSermon {
   date: string;
   scripture?: string;
   preacher?: string;
+  /** 유튜브 영상이 등록돼 있는지. 없으면 재생 아이콘 대신 「설교 보기」로 안내한다. */
+  hasVideo: boolean;
 }
 
 // "YYYY-MM-DD" -> "YYYY.MM.DD"
@@ -87,9 +89,15 @@ export default function LatestSermonSection({ sermons }: Props) {
                   className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 group-hover:scale-110"
                   style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                 >
-                  <Play className="w-4 h-4 text-white fill-white" />
+                  {latest.hasVideo ? (
+                    <Play className="w-4 h-4 text-white fill-white" aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-white" aria-hidden="true" />
+                  )}
                 </div>
-                <span className="text-sm font-medium text-white">설교 듣기</span>
+                <span className="text-sm font-medium text-white">
+                  {latest.hasVideo ? "설교 듣기" : "설교 보기"}
+                </span>
               </div>
             </div>
           </Link>
@@ -119,11 +127,20 @@ export default function LatestSermonSection({ sermons }: Props) {
                   className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full"
                   style={{ backgroundColor: "var(--color-bg-warm)" }}
                 >
-                  <Play
-                    className="w-4 h-4"
-                    style={{ color: "var(--color-primary)" }}
-                    fill="currentColor"
-                  />
+                  {sermon.hasVideo ? (
+                    <Play
+                      className="w-4 h-4"
+                      style={{ color: "var(--color-primary)" }}
+                      fill="currentColor"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <ChevronRight
+                      className="w-4 h-4"
+                      style={{ color: "var(--color-primary)" }}
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
               </Link>
             ))}

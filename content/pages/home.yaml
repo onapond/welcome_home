@@ -44,7 +44,7 @@ newHere:
     - { icon: parking, title: 주차, text: 교회 인근 공영주차장 이용 가능 (주일 2시간 지원) }
   cta: { label: 방문 예약하기, href: /visit#reservation }
   image: { label: 교회 사진 }
-  badge: { label: WELCOME, text: 누구나 환영합니다 }
+  badge: { label: 새가족, text: 누구나 환영합니다 }
   # 사진 아래에 인용하는 표어의 연도. 문구는 site.yaml의 표어에서 가져온다.
   quote: { year: 2024, caption: 청파중앙교회 표어 }
 

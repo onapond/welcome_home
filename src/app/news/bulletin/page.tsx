@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import BulletinClient from "@/components/features/bulletin/BulletinClient";
 import { NEWS_TABS, PageHero, fmtDate } from "@/components/features/news/shared";
 import { getBulletins } from "@/lib/content";
+import { getListPage } from "@/lib/content/lists";
+import { pageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/news/bulletin" },
-  title: "주보",
-  description: "청파중앙교회 주보 아카이브입니다. 매주 주보를 PDF로 보실 수 있습니다.",
-};
+export function generateMetadata(): Metadata {
+  const page = getListPage("bulletin");
+  return pageMetadata({ title: page.title, description: page.description, path: "/news/bulletin" });
+}
 
 export default function BulletinPage() {
+  const page = getListPage("bulletin");
   const items = getBulletins().map((b) => ({
     id: b.id,
     date: b.date,
@@ -19,7 +21,7 @@ export default function BulletinPage() {
 
   return (
     <main>
-      <PageHero label="소식" title="주보" description="매주 주보를 PDF로 내려받거나 바로 볼 수 있습니다." tabs={NEWS_TABS} current="/news/bulletin" />
+      <PageHero label={page.label} title={page.heading} description={page.intro} tabs={NEWS_TABS} current="/news/bulletin" />
       <section className="py-12 lg:py-16" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <BulletinClient items={items} />

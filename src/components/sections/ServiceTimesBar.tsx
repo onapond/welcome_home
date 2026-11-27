@@ -42,7 +42,7 @@ export default function ServiceTimesBar() {
                 <div>
                   <p
                     className="text-xs font-semibold tracking-widest uppercase mb-0.5"
-                    style={{ color: "var(--color-accent)" }}
+                    style={{ color: "var(--color-secondary-light)" }}
                   >
                     {service.short ?? service.name}
                   </p>
