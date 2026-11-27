@@ -66,7 +66,8 @@ function readText(file: string): string {
   }
   const nul = text.indexOf("\u0000");
   if (nul !== -1) {
-    const line = text.slice(0, nul).split("\n").length;
+    // Count CRLF, CR and LF line breaks, as the Markdown parser does.
+    const line = text.slice(0, nul).split(/\r\n|\r|\n/).length;
     throw new ContentError([
       `${rel(file)} → ${line}번째 줄: 보이지 않는 글자(U+0000)가 있습니다. 그 줄을 다시 입력해 주세요`,
     ]);

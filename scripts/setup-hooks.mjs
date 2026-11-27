@@ -1,10 +1,12 @@
 // npm "prepare" (runs on npm ci / npm install): turn on the pre-commit content
 // check (.githooks/pre-commit) by pointing core.hooksPath at .githooks — but
-// only when core.hooksPath is not set yet AND the hooks folder git uses now
-// (normally .git/hooks) is missing or holds nothing but *.sample files. Any
-// other file there, or a folder that cannot be read, counts as an existing
-// hooks setup and is left alone; a one-line notice says how to chain the
-// content check into it. Always exits 0 so installing never fails.
+// only on a clean setup: core.hooksPath not set yet AND the hooks folder git
+// uses now (normally .git/hooks) is missing or holds nothing but *.sample
+// files. Any other existing hooks setup (or a folder that cannot be read) is
+// left untouched, with a one-line notice that the check is off and the single
+// command that turns it on for this repository. No chaining instructions:
+// wiring the check into someone else's hooks is the developer's call.
+// Always exits 0 so installing never fails.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -13,10 +15,9 @@ function git(args) {
   return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 }
 
-/** The one supported way to chain the check: call .githooks/pre-commit and fail with it. */
-function chainNotice(reason, hooksDir) {
+function notOnNotice(reason) {
   console.log(
-    `[훅] ${reason} core.hooksPath 를 바꾸지 않았습니다. 커밋 전 콘텐츠 검사를 쓰려면 ${hooksDir}/pre-commit 에 다음 줄을 넣어 주세요(파일이 없으면 만들고 실행 권한을 줍니다): "$(git rev-parse --show-toplevel)/.githooks/pre-commit" || exit 1`,
+    `[훅] ${reason} 설정을 바꾸지 않았습니다 — 커밋 전 콘텐츠 검사가 꺼져 있습니다. 이 저장소에서 켜려면(기존 훅 대신 이 저장소의 .githooks 를 씀): git config core.hooksPath .githooks`,
   );
 }
 
@@ -36,7 +37,7 @@ try {
 
 if (current) {
   if (path.resolve(top, current) !== path.resolve(top, ".githooks")) {
-    chainNotice(`core.hooksPath 가 이미 '${current}' 입니다.`, current);
+    notOnNotice(`core.hooksPath 가 이미 '${current}' 입니다.`);
   }
   process.exit(0);
 }
@@ -48,15 +49,15 @@ try {
   names = fs.readdirSync(hooksDir);
 } catch (e) {
   if (e?.code !== "ENOENT") {
-    chainNotice(`훅 폴더(${hooksDir})를 읽지 못했습니다(${e?.code ?? "오류"}). 권한을 확인해 주세요.`, hooksDir);
+    notOnNotice(`훅 폴더(${hooksDir})를 읽지 못했습니다(${e?.code ?? "오류"}).`);
     process.exit(0);
   }
   names = []; // no hooks folder at all: nothing to preserve
 }
 
-const existing = names.filter((name) => !name.endsWith(".sample") && name !== ".DS_Store");
+const existing = names.filter((name) => !name.endsWith(".sample"));
 if (existing.length) {
-  chainNotice(`기존 훅 폴더에 파일(${existing.join(", ")})이 있어`, hooksDir);
+  notOnNotice(`훅 폴더(${hooksDir})에 기존 파일(${existing.join(", ")})이 있어`);
   process.exit(0);
 }
 
