@@ -1,3 +1,46 @@
+# convert.py — old boards → content/ (migration m2)
+
+Stdlib Python, run with `-I`. Reads `<crawl>/boards/*.json`, `<crawl>/media/manifest.json`,
+`<crawl>/binaries.json`; writes `<out>` (a content folder) and bulletin PDFs under `<public>/bulletins/`.
+
+```bash
+# review copy (any empty folder)
+python3 -I scripts/migrate/convert.py --crawl ../chungpa21-crawl --out /tmp/conv/content
+# into the repo, replacing the sample files
+python3 -I scripts/migrate/convert.py --crawl ../chungpa21-crawl --out content --replace
+npm run check:content
+```
+
+Options: `--public DIR` (default `<out>/../public`), `--report FILE` (default `<crawl>/convert-report.md`,
+outside the repo), `--replace` (delete `.md` files other than `_…` templates and bulletin PDFs that this
+run does not write — the samples), `--no-download`, `--delay 0.5`.
+
+- Mapping = `docs/migration-plan.md`. `s_board_2` / `s_board_4` are never read.
+  sermons ← media_1 (주일예배) + media_2 (금요기도회): scripture = `chapter`, preacher = `author`,
+  falling back to the `▶ 설교자 / 성경본문 / 설교제목` lines (those lines are dropped from the body).
+  praise ← media_3 (no body). videos ← s_board_3. albums ← s_board_1 (category from title words,
+  else 기타; photos = manifest `key` + `thumbKey` + width/height). events ← s_board_5 (start/end from
+  the `YY-MM-DD[~MM-DD]` title prefix, or `M월 D일` + post year; prefix removed from the title).
+  news ← s_board_6 (`category: 소식`, date from the `YY-MM-DD` title prefix when present).
+  bulletins ← weekly (`pdf: /bulletins/<id>.pdf`, file in `public/bulletins/`). history.yaml, staff.yaml.
+- Video: only YouTube goes into `video:` (first one; more become `[영상 N](https://youtu.be/…)` links).
+  Vimeo links are dropped (docs/검토규칙.md ⑱). A videos post without YouTube gets its first photo as `thumbnail`.
+- Photos: only manifest entries with `status: ok`. `sameFileAs` is NOT used (picked by file-name tail,
+  may be a different photo); failed photos are left out and listed under 「사진 없음」 in the report.
+- Ids: `YYYY-MM-DD`, same day → `-2`, `-3` … in (date, board, seq) order. Same input → identical files
+  (files whose content is unchanged are not rewritten).
+- Every collection item has `legacy: {board, seq, url}`; weekly has no post number, so `seq` is the
+  first 10 hex of SHA-1(PDF URL). history / staff schemas have no `legacy` field.
+- Body HTML → Markdown: paragraphs, `<br>` (as `\` line ends), links (old-site relative links made
+  absolute), bold, images (`![title](manifest key)`), table rows as `칸 · 칸` lines; scripts, styles,
+  iframes and other tags removed; entities decoded; Markdown characters and `{{ }}` escaped.
+- Privacy: author IP / id never written; phone-like numbers masked `010-****-****` (not the church's
+  02-714-0041~3 / 02-711-8166); e-mails masked except church@chungpa21.org; staff phones/e-mails omitted.
+  Lists of personal names are NOT changed — the report counts them per board with masked samples so the
+  user can decide.
+- PDFs: downloaded once into `<crawl>/weekly-pdf/` (`state.json`, resumable, one connection,
+  `crawl.Fetcher`, `%PDF-` check, size compared with `binaries.json`), then copied.
+
 # chungpa21.org inventory crawler
 
 Re-runnable, stdlib-only (Python 3) crawler that inventories the old WebChurch site
