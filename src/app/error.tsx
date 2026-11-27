@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { RefreshCw, Phone } from "lucide-react";
+import { useSite } from "@/components/layout/SiteProvider";
 
 /**
  * 렌더링 중 예외가 발생했을 때의 폴백 화면.
@@ -17,6 +18,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const site = useSite();
+
   useEffect(() => {
     // digest는 서버 로그와 대조하기 위한 식별자다
     console.error("[error boundary]", error.digest ?? error.message);
@@ -48,7 +51,7 @@ export default function Error({
           </button>
 
           <a
-            href="tel:0271400041"
+            href={site.phoneHref}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all hover:brightness-105"
             style={{
               backgroundColor: "var(--color-white)",
@@ -57,7 +60,7 @@ export default function Error({
             }}
           >
             <Phone className="w-4 h-4" strokeWidth={1.75} />
-            02-714-0041
+            {site.phone}
           </a>
         </div>
 

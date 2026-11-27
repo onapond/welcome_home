@@ -3,48 +3,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Youtube, Instagram, Mail } from "lucide-react";
-
-const FOOTER_LINKS = {
-  예배: [
-    { label: "새가족 안내", href: "/visit" },
-    { label: "방문 예약", href: "/visit#reservation" },
-    { label: "오시는 길", href: "/visit#location" },
-    { label: "예배 시간", href: "/visit/service-times" },
-  ],
-  공동체: [
-    { label: "청년부 United", href: "/community#youth" },
-    { label: "청소년부", href: "/community#students" },
-    { label: "선교", href: "/community#mission" },
-    { label: "소그룹 / 구역", href: "/community#groups" },
-  ],
-  미디어: [
-    { label: "설교 아카이브", href: "/sermons" },
-    { label: "소식 & 공지", href: "/news" },
-    { label: "문의하기", href: "/contact" },
-    { label: "교회소개", href: "/about" },
-  ],
-} as const;
-
-const SNS_LINKS = [
-  {
-    label: "유튜브 채널",
-    href: "https://www.youtube.com/channel/UC7Fk-mpsIQlgykLK4lW3t7g",
-    Icon: Youtube,
-  },
-  {
-    label: "청년부 인스타그램",
-    href: "https://www.instagram.com/chungpa_united",
-    Icon: Instagram,
-  },
-  {
-    label: "이메일 문의",
-    href: "mailto:church@chungpa21.org",
-    Icon: Mail,
-  },
-] as const;
+import { useSite } from "./SiteProvider";
+import { FOOTER_LINK_GROUPS } from "@/lib/nav";
 
 export default function Footer() {
+  const site = useSite();
   const currentYear = new Date().getFullYear();
+
+  // 주소·SNS는 site.yaml에 값이 있는 것만 보인다.
+  const snsLinks = [
+    site.youtube && { label: "유튜브 채널", href: site.youtube, Icon: Youtube },
+    site.instagram && { label: "인스타그램", href: site.instagram, Icon: Instagram },
+    site.email && { label: "이메일 문의", href: `mailto:${site.email}`, Icon: Mail },
+  ].filter((l): l is { label: string; href: string; Icon: typeof Mail } => Boolean(l));
 
   return (
     <footer style={{ backgroundColor: "var(--color-dark)" }}>
@@ -54,10 +25,10 @@ export default function Footer() {
 
           {/* Column 1 — Church Info */}
           <div className="md:col-span-2 lg:col-span-1">
-            <Link href="/" aria-label="청파중앙교회 홈으로">
+            <Link href="/" aria-label={`${site.name} 홈으로`}>
               <Image
                 src="/images/logo-mark.png"
-                alt="청파중앙교회"
+                alt={site.name}
                 width={262}
                 height={98}
                 className="h-9 w-auto mb-5"
@@ -69,23 +40,23 @@ export default function Footer() {
               className="text-sm leading-relaxed mb-5"
               style={{ color: "rgba(255,255,255,0.55)" }}
             >
-              21세기 지도자를 길러내는 교회.
+              {site.vision}.
               <br />
-              일어나 함께가자.
+              {site.latestMotto}.
             </p>
 
             <address
               className="not-italic text-sm space-y-1"
               style={{ color: "rgba(255,255,255,0.4)" }}
             >
-              <p>서울특별시 용산구 청파로73길 58</p>
-              <p>Tel. 02-714-0041~3</p>
-              <p>Fax. 02-711-8166</p>
+              <p>{site.address}</p>
+              <p>Tel. {site.phone}</p>
+              {site.fax && <p>Fax. {site.fax}</p>}
             </address>
 
             {/* SNS Icons */}
             <div className="flex items-center gap-3 mt-6">
-              {SNS_LINKS.map(({ label, href, Icon }) => (
+              {snsLinks.map(({ label, href, Icon }) => (
                 <a
                   key={href}
                   href={href}
@@ -108,8 +79,8 @@ export default function Footer() {
           </div>
 
           {/* Columns 2–4 — Link Groups */}
-          {(Object.entries(FOOTER_LINKS) as [string, readonly { label: string; href: string }[]][]).map(
-            ([category, links]) => (
+          {FOOTER_LINK_GROUPS.map(
+            ({ title: category, links }) => (
               <div key={category}>
                 <h3
                   className="text-xs font-semibold uppercase tracking-widest mb-4"
@@ -153,13 +124,13 @@ export default function Footer() {
             className="text-xs"
             style={{ color: "rgba(255,255,255,0.3)" }}
           >
-            &copy; {currentYear} 청파중앙교회 (Chungpa JoongAng Church). All rights reserved.
+            &copy; {currentYear} {site.name} ({site.nameEn}). All rights reserved.
           </p>
           <p
             className="text-xs"
             style={{ color: "rgba(255,255,255,0.2)" }}
           >
-            대한예수교 장로회
+            {site.denomination}
           </p>
         </div>
       </div>

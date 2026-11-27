@@ -3,50 +3,51 @@
 import { useState } from "react";
 import { Phone, MapPin, Clock, Mail, CheckCircle, Send } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
+import type { ContactPage } from "@/lib/content/pages";
 
-const INQUIRY_TYPES = [
-  "예배 및 행사 문의",
-  "새가족 등록",
-  "공동체 참여",
-  "시설 대관",
-  "기타 문의",
-] as const;
+interface ContactClientProps {
+  page: ContactPage;
+  phone: string;
+  phoneHref: string;
+  fax?: string;
+  email?: string;
+  /** "도로명 (상세)" 한 줄 주소 */
+  address: string;
+  /** 지도 안내 박스에 쓰는 도로명 주소 */
+  addressRoad: string;
+  mapUrl: string;
+  /** 지도 박스에 덧붙이는 지하철 안내 (location.yaml) */
+  subway?: string;
+}
 
-const CONTACT_INFO = [
-  {
-    Icon: Phone,
-    label: "전화",
-    value: "02-714-0041~3",
-    href: "tel:0271400041",
-  },
-  {
-    Icon: Mail,
-    label: "팩스",
-    value: "02-711-8166",
-    href: undefined,
-  },
-  {
-    Icon: MapPin,
-    label: "주소",
-    value: "서울특별시 용산구 청파로73길 58 (서계동)",
-    href: "https://map.kakao.com/?q=청파중앙교회",
-  },
-  {
-    Icon: Clock,
-    label: "교회 사무실",
-    value: "월~금 09:00 – 18:00",
-    href: undefined,
-  },
-] as const;
+export default function ContactClient({
+  page,
+  phone,
+  phoneHref,
+  fax,
+  email,
+  address,
+  addressRoad,
+  mapUrl,
+  subway,
+}: ContactClientProps) {
+  const inquiryTypes = page.form.inquiryTypes;
+  const EMPTY_CONTACT_FORM = {
+    name: "",
+    phone: "",
+    type: inquiryTypes[0] ?? "",
+    message: "",
+  };
 
-const EMPTY_CONTACT_FORM = {
-  name: "",
-  phone: "",
-  type: INQUIRY_TYPES[0] as string,
-  message: "",
-};
+  // 화면에 보일 연락처 목록 — 값이 없는 항목(팩스·이메일)은 건너뛴다.
+  const contactInfo: { Icon: typeof Phone; label: string; value: string; href?: string }[] = [
+    { Icon: Phone, label: "전화", value: phone, href: phoneHref },
+    ...(fax ? [{ Icon: Mail, label: "팩스", value: fax }] : []),
+    ...(email ? [{ Icon: Mail, label: "이메일", value: email, href: `mailto:${email}` }] : []),
+    { Icon: MapPin, label: "주소", value: address, href: mapUrl },
+    { Icon: Clock, label: page.info.officeHoursLabel, value: page.info.officeHours },
+  ];
 
-export default function ContactClient() {
   const [form, setForm] = useState(EMPTY_CONTACT_FORM);
   const [consent, setConsent] = useState(false);
   // 허니팟 — 사람에게 보이지 않으므로 값이 차면 봇이다
@@ -81,7 +82,7 @@ export default function ContactClient() {
         setError(
           fieldMessage ??
             data.message ??
-            "문의를 접수하지 못했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다."
+            `문의를 접수하지 못했습니다. ${phone}로 전화 주시면 도와드리겠습니다.`
         );
         return;
       }
@@ -117,13 +118,18 @@ export default function ContactClient() {
               border: "1px solid rgba(212,168,67,0.35)",
             }}
           >
-            문의
+            {page.hero.badge}
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white">
-            언제든지 연락하세요
+            {page.hero.title}
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
-            궁금한 점이 있으시면 편하게 문의해 주세요.
+            {page.hero.lines.map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
           </p>
         </div>
       </section>
@@ -136,14 +142,14 @@ export default function ContactClient() {
             {/* Left — Info */}
             <div>
               <SectionHeader
-                label="연락처"
-                title="교회 정보"
+                label={page.info.label}
+                title={page.info.title}
                 align="left"
                 className="mb-8"
               />
 
               <dl className="flex flex-col gap-5 mb-10">
-                {CONTACT_INFO.map(({ Icon, label, value, href }) => (
+                {contactInfo.map(({ Icon, label, value, href }) => (
                   <div key={label} className="flex items-start gap-4">
                     <div
                       className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl"
@@ -189,12 +195,16 @@ export default function ContactClient() {
                 <div className="flex flex-col items-center gap-2 text-center px-4">
                   <MapPin className="w-8 h-8" style={{ color: "var(--color-primary)", opacity: 0.4 }} />
                   <p className="text-xs" style={{ color: "var(--color-dark-soft)" }}>
-                    서울특별시 용산구 청파로73길 58
-                    <br />
-                    지하철 남영역 3번 출구 도보 8분
+                    {addressRoad}
+                    {subway && (
+                      <>
+                        <br />
+                        {subway}
+                      </>
+                    )}
                   </p>
                   <a
-                    href="https://map.kakao.com/?q=청파중앙교회"
+                    href={mapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-1 px-4 py-1.5 rounded-full text-xs font-semibold transition-all hover:brightness-110"
@@ -209,8 +219,8 @@ export default function ContactClient() {
             {/* Right — Form */}
             <div>
               <SectionHeader
-                label="문의 양식"
-                title="메시지 보내기"
+                label={page.form.label}
+                title={page.form.title}
                 align="left"
                 className="mb-8"
               />
@@ -227,10 +237,10 @@ export default function ContactClient() {
                   <CheckCircle className="w-12 h-12" style={{ color: "var(--color-primary)" }} strokeWidth={1.5} />
                   <div>
                     <p className="font-serif text-lg font-bold mb-2" style={{ color: "var(--color-dark)" }}>
-                      문의가 접수되었습니다
+                      {page.form.successTitle}
                     </p>
                     <p className="text-sm" style={{ color: "var(--color-dark-soft)" }}>
-                      빠른 시일 내에 연락드리겠습니다.
+                      {page.form.successText}
                     </p>
                   </div>
                   <button
@@ -318,7 +328,7 @@ export default function ContactClient() {
                         color: "var(--color-dark)",
                       }}
                     >
-                      {INQUIRY_TYPES.map((t) => (
+                      {inquiryTypes.map((t) => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>

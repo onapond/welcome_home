@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Sun, Moon, Heart, Sunrise, Users, Clock, MapPin } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ChevronDown, Users, Clock, MapPin } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
-import LocationSection from "@/components/sections/LocationSection";
+import { getIcon } from "@/lib/icons";
+import type { Service } from "@/lib/content/schema";
+import type { VisitPage } from "@/lib/content/pages";
 
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 
@@ -13,79 +14,6 @@ interface FaqItem {
   answer: string;
 }
 
-const FAQS: FaqItem[] = [
-  {
-    question: "복장은 어떻게 입고 오면 되나요?",
-    answer:
-      "특별한 복장 규정은 없습니다. 편안한 일상복으로 오셔도 전혀 문제없습니다. 중요한 것은 마음으로 드리는 예배입니다.",
-  },
-  {
-    question: "주차는 가능한가요?",
-    answer:
-      "교회 전용 주차장은 없으나, 인근 공영주차장을 이용하실 수 있습니다. 주일예배 시 2시간 주차비를 교회에서 지원해드립니다. 대중교통 이용을 권장합니다 (1호선 남영역 3번 출구 도보 8분).",
-  },
-  {
-    question: "예배는 몇 시에 시작하나요?",
-    answer:
-      "주일예배는 오전 11시에 시작합니다. 10~15분 전에 도착하시면 자리 안내를 받으실 수 있습니다. 수요예배는 오후 7:30, 금요기도회는 오후 9:00, 새벽기도는 오전 5:30입니다.",
-  },
-  {
-    question: "아이와 함께 와도 되나요?",
-    answer:
-      "물론입니다! 영아부터 청소년까지 연령별로 분리된 예배와 교육 프로그램이 준비되어 있습니다. 본당 입구에서 안내 받으시면 각 연령부로 안내해 드립니다.",
-  },
-  {
-    question: "헌금은 꼭 해야 하나요?",
-    answer:
-      "처음 오시는 분께는 헌금에 대한 부담이 전혀 없습니다. 헌금은 믿음으로 자발적으로 드리는 것입니다. 편하게 예배에만 집중하세요.",
-  },
-  {
-    question: "예배 후 식사나 교제가 있나요?",
-    answer:
-      "주일예배 후 교회 식당에서 점심 식사를 함께 합니다. 처음 오시는 분들도 함께 식사하시며 교우들과 자연스럽게 교제하실 수 있습니다. 별도 비용은 없습니다.",
-  },
-];
-
-// ─── Service Cards ────────────────────────────────────────────────────────────
-
-interface ServiceCard {
-  label: string;
-  time: string;
-  day: string;
-  description: string;
-  Icon: LucideIcon;
-}
-
-const SERVICES: ServiceCard[] = [
-  {
-    label: "주일예배",
-    time: "오전 11:00",
-    day: "매주 일요일",
-    description: "전 교인이 함께 드리는 주일 본 예배입니다. 찬양과 말씀, 성찬으로 한 주를 시작합니다.",
-    Icon: Sun,
-  },
-  {
-    label: "수요예배",
-    time: "오후 7:30",
-    day: "매주 수요일",
-    description: "한 주의 중간, 하나님 앞에 모여 말씀을 듣고 기도로 새 힘을 얻는 예배입니다.",
-    Icon: Moon,
-  },
-  {
-    label: "금요기도회",
-    time: "오후 9:00",
-    day: "매주 금요일",
-    description: "교회와 이웃을 위해 뜨겁게 기도하는 시간입니다. 중보기도와 찬양이 함께합니다.",
-    Icon: Heart,
-  },
-  {
-    label: "새벽기도",
-    time: "오전 5:30",
-    day: "월요일~토요일",
-    description: "하루를 하나님께 드리며 시작하는 새벽 기도회입니다. 짧은 말씀과 기도로 진행됩니다.",
-    Icon: Sunrise,
-  },
-];
 
 // ─── Accordion Item ───────────────────────────────────────────────────────────
 
@@ -146,17 +74,24 @@ function AccordionItem({
 
 // ─── Visit Form ───────────────────────────────────────────────────────────────
 
-const SERVICE_OPTIONS = ["주일예배 (11:00)", "수요예배 (19:30)", "금요기도회 (21:00)", "새벽기도 (05:30)"];
-
-const EMPTY_VISIT_FORM = {
-  name: "",
-  phone: "",
-  service: SERVICE_OPTIONS[0],
-  count: "1",
-  memo: "",
-};
-
-function VisitForm() {
+// 예배 선택지는 site.yaml의 예배 목록에서 온다. 서버(api/visit)도 같은 이름 목록으로 검증한다.
+function VisitForm({
+  services,
+  phone,
+  copy,
+}: {
+  services: Service[];
+  phone: string;
+  copy: VisitPage["reservation"];
+}) {
+  const serviceOptions = services.map((s) => ({ value: s.name, label: `${s.name} (${s.time})` }));
+  const EMPTY_VISIT_FORM = {
+    name: "",
+    phone: "",
+    service: serviceOptions[0]?.value ?? "",
+    count: "1",
+    memo: "",
+  };
   const [form, setForm] = useState(EMPTY_VISIT_FORM);
   const [consent, setConsent] = useState(false);
   // 허니팟 — 사람에게 보이지 않으므로 값이 차면 봇이다
@@ -190,7 +125,7 @@ function VisitForm() {
         setError(
           fieldMessage ??
             data.message ??
-            "신청을 접수하지 못했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다."
+            `신청을 접수하지 못했습니다. ${phone}로 전화 주시면 도와드리겠습니다.`
         );
         return;
       }
@@ -224,7 +159,7 @@ function VisitForm() {
             color: "var(--color-primary)",
           }}
         >
-          방문 신청이 접수되었습니다. 담당 사역자가 연락드리겠습니다.
+          {copy.successMessage}
         </div>
       )}
 
@@ -286,15 +221,15 @@ function VisitForm() {
           <span className="sr-only">(필수)</span>
         </legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {SERVICE_OPTIONS.map((option) => (
+          {serviceOptions.map((option) => (
             <label
-              key={option}
+              key={option.value}
               className="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-all duration-200"
               style={{
                 backgroundColor:
-                  form.service === option ? "color-mix(in srgb, var(--color-primary) 8%, white)" : "var(--color-bg)",
+                  form.service === option.value ? "color-mix(in srgb, var(--color-primary) 8%, white)" : "var(--color-bg)",
                 border:
-                  form.service === option
+                  form.service === option.value
                     ? "1px solid color-mix(in srgb, var(--color-primary) 35%, white)"
                     : "1px solid rgba(43,58,140,0.12)",
               }}
@@ -302,12 +237,12 @@ function VisitForm() {
               <input
                 type="radio"
                 name="service"
-                value={option}
-                checked={form.service === option}
+                value={option.value}
+                checked={form.service === option.value}
                 onChange={handleChange}
                 style={{ accentColor: "var(--color-primary)" }}
               />
-              <span className="text-sm" style={{ color: "var(--color-dark)" }}>{option}</span>
+              <span className="text-sm" style={{ color: "var(--color-dark)" }}>{option.label}</span>
             </label>
           ))}
         </div>
@@ -390,7 +325,7 @@ function VisitForm() {
         className="self-start inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ backgroundColor: "var(--color-primary)" }}
       >
-        {loading ? "신청 중..." : "방문 신청하기"}
+        {loading ? "신청 중..." : copy.submitLabel}
       </button>
     </form>
   );
@@ -398,7 +333,18 @@ function VisitForm() {
 
 // ─── Main Client Component ────────────────────────────────────────────────────
 
-export default function VisitClient() {
+export default function VisitClient({
+  page,
+  services,
+  phone,
+  locationSlot,
+}: {
+  page: VisitPage;
+  services: Service[];
+  phone: string;
+  /** 서버에서 렌더한 「오시는 길」 섹션 */
+  locationSlot: React.ReactNode;
+}) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   function toggleFaq(i: number) {
@@ -425,15 +371,18 @@ export default function VisitClient() {
               border: "1px solid rgba(212,168,67,0.35)",
             }}
           >
-            새가족 안내
+            {page.hero.badge}
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-tight">
-            처음 오시는 분을 환영합니다
+            {page.hero.title}
           </h1>
           <p className="text-sm sm:text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
-            교회가 처음이셔도, 신앙이 없으셔도 괜찮습니다.
-            <br />
-            청파중앙교회는 모든 분을 온 마음으로 환영합니다.
+            {page.hero.lines.map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
           </p>
         </div>
       </section>
@@ -441,9 +390,9 @@ export default function VisitClient() {
       {/* 2. FAQ */}
       <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader label="자주 묻는 질문" title="방문 전 알아두세요" align="center" className="mb-12" />
+          <SectionHeader label={page.faq.label} title={page.faq.title} align="center" className="mb-12" />
           <div className="flex flex-col gap-3" role="list">
-            {FAQS.map((faq, i) => (
+            {page.faq.items.map((faq, i) => (
               <div key={i} role="listitem">
                 <AccordionItem
                   item={faq}
@@ -460,11 +409,14 @@ export default function VisitClient() {
       {/* 3. Service Cards */}
       <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-white)" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader label="예배" title="예배 안내" align="center" className="mb-12" />
+          <SectionHeader label={page.services.label} title={page.services.title} align="center" className="mb-12" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {SERVICES.map(({ label, time, day, description, Icon }) => (
+            {services.map((service) => {
+              const Icon = getIcon(service.icon);
+              const { name: label, time, day, description } = service;
+              return (
               <div
-                key={label}
+                key={service.id}
                 className="flex flex-col gap-4 rounded-2xl p-6"
                 style={{ backgroundColor: "var(--color-bg)", border: "1px solid rgba(43,58,140,0.08)" }}
               >
@@ -489,9 +441,12 @@ export default function VisitClient() {
                     <span className="text-sm" style={{ color: "var(--color-dark-soft)" }}>{day}</span>
                   </div>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--color-dark-soft)" }}>{description}</p>
+                {description && (
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--color-dark-soft)" }}>{description}</p>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -499,16 +454,16 @@ export default function VisitClient() {
       {/* 4. Visit Form */}
       <section id="reservation" className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader label="방문 예약" title="방문 신청하기" align="center" className="mb-3" />
+          <SectionHeader label={page.reservation.label} title={page.reservation.title} align="center" className="mb-3" />
           <p className="text-sm text-center mb-12" style={{ color: "var(--color-dark-soft)" }}>
-            방문 전 미리 신청해주시면 담당 사역자가 편안하게 안내해 드립니다.
+            {page.reservation.intro}
           </p>
-          <VisitForm />
+          <VisitForm services={services} phone={phone} copy={page.reservation} />
         </div>
       </section>
 
       {/* 5. Location */}
-      <LocationSection />
+      {locationSlot}
     </main>
   );
 }

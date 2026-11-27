@@ -5,6 +5,8 @@
 // SDK 대신 fetch로 직접 호출한다. 이 프로젝트는 이미 peer dependency 충돌로
 // legacy-peer-deps를 쓰고 있어, 의존성을 늘리지 않는 편이 안전하다.
 
+import { getSite } from "@/lib/content";
+
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 export type MailResult =
@@ -60,7 +62,7 @@ export async function sendFormNotification(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `청파중앙교회 홈페이지 <${from}>`,
+        from: `${getSite().name} 홈페이지 <${from}>`,
         to,
         subject,
         html,

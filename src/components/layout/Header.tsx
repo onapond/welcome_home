@@ -5,19 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import MobileNav from "./MobileNav";
-
-export const NAV_LINKS = [
-  { label: "교회소개", href: "/about" },
-  { label: "예배안내", href: "/visit/service-times" },
-  { label: "새가족", href: "/visit" },
-  { label: "공동체", href: "/community" },
-  { label: "설교", href: "/sermons" },
-  { label: "소식", href: "/news" },
-] as const;
+import { useSite } from "./SiteProvider";
+import { NAV_CTA, NAV_ITEMS } from "@/lib/nav";
 
 const SCROLL_THRESHOLD = 60;
 
 export default function Header() {
+  const site = useSite();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -57,11 +51,11 @@ export default function Header() {
             <Link
               href="/"
               className="flex-shrink-0"
-              aria-label="청파중앙교회 홈으로"
+              aria-label={`${site.name} 홈으로`}
             >
               <Image
                 src="/images/logo-mark.png"
-                alt="청파중앙교회"
+                alt={site.name}
                 width={262}
                 height={98}
                 className="h-9 w-auto transition-all duration-300"
@@ -79,24 +73,49 @@ export default function Header() {
               className="hidden md:flex items-center gap-1 lg:gap-2"
               aria-label="주 메뉴"
             >
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={[
-                    "px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-                    scrolled
-                      ? "text-dark hover:text-primary hover:bg-gray-50"
-                      : "text-white/90 hover:text-white hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const linkClass = [
+                  "px-2.5 lg:px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-300",
+                  scrolled
+                    ? "text-dark hover:text-primary hover:bg-gray-50"
+                    : "text-white/90 hover:text-white hover:bg-white/10",
+                ].join(" ");
+
+                if (!item.children) {
+                  return (
+                    <Link key={item.href} href={item.href} className={linkClass}>
+                      {item.label}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={item.href} className="relative group">
+                    <Link href={item.href} className={linkClass}>
+                      {item.label}
+                    </Link>
+                    {/* 하위 메뉴: 마우스를 올리거나 키보드로 들어오면 열린다 */}
+                    <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity duration-200 absolute left-0 top-full min-w-36 pt-1">
+                      <ul className="rounded-lg bg-white py-1.5 shadow-lg ring-1 ring-black/5">
+                        {item.children.map((child) => (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              className="block px-4 py-2 text-sm text-dark whitespace-nowrap hover:bg-gray-50 hover:text-primary"
+                            >
+                              {child.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })}
 
               {/* CTA Button */}
               <Link
-                href="/visit#reservation"
+                href={NAV_CTA.href}
                 className={[
                   "ml-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300",
                   scrolled
@@ -104,7 +123,7 @@ export default function Header() {
                     : "bg-white text-primary hover:bg-white/90",
                 ].join(" ")}
               >
-                처음 오시나요?
+                {NAV_CTA.label}
               </Link>
             </nav>
 

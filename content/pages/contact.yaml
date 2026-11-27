@@ -1,0 +1,34 @@
+# 문의(/contact) 문구 — 머리글 · 사무실 운영 시간 · 문의 양식 안내와 문의 유형 목록.
+#   전화 · 팩스 · 주소 · 이메일은 site.yaml에서 가져온다.
+#   inquiryTypes는 문의 양식의 「문의 유형」 선택지이며, 서버도 같은 목록으로 검증한다.
+#
+# TODO(이전): 옛 사이트 확인 전 — 사무실 운영 시간(월~금 09:00 – 18:00)은 교회 확인이 필요하다.
+
+meta:
+  title: 문의
+  description: "{{name}} 문의 안내. 전화 {{phone}}, {{address.road}}. 예배·새가족 등록·대관 문의를 남겨주세요."
+  ogDescription: "{{name}}에 궁금한 점을 문의해 주세요. 전화, 주소, 오시는 길을 함께 안내합니다."
+
+hero:
+  badge: 문의
+  title: 언제든지 연락하세요
+  lines:
+    - 궁금한 점이 있으시면 편하게 문의해 주세요.
+
+info:
+  label: 연락처
+  title: 교회 정보
+  officeHoursLabel: 교회 사무실
+  officeHours: 월~금 09:00 – 18:00
+
+form:
+  label: 문의 양식
+  title: 메시지 보내기
+  successTitle: 문의가 접수되었습니다
+  successText: 빠른 시일 내에 연락드리겠습니다.
+  inquiryTypes:
+    - 예배 및 행사 문의
+    - 새가족 등록
+    - 공동체 참여
+    - 시설 대관
+    - 기타 문의

@@ -1,0 +1,54 @@
+# 홈페이지(/) 문구 — 첫 화면(히어로) · 표어 여정 · 새가족 안내 · 공동체 섹션 제목.
+#   - 예배 시간 바는 site.yaml의 예배 목록, 공동체 카드는 community.yaml, 오시는 길은 location.yaml을 읽는다.
+#   - 문구 안의 {{phone}} {{address}} {{service.sunday.time}} {{motto.latest.text}} 같은 표시는
+#     site.yaml의 값으로 바뀐다(사용법은 src/lib/content/pages.ts 위쪽 설명 참고).
+#   - icon 값은 정해진 이름만 쓸 수 있다: sun moon heart sunrise users music target book-open shield
+#     globe baby parking map-pin clock train bus home footprints arrow-up-right
+#   - 사진은 image/src에 경로를 적으면 자리표시 대신 나온다(비워 두면 「사진 준비 중」).
+#
+# TODO(이전): 옛 사이트 확인 전 — 소개 문구·교통편·주차 안내는 옛 사이트와 대조 후 바로잡는다.
+
+hero:
+  badge: "{{motto.latest.year}} 표어"
+  headline: "{{motto.latest.text}}"
+  lines:
+    - "{{vision}}"
+    - 서울 용산, 함께 걸어가는 공동체
+  primaryCta: { label: 예배 안내, href: /visit/service-times }
+  secondaryCta: { label: 온라인 예배, href: "{{sns.youtube}}" }
+  slides:
+    - { label: 예배 사진 1 }
+    - { label: 예배 사진 2 }
+    - { label: 예배 사진 3 }
+
+journey:
+  label: 우리의 여정
+  title: 3년의 발걸음, 하나의 이야기
+  # 연도는 site.yaml의 표어와 짝이 맞아야 한다(표어 문구는 거기서 가져온다).
+  nodes:
+    - { year: 2024, subtitle: 소속감과 뿌리를 찾아서, icon: home }
+    - { year: 2025, subtitle: "순례의 여정, 함께 걷는 길", icon: footprints }
+    - { year: 2026, subtitle: "행동하는 공동체, 동행의 시작", icon: arrow-up-right }
+
+newHere:
+  label: 새가족 안내
+  title: 처음 오시는 분을 환영합니다
+  intro: >-
+    청파중앙교회는 처음 오시는 모든 분을 온 마음으로 환영합니다.
+    종교가 없으셔도, 교회가 처음이셔도 괜찮습니다.
+    이곳에서 새로운 가족을 만나고, 함께 걸어가는 여정을 시작해보세요.
+  items:
+    - { icon: map-pin, title: 위치, text: "{{address}}" }
+    - { icon: clock, title: 주일예배, text: "{{service.sunday.time}} — {{service.sunday.day}} {{service.sunday.place}}에서 드립니다" }
+    - { icon: baby, title: 키즈, text: 영아부터 청소년까지 연령별 예배와 교육이 준비되어 있습니다 }
+    - { icon: parking, title: 주차, text: 교회 인근 공영주차장 이용 가능 (주일 2시간 지원) }
+  cta: { label: 방문 예약하기, href: /visit#reservation }
+  image: { label: 교회 사진 }
+  badge: { label: WELCOME, text: 누구나 환영합니다 }
+  # 사진 아래에 인용하는 표어의 연도. 문구는 site.yaml의 표어에서 가져온다.
+  quote: { year: 2024, caption: 청파중앙교회 표어 }
+
+community:
+  label: 공동체
+  title: 함께 걸어가는 사람들
+  linkLabel: 자세히 보기

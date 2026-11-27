@@ -12,14 +12,7 @@ import {
 } from "@/lib/forms";
 import { mailConfigured, notificationHtml, sendFormNotification } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-
-/** VisitClient의 SERVICE_OPTIONS와 반드시 동일하게 유지할 것 */
-const SERVICE_OPTIONS = [
-  "주일예배 (11:00)",
-  "수요예배 (19:30)",
-  "금요기도회 (21:00)",
-  "새벽기도 (05:30)",
-] as const;
+import { getSite } from "@/lib/content";
 
 const COUNT_OPTIONS = ["1", "2", "3", "4", "5명 이상"] as const;
 
@@ -35,6 +28,9 @@ const RATE_WINDOW_MS = 10 * 60 * 1000;
 
 export async function POST(request: Request) {
   const ip = clientIp(request);
+  // 예배 선택지는 site.yaml의 예배 이름 목록 — VisitClient가 보여 주는 값과 같은 출처다.
+  const { phone: churchPhone, services } = getSite();
+  const serviceOptions = services.map((s) => s.name);
 
   const flood = rateLimit(`visit:flood:${ip}`, FLOOD_LIMIT, RATE_WINDOW_MS);
   if (!flood.ok) {
@@ -65,7 +61,7 @@ export async function POST(request: Request) {
   const errors: FieldError[] = [];
   const name = requireText(body.name, "name", "이름", LIMITS.name, errors);
   const phone = requirePhone(body.phone, errors);
-  const service = requireChoice(body.service, "service", "예배", SERVICE_OPTIONS, errors);
+  const service = requireChoice(body.service, "service", "예배", serviceOptions, errors);
   const count = requireChoice(body.count, "count", "인원수", COUNT_OPTIONS, errors);
   const memo = optionalText(body.memo, LIMITS.message);
   requireConsent(body.consent, errors);
@@ -92,7 +88,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         message:
-          "현재 온라인 신청 접수가 일시 중단되었습니다. 02-714-0041로 전화 주시면 안내해 드리겠습니다.",
+          `현재 온라인 신청 접수가 일시 중단되었습니다. ${churchPhone}로 전화 주시면 안내해 드리겠습니다.`,
       },
       { status: 503 }
     );
@@ -116,7 +112,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         message:
-          "신청 접수 중 문제가 발생했습니다. 02-714-0041로 전화 주시면 도와드리겠습니다.",
+          `신청 접수 중 문제가 발생했습니다. ${churchPhone}로 전화 주시면 도와드리겠습니다.`,
       },
       { status: 502 }
     );

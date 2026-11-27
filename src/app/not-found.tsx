@@ -9,7 +9,7 @@ const QUICK_LINKS = [
   { href: "/", label: "홈으로", Icon: Home },
   { href: "/visit", label: "새가족 안내", Icon: MapPin },
   { href: "/sermons", label: "설교 아카이브", Icon: BookOpen },
-  { href: "/visit#service-times", label: "예배 시간", Icon: Clock },
+  { href: "/visit/service-times", label: "예배 시간", Icon: Clock },
 ];
 
 export default function NotFound() {

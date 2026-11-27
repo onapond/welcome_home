@@ -1,20 +1,9 @@
-import { Sun, Moon, Heart, Sunrise } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-interface ServiceTime {
-  label: string;
-  time: string;
-  Icon: LucideIcon;
-}
-
-const SERVICE_TIMES: ServiceTime[] = [
-  { label: "주일예배", time: "오전 11:00", Icon: Sun },
-  { label: "수요예배", time: "오후 7:30",  Icon: Moon },
-  { label: "금요기도", time: "오후 9:00",  Icon: Heart },
-  { label: "새벽기도", time: "오전 5:30",  Icon: Sunrise },
-];
+import { getSite } from "@/lib/content";
+import { getIcon } from "@/lib/icons";
 
 export default function ServiceTimesBar() {
+  const services = getSite().services.filter((s) => s.showOnHome);
+
   return (
     <section
       aria-label="예배 시간 안내"
@@ -22,13 +11,14 @@ export default function ServiceTimesBar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-2 md:grid-cols-4">
-          {SERVICE_TIMES.map(({ label, time, Icon }, i) => {
+          {services.map((service, i) => {
+            const Icon = getIcon(service.icon);
             const isLastInRow2Mobile = i === 3;
-            const isLastDesktop = i === SERVICE_TIMES.length - 1;
+            const isLastDesktop = i === services.length - 1;
 
             return (
               <div
-                key={label}
+                key={service.id}
                 className={[
                   "flex items-center gap-4 px-6 py-4",
                   // mobile: right border except last in each row
@@ -45,6 +35,7 @@ export default function ServiceTimesBar() {
                   className="w-5 h-5 flex-shrink-0"
                   style={{ color: "rgba(255,255,255,0.6)" }}
                   strokeWidth={1.5}
+                  aria-hidden="true"
                 />
 
                 {/* Text */}
@@ -53,12 +44,12 @@ export default function ServiceTimesBar() {
                     className="text-xs font-semibold tracking-widest uppercase mb-0.5"
                     style={{ color: "var(--color-accent)" }}
                   >
-                    {label}
+                    {service.short ?? service.name}
                   </p>
                   <p
                     className="font-serif text-lg text-white leading-none"
                   >
-                    {time}
+                    {service.time}
                   </p>
                 </div>
               </div>
