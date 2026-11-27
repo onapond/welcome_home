@@ -8,10 +8,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // (including ones no page shows yet, like events) gets validated.
   validateAllContent();
 
-  // lastModified only on dated posts (sermons, news, videos, albums): their
-  // `date` is when the post appeared and they are rarely edited later. List
-  // pages and bulletins get none — build time would mark untouched pages as
-  // changed, and a wrong value is worse than none.
+  // No lastModified anywhere. A post's `date` is when it was published, not when
+  // its file last changed (a later video or body fix keeps the same date), and
+  // content files carry no separate "updated" field. List pages, home and
+  // bulletins get none either — build time would mark untouched pages as
+  // changed. A wrong lastmod is worse than none (crawlers learn to ignore it).
+  // If an `updated:` front-matter field is added later, emit it here only for
+  // posts that have it.
 
   const routes: Array<{
     path: string;
@@ -39,20 +42,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority,
   }));
 
-  const detail = (base: string, items: { id: string; date?: string }[], priority: number, dated = false) =>
+  const detail = (base: string, items: { id: string }[], priority: number) =>
     items.map((i) => ({
       url: `${SITE_URL}${base}/${i.id}`,
-      ...(dated && i.date ? { lastModified: `${i.date}T00:00:00+09:00` } : {}),
       changeFrequency: "yearly" as const,
       priority,
     }));
 
   return [
     ...list,
-    ...detail("/sermons", getSermons(), 0.5, true),
-    ...detail("/news", getNews(), 0.5, true),
+    ...detail("/sermons", getSermons(), 0.5),
+    ...detail("/news", getNews(), 0.5),
     ...detail("/news/bulletin", getBulletins(), 0.3),
-    ...detail("/news/gallery", getAlbums(), 0.3, true),
-    ...detail("/news/videos", getVideos(), 0.3, true),
+    ...detail("/news/gallery", getAlbums(), 0.3),
+    ...detail("/news/videos", getVideos(), 0.3),
   ];
 }

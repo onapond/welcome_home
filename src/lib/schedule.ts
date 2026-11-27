@@ -112,13 +112,33 @@ export function nextServiceWhen(day: string, time: string, now: KstNow = kstNow(
   return `${daysAhead <= untilWeekEnd ? "이번" : "다음"} ${name}`;
 }
 
-/** 방문 희망일 값 검사(서버): 형식 · 실재하는 날 · 오늘~90일 안. "undecided"는 「미정」. */
+/** 방문 희망일 「아직 정하지 않음」 값 */
 export const VISIT_DATE_UNDECIDED = "undecided";
 
-export function isAcceptableVisitDate(value: string, now: KstNow = kstNow()): boolean {
+/** 방문 신청 폼이 보여 주는 희망일 개수 */
+export const VISIT_DATE_COUNT = 6;
+
+/**
+ * 방문 희망일 선택지 — 화면(VisitClient)과 서버(api/visit)가 같은 함수로 계산한다.
+ * 선택한 예배의 요일에 해당하고, 오늘 예배가 이미 시작했으면 오늘은 뺀다(한국 시간).
+ */
+export function visitDateChoices(
+  service: { day: string; time: string },
+  now: KstNow = kstNow(),
+): string[] {
+  return upcomingServiceDates(service.day, service.time, VISIT_DATE_COUNT, now);
+}
+
+/**
+ * 방문 희망일 값 검사(서버): 「미정」이거나, 선택한 예배의 지금 선택지(visitDateChoices) 안의 날짜.
+ * 요일이 다른 날 · 이미 시작한 예배 날짜 · 너무 먼 날은 거절한다.
+ */
+export function isAcceptableVisitDate(
+  value: string,
+  service: { day: string; time: string },
+  now: KstNow = kstNow(),
+): boolean {
   if (value === VISIT_DATE_UNDECIDED) return true;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value) return false;
-  return value >= now.date && value <= addDays(now.date, 90);
+  return visitDateChoices(service, now).includes(value);
 }

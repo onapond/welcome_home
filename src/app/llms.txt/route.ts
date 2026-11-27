@@ -3,6 +3,7 @@
 import { getSermons, getSite } from "@/lib/content";
 import { fullAddress } from "@/lib/content/site-format";
 import { absoluteUrl } from "@/lib/site";
+import { markdownLinkLabel, oneLine } from "@/lib/markdown-text";
 
 export const dynamic = "force-static";
 
@@ -42,14 +43,15 @@ export function GET() {
     "",
     "## 주요 페이지",
     "",
-    ...PAGES.map(([name, path, note]) => `- [${name}](${absoluteUrl(path)}): ${note}`),
+    ...PAGES.map(([name, path, note]) => `- [${markdownLinkLabel(name)}](${absoluteUrl(path)}): ${note}`),
     ...(latest.length
       ? [
           "",
           "## 최근 설교",
           "",
           ...latest.map(
-            (s) => `- [${s.title}](${absoluteUrl(`/sermons/${s.id}`)}): ${s.date}${s.scripture ? ` · ${s.scripture}` : ""}`,
+            (s) =>
+              `- [${markdownLinkLabel(s.title)}](${absoluteUrl(`/sermons/${s.id}`)}): ${s.date}${s.scripture ? ` · ${oneLine(s.scripture)}` : ""}`,
           ),
         ]
       : []),
