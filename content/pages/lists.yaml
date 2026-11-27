@@ -4,7 +4,7 @@
 #   - label:       머리글 위의 작은 분류 글자
 #   - intro:       머리글 제목 아래 한두 줄 소개
 #   - description: 검색 결과 · 카카오톡 공유 미리보기에 나오는 설명
-#   - 문구에 {{name}} 이라고 적으면 site.yaml의 교회 이름으로 바뀐다. 다른 {{ }} 표시는 쓸 수 없다.
+#   - 문구에 {{name}}(교회 이름) 같은 자리표시를 쓸 수 있다. 다른 pages/*.yaml과 같은 목록 — content/README.md 「자리표시」 절.
 #   - 모든 값은 비워 둘 수 없다(heading 제외). 고친 뒤 `npm run build`가 통과해야 한다.
 
 sermons:

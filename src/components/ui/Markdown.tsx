@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import Image from "next/image";
-import { mediaUrl } from "@/lib/media";
+import { markdownMediaUrl } from "@/lib/media";
 
 // Safe mode only: no raw HTML (rehype-raw is intentionally not used).
 const components: Components = {
@@ -56,12 +56,15 @@ const components: Components = {
   hr: () => <hr className="my-8" style={{ borderColor: "rgba(43,58,140,0.12)" }} />,
   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
   // Body images use the same path rules as front matter (store key, /path,
-  // https://) via mediaUrl(). Size is unknown, so width/height are only
-  // placeholders and CSS keeps the real aspect ratio.
+  // https://); content loading already rejected bad ones (lib/content/body.ts).
+  // The parser hands over an already percent-encoded src, so
+  // markdownMediaUrl() decodes it first — the same key yields the same URL as
+  // in front matter. Size is unknown, so width/height are only placeholders
+  // and CSS keeps the real aspect ratio.
   img: ({ src, alt }) =>
     typeof src === "string" && src ? (
       <Image
-        src={mediaUrl(src)}
+        src={markdownMediaUrl(src)}
         alt={alt ?? ""}
         width={1600}
         height={1067}

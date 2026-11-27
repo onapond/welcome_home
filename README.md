@@ -13,7 +13,7 @@
 ## 로컬 실행
 
 ```bash
-npm ci
+npm ci                             # 커밋 전 콘텐츠 검사(.githooks/pre-commit)도 함께 켠다
 cp .env.local.example .env.local   # 값은 비워 둬도 화면은 뜬다 (폼만 503 안내)
 npm run dev                        # http://localhost:3000
 ```
@@ -23,6 +23,12 @@ npm run dev                        # http://localhost:3000
 `content/README.md`에 폴더 · 파일 이름 · 날짜 형식 · 사진 경로 규칙이 있습니다. 각 폴더의 `_template.md`를 복사해 새 항목을 만듭니다.
 
 형식이 틀린 파일은 **빌드가 실패**하고, 어느 파일의 어느 항목이 틀렸는지 한국어로 알려 줍니다. 잘못된 내용이 사이트에 올라가지 않습니다.
+
+```bash
+npm run check:content   # 빌드 없이 content/ 전체를 몇 초 만에 검사 (빌드와 같은 규칙)
+```
+
+`content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트로 `core.hooksPath=.githooks`를 설정합니다(저장소 밖 · 도구가 없는 환경에서는 조용히 건너뜀).
 
 ## 점검
 

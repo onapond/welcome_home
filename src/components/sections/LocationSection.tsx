@@ -10,7 +10,7 @@ export default function LocationSection() {
   const directions = [
     { label: location.mapButton, href: kakaoMapUrl(site.address) },
     {
-      label: "네이버 지도에서 보기",
+      label: location.naverMapButton,
       href: `https://map.naver.com/p/search/${encodeURIComponent(site.address.mapQuery)}`,
     },
   ];
@@ -55,9 +55,9 @@ export default function LocationSection() {
             />
           </div>
           <div>
-            <p className="text-sm font-medium text-white mb-1">길찾기</p>
+            <p className="text-sm font-medium text-white mb-1">{location.directions.title}</p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              지도 앱에서 교회 위치를 확인하고 길찾기를 이용하실 수 있습니다.
+              {location.directions.text}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3">

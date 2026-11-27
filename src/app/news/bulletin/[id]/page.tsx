@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Download } from "lucide-react";
+import { ChevronLeft, Download, ExternalLink } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { getBulletins, getSite } from "@/lib/content";
-import { mediaUrl } from "@/lib/media";
+import { isOwnMedia, mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
@@ -31,6 +31,9 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
   const b = getBulletins().find((x) => x.id === id);
   if (!b) notFound();
   const pdf = b.pdf ? mediaUrl(b.pdf) : null;
+  // Embed only files the church serves (site path · photo store). An outside
+  // https file may not be the PDF its name says, so it gets a plain link.
+  const embed = b.pdf ? isOwnMedia(b.pdf) : false;
   const title = b.title ?? `${fmtDate(b.date)} 주보`;
 
   return (
@@ -49,7 +52,7 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
           </p>
         </header>
 
-        {pdf ? (
+        {pdf && embed ? (
           <>
             <a
               href={pdf}
@@ -60,6 +63,7 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
             >
               <Download className="w-4 h-4" aria-hidden="true" />
               PDF 열기·내려받기
+              <span className="sr-only">(새 창)</span>
             </a>
             <iframe
               src={pdf}
@@ -69,6 +73,18 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
               style={{ height: "80vh", border: "1px solid rgba(43,58,140,0.1)" }}
             />
           </>
+        ) : pdf ? (
+          <a
+            href={pdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full text-sm font-semibold"
+            style={{ backgroundColor: "var(--color-primary)", color: "var(--color-white)" }}
+          >
+            <ExternalLink className="w-4 h-4" aria-hidden="true" />
+            PDF 열기
+            <span className="sr-only">(새 창)</span>
+          </a>
         ) : (
           <p className="mt-6 text-sm" style={{ color: "var(--color-dark-soft)" }}>
             이 주보의 PDF는 아직 등록되지 않았습니다.

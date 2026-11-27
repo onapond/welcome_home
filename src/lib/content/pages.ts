@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { ICON_KEYS } from "@/lib/icons";
 import { ContentError, loadYaml } from "./load";
-import { idList, idString, mediaPath, optional, text, type Site } from "./schema";
-import { fullAddress, latestMotto } from "./site-format";
+import { idList, idString, mediaPath, optional, text } from "./schema";
+import { fillTokens } from "./tokens";
 import { getHistory, getSite, getStaff } from "./index";
 
 // ─── 공통 조각 ───────────────────────────────────────────────────────────────
@@ -56,7 +56,10 @@ export const homeSchema = z.strictObject({
 
 export const locationSchema = z.strictObject({
   label: text,
-  mapButton: text,
+  mapButton: text, // 카카오맵 버튼
+  naverMapButton: text, // 네이버 지도 버튼
+  // 길찾기 상자의 제목과 안내 문구
+  directions: z.strictObject({ title: text, text }),
   transport: idList(z.strictObject({ id: idString, icon, label: text, text })),
 });
 
@@ -191,127 +194,15 @@ export type ServiceTimesPage = z.infer<typeof serviceTimesSchema>;
 export type ContactPage = z.infer<typeof contactSchema>;
 export type CommunityGroup = CommunityPage["groups"][number];
 
-// ─── {{자리표시}} 치환 ───────────────────────────────────────────────────────
-//
-// 페이지 파일의 문구 안에서 교회 정보를 {{ }}로 부를 수 있다. 정보가 바뀌어도
-// 한 곳(site.yaml)만 고치면 모든 문구가 따라온다. 직원용 목록은
-// content/README.md 「자리표시」 절에 있다 — 여기를 바꾸면 그 표도 고친다.
-//
-//   {{name}} {{nameEn}} {{denomination}} {{pastor}} {{founded}} {{vision}}
-//   {{description}} {{phone}} {{fax}} {{email}}
-//   {{address}} (도로명 (상세))  {{address.road}}  {{address.detail}}
-//   {{sns.youtube}}  {{sns.instagram}}
-//   {{service.<예배 id>.<name|short|day|time|place|audience>}}
-//   {{motto.latest.<year|text|keyword>}}  {{motto.<연도>}}
-//   {{transport.<교통편 id>}}  (location.yaml 교통편 — location.yaml 안에서는 못 씀)
-//
-// 모르는 이름이나 값이 비어 있는 항목을 부르면 파일 · 위치와 함께 빌드가 멈춘다.
-
-type Ctx = { site: Site; transport: Record<string, string> | null };
-type Resolved = { value: string } | { problem: string };
-
-const SITE_TOKENS = [
-  "name",
-  "nameEn",
-  "denomination",
-  "pastor",
-  "founded",
-  "vision",
-  "description",
-  "phone",
-  "fax",
-  "email",
-] as const;
-const SERVICE_FIELDS = ["name", "short", "day", "time", "place", "audience"] as const;
-const MOTTO_FIELDS = ["year", "text", "keyword"] as const;
-
-const UNKNOWN: Resolved = { problem: "알 수 없는 자리표시입니다 (content/README.md의 자리표시 목록 참고)" };
-
-function has<T extends string>(list: readonly T[], v: string | undefined): v is T {
-  return v !== undefined && (list as readonly string[]).includes(v);
-}
-
-function present(v: string | number | undefined, where: string): Resolved {
-  return v === undefined || v === "" ? { problem: `${where} 값이 비어 있습니다` } : { value: String(v) };
-}
-
-function resolveToken(token: string, ctx: Ctx): Resolved {
-  const { site } = ctx;
-  const parts = token.split(".");
-  const [head, a, b] = parts;
-
-  switch (head) {
-    case "address":
-      if (parts.length === 1) return { value: fullAddress(site.address) };
-      if (parts.length === 2 && (a === "road" || a === "detail")) {
-        return present(site.address[a], `site.yaml의 address.${a}`);
-      }
-      return UNKNOWN;
-    case "sns":
-      if (parts.length === 2 && (a === "youtube" || a === "instagram")) {
-        return present(site.sns[a], `site.yaml의 sns.${a}`);
-      }
-      return UNKNOWN;
-    case "service": {
-      if (parts.length !== 3 || !has(SERVICE_FIELDS, b)) return UNKNOWN;
-      const svc = site.services.find((s) => s.id === a);
-      if (!svc) return { problem: `site.yaml에 id가 '${a}'인 예배가 없습니다` };
-      return present(svc[b], `site.yaml 예배 '${a}'의 ${b}`);
-    }
-    case "motto": {
-      if (parts.length === 3 && a === "latest" && has(MOTTO_FIELDS, b)) {
-        const m = latestMotto(site);
-        return m ? present(m[b], "site.yaml의 mottos") : { problem: "site.yaml에 표어(mottos)가 없습니다" };
-      }
-      if (parts.length === 2 && /^\d{4}$/.test(a)) {
-        const m = site.mottos.find((x) => String(x.year) === a);
-        return m ? { value: m.text } : { problem: `site.yaml에 ${a}년 표어가 없습니다` };
-      }
-      return UNKNOWN;
-    }
-    case "transport": {
-      if (parts.length !== 2) return UNKNOWN;
-      if (!ctx.transport) return { problem: "location.yaml 안에서는 {{transport.…}}를 쓸 수 없습니다" };
-      const t = ctx.transport[a];
-      return t === undefined ? { problem: `location.yaml에 id가 '${a}'인 교통편이 없습니다` } : { value: t };
-    }
-    default:
-      if (parts.length === 1 && has(SITE_TOKENS, head)) return present(site[head], `site.yaml의 ${head}`);
-      return UNKNOWN;
-  }
-}
-
-function fillDeep<T>(value: T, ctx: Ctx, file: string, problems: string[], path = ""): T {
-  if (typeof value === "string") {
-    return value.replace(/\{\{\s*([^}]*?)\s*\}\}/g, (whole, token: string) => {
-      const out = resolveToken(token, ctx);
-      if ("problem" in out) {
-        problems.push(`${file} → ${path || "(문구)"}: ${whole} — ${out.problem}`);
-        return whole;
-      }
-      return out.value;
-    }) as T;
-  }
-  if (Array.isArray(value)) {
-    return value.map((v, i) => fillDeep(v, ctx, file, problems, `${path}.${i}`.replace(/^\./, ""))) as T;
-  }
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, fillDeep(v, ctx, file, problems, path ? `${path}.${k}` : k)]),
-    ) as T;
-  }
-  return value;
-}
-
 /** Validate content/pages/<name>.yaml, then substitute {{ }} tokens. */
 function loadPage<S extends z.ZodType>(
   name: string,
   schema: S,
-  transport: Record<string, string> | null,
+  transport: ReadonlyMap<string, string> | null,
 ): z.output<S> {
   const raw = loadYaml(`pages/${name}.yaml`, schema);
   const problems: string[] = [];
-  const out = fillDeep(raw, { site: getSite(), transport }, `content/pages/${name}.yaml`, problems);
+  const out = fillTokens(raw, { site: getSite(), transport }, `content/pages/${name}.yaml`, problems);
   if (problems.length) throw new ContentError(problems);
   return out;
 }
@@ -321,8 +212,9 @@ function loadPage<S extends z.ZodType>(
 /** location.yaml — its strings go through the same substitution (without transport tokens). */
 export const getLocationInfo = (): LocationInfo => loadPage("location", locationSchema, null);
 
-function transportMap(): Record<string, string> {
-  return Object.fromEntries(getLocationInfo().transport.map((t) => [t.id, t.text]));
+/** 교통편 id → 문구 (다른 페이지 파일의 {{transport.<id>}}). */
+export function transportMap(): ReadonlyMap<string, string> {
+  return new Map(getLocationInfo().transport.map((t) => [t.id, t.text]));
 }
 
 const page = <S extends z.ZodType>(name: string, schema: S) => (): z.output<S> =>
