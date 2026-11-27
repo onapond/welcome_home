@@ -49,11 +49,21 @@
 
 **로드맵**: P0 정리 → P1 콘텐츠를 `content/` 파일로 + Sanity 제거 → P2 폼 저장 → P3 실제 콘텐츠 · 빠진 페이지 → P4 관리자 작업 환경(안내 문서 · 명령 · 범위 제한 · 자동 점검 · Git 연동 배포) → P5 계정 이전 · 직원 초대 → P6 QA · `chungpa21.org` 전환
 
+**사용자 지시 (11/27)**: 「지금 구조 그대로 가지 않는다. 변경할 것을 먼저 바꾸고 마이그레이션한다. 리팩토링은 검수한다. 병렬로 가능한 것은 바로 진행.」
+
+**리팩토링 R (진행 중)** — 이전보다 먼저
+- R0 ✅ `642efec` 콘텐츠 계층: `src/lib/content/`(zod 스키마 · md/yaml 로더 · 한국어 오류) · `src/lib/media.ts`(R2 URL · 썸네일 규칙) · `content/site.yaml`. 패키지 gray-matter · zod · react-markdown · js-yaml(사용자 승인)
+- R1 (병렬 · 작업 트리) 설교 · 소식 · 주보 · 갤러리 라우트 → content 기반, 정적 생성, `src/lib/sanity` 삭제
+- R2 (병렬 · 작업 트리) 정적 페이지 · 레이아웃의 교회 정보 · 문구 → `site.yaml` · `content/pages/*.yaml` · `history.yaml` · `staff.yaml`
+- R3 (R1 · R2 합친 뒤) Sanity 패키지 · `sanity/` · `/studio` · `ClientLayout` · `next.config` 정리
+- R4 검수: Codex 독립 검토(아스트라 · high · fast) + harness 대립 검토 → 지적 수정 → 재판정
+- 라우트: `/sermons` · `/sermons/[id]` · `/sermons/praise` · `/news` · `/news/[id]` · `/news/bulletin(/[id])` · `/news/gallery(/[id])` — 전부 정적(`dynamicParams=false`, `revalidate` 없음). 사진은 next/image 최적화를 쓰지 않음(R2에서 미리 줄인 파일)
+- 주의: 정적 페이지라 「다가오는 일정」은 빌드 시점 기준이 되면 안 됨(클라이언트에서 거르기)
+
 **다음 할 일**
-1. **진행 중**: 옛 사이트 목록 재수집(메타데이터 · 파일 용량만, 바이너리는 아직 안 받음). 코드 `scripts/migrate/`, 데이터 `../chungpa21-crawl/`(저장소 밖) — 8/21 자료가 사라진 일 반복 방지
-2. 수집 결과로 P1 형식 다시 짜서 승인받기(gray-matter · zod · react-markdown 제안은 아직 승인 전) → Sanity 제거
+1. R1 · R2 결과 합치기 → R3 → R4 검수
+2. 옛 사이트 목록 수집 결과(`../chungpa21-crawl/inventory.md`)로 스키마 보정 → 이전(M) 단계
 3. README는 P4(관리자 안내)에서 다시 씀
-3. 빠진 자료(`../chungpa21-crawl/` 등) 위치 사용자에게 확인
 
 ---
 
