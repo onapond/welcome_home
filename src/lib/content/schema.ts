@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isPdfPath, mediaPathProblem } from "@/lib/media";
+import { isPdfPath, mediaPathProblem, type Video } from "@/lib/media";
 
 // ─── Korean error messages ───────────────────────────────────────────────────
 //
@@ -129,8 +129,60 @@ export const youtubeId = z.preprocess(
   (v) => (typeof v === "string" ? (parseYoutubeId(v) ?? v) : v),
   z
     .string()
-    .regex(YOUTUBE_ID, "유튜브 주소(youtube.com · youtu.be) 또는 영상 ID(11자)가 올바르지 않습니다"),
+    .regex(
+      YOUTUBE_ID,
+      "유튜브 주소(youtube.com · youtu.be) 또는 영상 ID(11자)가 올바르지 않습니다 (비메오 영상은 video: 항목에 적습니다)",
+    ),
 );
+
+// Vimeo: vimeo.com/<digits>, vimeo.com/<digits>/<hash> (unlisted),
+// player.vimeo.com/video/<digits>[?h=<hash>]. Other query parameters
+// (e.g. ?share=copy) are ignored.
+const VIMEO_ID = /^\d{1,12}$/;
+const VIMEO_HASH = /^[0-9a-f]{4,32}$/i;
+const VIMEO_HOSTS = new Set(["vimeo.com", "www.vimeo.com"]);
+
+export function parseVimeo(input: string): Video | null {
+  let u: URL;
+  try {
+    u = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+  const host = u.hostname.toLowerCase();
+  const seg = u.pathname.split("/").filter(Boolean);
+  let id: string | undefined;
+  let hash: string | undefined;
+  if (VIMEO_HOSTS.has(host) && (seg.length === 1 || seg.length === 2)) {
+    [id, hash] = seg;
+  } else if (host === "player.vimeo.com" && seg.length === 2 && seg[0] === "video") {
+    id = seg[1];
+    hash = u.searchParams.get("h") ?? undefined;
+  }
+  if (!id || !VIMEO_ID.test(id)) return null;
+  if (hash !== undefined && !VIMEO_HASH.test(hash)) return null;
+  return hash ? { provider: "vimeo", id, hash } : { provider: "vimeo", id };
+}
+
+export function parseVideo(input: string): Video | null {
+  const yt = parseYoutubeId(input);
+  return yt ? { provider: "youtube", id: yt } : parseVimeo(input);
+}
+
+/** `video:` — a YouTube or Vimeo address, stored as { provider, id, hash? }. */
+export const videoRef = z.string().transform((v, ctx): Video => {
+  const parsed = parseVideo(v);
+  if (!parsed) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "영상 주소가 올바르지 않습니다. 유튜브(youtube.com · youtu.be 주소 또는 영상 ID 11자) 또는 비메오(https://vimeo.com/숫자 · https://player.vimeo.com/video/숫자) 주소를 적어 주세요",
+    });
+    return z.NEVER;
+  }
+  return parsed;
+});
 
 // Media key in the photo store (R2), e.g. "albums/2024-05-12-sports/001.webp",
 // a site path under /public, e.g. "/images/logo.png", or an https:// URL.
@@ -205,6 +257,30 @@ export const siteSchema = z.strictObject({
 
 // ─── Collections (one .md file per item; id = file name) ────────────────────
 
+/**
+ * Video fields shared by sermons and praise: `video:` (YouTube or Vimeo),
+ * the older `youtube:` (YouTube only, still accepted) and `thumbnail:`.
+ * After parsing only `video` and `thumbnail` remain.
+ */
+const videoFields = {
+  video: optional(videoRef),
+  youtube: optional(youtubeId),
+  thumbnail: optional(mediaPath),
+};
+
+function checkVideoFields(v: { video?: Video; youtube?: string; thumbnail?: string }, ctx: z.RefinementCtx) {
+  if (v.video && v.youtube) {
+    ctx.addIssue({ code: "custom", path: ["youtube"], message: "video와 youtube를 함께 쓸 수 없습니다 — video 한 줄만 남겨 주세요" });
+  }
+  if (v.thumbnail && !v.video && !v.youtube) {
+    ctx.addIssue({ code: "custom", path: ["thumbnail"], message: "thumbnail(영상 표지 사진)은 video 영상 주소가 있을 때만 씁니다" });
+  }
+}
+
+function mergeVideo<T extends { video?: Video; youtube?: string }>({ youtube, ...rest }: T): Omit<T, "youtube"> {
+  return youtube ? { ...rest, video: { provider: "youtube", id: youtube } } : rest;
+}
+
 export const SERMON_KINDS = ["주일예배", "수요예배", "금요기도회", "새벽기도", "특별예배"] as const;
 
 export const sermonSchema = z.strictObject({
@@ -214,17 +290,21 @@ export const sermonSchema = z.strictObject({
   preacher: optText,
   scripture: optText,
   series: optText,
-  youtube: optional(youtubeId),
+  ...videoFields,
   legacy: legacySource,
-});
+})
+  .superRefine(checkVideoFields)
+  .transform(mergeVideo);
 
 export const praiseSchema = z.strictObject({
   title: text,
   date: isoDate,
   team: optText, // 찬양대·팀 이름
-  youtube: optional(youtubeId),
+  ...videoFields,
   legacy: legacySource,
-});
+})
+  .superRefine(checkVideoFields)
+  .transform(mergeVideo);
 
 export const NEWS_CATEGORIES = ["공지", "소식", "간증"] as const;
 

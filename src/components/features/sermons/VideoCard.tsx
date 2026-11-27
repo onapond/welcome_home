@@ -14,8 +14,10 @@ export interface VideoItem {
   badge?: string;
   scripture?: string;
   person?: string;
-  /** YouTube thumbnail URL; null when the item has no video */
+  /** cover image URL; null when there is none (no video, or Vimeo without `thumbnail:`) */
   thumb: string | null;
+  /** true when the item has a video (YouTube or Vimeo) */
+  hasVideo: boolean;
   series?: string;
   kind?: string;
 }
@@ -25,7 +27,7 @@ function Wrapper({ href, title, children }: { href: string | null; title: string
   if (!href) return <div className={cls}>{children}</div>;
   if (href.startsWith("https://")) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} aria-label={`${title} 유튜브에서 보기`}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} aria-label={`${title} 영상 새 창에서 보기`}>
         {children}
       </a>
     );
@@ -59,6 +61,17 @@ export default function VideoCard({ item }: { item: VideoItem }) {
               sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
               className="object-cover"
             />
+          ) : item.hasVideo ? (
+            // Video without a cover image (e.g. Vimeo without `thumbnail:`)
+            <span
+              data-video-placeholder=""
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(110,198,230,0.22) 0%, rgba(110,198,230,0) 60%), linear-gradient(160deg, var(--color-primary) 0%, var(--color-dark) 100%)",
+              }}
+              aria-hidden="true"
+            />
           ) : (
             <span
               className="absolute inset-0 flex items-center justify-center font-serif px-4 text-center leading-relaxed"
@@ -67,7 +80,7 @@ export default function VideoCard({ item }: { item: VideoItem }) {
               {item.scripture ?? "영상 없음"}
             </span>
           )}
-          {item.thumb && (
+          {item.hasVideo && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="flex items-center justify-center w-12 h-12 rounded-full transition-transform duration-300 group-hover:scale-110"

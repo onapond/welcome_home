@@ -50,7 +50,7 @@ export default function Home() {
       date: s.date,
       scripture: s.scripture,
       preacher: s.preacher,
-      hasVideo: !!s.youtube,
+      hasVideo: !!s.video,
     }));
 
   return (
