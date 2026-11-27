@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import { getAlbums, getBulletins, getNews, getSermons } from "@/lib/content";
+import { getAlbums, getBulletins, getNews, getSermons, getVideos } from "@/lib/content";
 import { validateAllContent } from "@/lib/content/validate";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -26,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/news", changeFrequency: "weekly", priority: 0.7 },
     { path: "/news/bulletin", changeFrequency: "weekly", priority: 0.6 },
     { path: "/news/gallery", changeFrequency: "monthly", priority: 0.5 },
+    { path: "/news/videos", changeFrequency: "monthly", priority: 0.5 },
     { path: "/community", changeFrequency: "monthly", priority: 0.6 },
     { path: "/contact", changeFrequency: "yearly", priority: 0.5 },
   ];
@@ -49,5 +50,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...detail("/news", getNews(), 0.5),
     ...detail("/news/bulletin", getBulletins(), 0.3),
     ...detail("/news/gallery", getAlbums(), 0.3),
+    ...detail("/news/videos", getVideos(), 0.3),
   ];
 }

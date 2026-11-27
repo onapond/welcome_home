@@ -1,5 +1,5 @@
-import type { Praise, Sermon } from "@/lib/content";
-import { videoThumb, videoWatchUrl } from "@/lib/media";
+import type { Praise, Sermon, VideoPost } from "@/lib/content";
+import { thumbUrl, videoThumb, videoWatchUrl } from "@/lib/media";
 import type { VideoItem } from "./VideoCard";
 
 // Plain-data mappers (run on the server, result is passed to client components).
@@ -30,5 +30,17 @@ export function praiseToItem(p: Praise): VideoItem {
     person: p.team,
     thumb: videoThumb(p.video, p.thumbnail),
     hasVideo: !!p.video,
+  };
+}
+
+/** Special video post: cover = thumbnail → YouTube still → first photo (small copies first). */
+export function videoPostToItem(v: VideoPost): VideoItem {
+  return {
+    id: v.id,
+    href: `/news/videos/${v.id}`,
+    title: v.title,
+    date: v.date,
+    thumb: videoThumb(v.video, v.thumbnail) ?? (v.images[0] ? thumbUrl(v.images[0]) : null),
+    hasVideo: !!v.video,
   };
 }

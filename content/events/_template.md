@@ -7,7 +7,7 @@ end: 2026-12-24T21:00       # 선택. 시작보다 앞설 수 없습니다
 category: 행사              # 예배 · 교육 · 행사 · 선교 · 기타
 location: 본당              # 선택
 registrationUrl: https://example.com/form   # 선택. 신청 주소(https)
-image: events/xmas.webp     # 선택. 사진 경로
+image: events/xmas.webp     # 선택. 사진 경로. 작은 사진이 있으면 { src: events/xmas.webp, thumb: events/xmas-480.webp }
 ---
 
 선택. 안내 문구(마크다운).

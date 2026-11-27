@@ -120,17 +120,21 @@ export function isEmbeddableMedia(src: string): boolean {
 }
 
 /**
- * Thumbnail convention: every photo "dir/name.webp" has "dir/thumb/name.webp"
- * generated at upload time, so list pages never load full-size images.
+ * A photo with an optional smaller copy for lists. Content files name the
+ * small copy explicitly (`thumb:`); it is never derived from the file name,
+ * because photos staff upload by hand have no small copy.
  */
-export function thumbUrl(src: string): string {
-  if (isSitePath(src) || src.startsWith("https://")) return src;
-  const key = src.replace(/^\/+/, "");
-  const i = key.lastIndexOf("/");
-  return mediaUrl(i === -1 ? `thumb/${key}` : `${key.slice(0, i)}/thumb/${key.slice(i + 1)}`);
+export interface ImageRef {
+  src: string;
+  thumb?: string;
 }
 
-// ─── Video (sermons · praise) ─────────────────────────────────────────────────
+/** URL for grids, cards and lists: the small copy when given, else the photo itself. */
+export function thumbUrl(img: ImageRef): string {
+  return mediaUrl(img.thumb ?? img.src);
+}
+
+// ─── Video (sermons · praise · videos) ─────────────────────────────────────────────────
 
 /** A parsed `video:` field (lib/content/schema.ts). */
 export type Video = { provider: "youtube"; id: string } | { provider: "vimeo"; id: string; hash?: string };
@@ -162,9 +166,15 @@ export function videoWatchUrl(v: Video): string {
  * Cover image for a video: the content's `thumbnail:` when given, else the
  * YouTube still. Vimeo has no static thumbnail URL without an API call, so a
  * Vimeo video without `thumbnail:` gets null (cards draw a placeholder).
+ * `size: "card"` uses the thumbnail's small copy (`thumb`) when there is one;
+ * `"full"` (share previews) always uses the main photo.
  */
-export function videoThumb(v: Video | undefined, thumbnail?: string): string | null {
+export function videoThumb(
+  v: Video | undefined,
+  thumbnail?: ImageRef,
+  size: "card" | "full" = "card",
+): string | null {
+  if (thumbnail) return size === "card" ? thumbUrl(thumbnail) : mediaUrl(thumbnail.src);
   if (!v) return null;
-  if (thumbnail) return mediaUrl(thumbnail);
   return v.provider === "youtube" ? youtubeThumb(v.id) : null;
 }

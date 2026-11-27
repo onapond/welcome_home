@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isPdfPath, mediaPathProblem, type Video } from "@/lib/media";
+import { isPdfPath, mediaPathProblem, type ImageRef, type Video } from "@/lib/media";
 
 // ─── Korean error messages ───────────────────────────────────────────────────
 //
@@ -194,6 +194,17 @@ export const mediaPath = z.string().superRefine((v, ctx) => {
   if (problem) ctx.addIssue({ code: "custom", message: problem, continue: false });
 });
 
+/**
+ * A single photo field (`cover:`, event `image:`, video `thumbnail:`): either
+ * just a path, or { src, thumb } where `thumb` is the small copy shown in
+ * lists and cards. A bare path is turned into { src } first, so a typo such
+ * as `scr` is reported against the one object schema.
+ */
+export const imageRef = z.preprocess(
+  (v) => (typeof v === "string" ? { src: v } : v),
+  z.strictObject({ src: mediaPath, thumb: optional(mediaPath) }),
+) as z.ZodType<ImageRef, unknown>;
+
 export const pdfPath = mediaPath.refine(isPdfPath, "주보 파일은 .pdf 로 끝나는 PDF 경로여야 합니다");
 
 // Where an item came from on the old site — used for redirects and re-imports.
@@ -259,16 +270,16 @@ export const siteSchema = z.strictObject({
 
 /**
  * Video fields shared by sermons and praise: `video:` (YouTube or Vimeo),
- * the older `youtube:` (YouTube only, still accepted) and `thumbnail:`.
- * After parsing only `video` and `thumbnail` remain.
+ * the older `youtube:` (YouTube only, still accepted) and `thumbnail:`
+ * (a path or { src, thumb }). After parsing only `video` and `thumbnail` remain.
  */
 const videoFields = {
   video: optional(videoRef),
   youtube: optional(youtubeId),
-  thumbnail: optional(mediaPath),
+  thumbnail: optional(imageRef),
 };
 
-function checkVideoFields(v: { video?: Video; youtube?: string; thumbnail?: string }, ctx: z.RefinementCtx) {
+function checkVideoFields(v: { video?: Video; youtube?: string; thumbnail?: ImageRef }, ctx: z.RefinementCtx) {
   if (v.video && v.youtube) {
     ctx.addIssue({ code: "custom", path: ["youtube"], message: "video와 youtube를 함께 쓸 수 없습니다 — video 한 줄만 남겨 주세요" });
   }
@@ -309,15 +320,16 @@ export const praiseSchema = z.strictObject({
 export const NEWS_CATEGORIES = ["공지", "소식", "간증"] as const;
 
 /**
- * A news photo: either just a path, or { src, alt } with a description.
- * A bare path is turned into { src } first, so a typo such as `scr` is
- * reported against the one object schema (missing src + unknown key).
+ * A news (or video post) photo: either just a path, or { src, alt, thumb }
+ * with a description and the small copy for grids. A bare path is turned into
+ * { src } first, so a typo such as `scr` is reported against the one object
+ * schema (missing src + unknown key).
  */
 export const newsImageSchema = z.preprocess(
   (v) => (typeof v === "string" ? { src: v } : v),
   z
-    .strictObject({ src: mediaPath, alt: optText })
-    .transform((v) => ({ src: v.src, alt: v.alt ?? "" })),
+    .strictObject({ src: mediaPath, thumb: optional(mediaPath), alt: optText })
+    .transform((v) => ({ src: v.src, thumb: v.thumb, alt: v.alt ?? "" })),
 );
 
 export const newsSchema = z.strictObject({
@@ -339,7 +351,8 @@ export const eventSchema = z
     category: z.enum(EVENT_CATEGORIES).default("행사"),
     location: optText,
     registrationUrl: optional(httpsUrl),
-    image: optional(mediaPath),
+    image: optional(imageRef),
+    legacy: legacySource,
   })
   .superRefine((e, ctx) => {
     if (!e.end) return;
@@ -361,6 +374,7 @@ export const ALBUM_CATEGORIES = ["예배", "행사", "수련회", "선교", "교
 
 export const photoSchema = z.strictObject({
   src: mediaPath,
+  thumb: optional(mediaPath), // small copy for the grid, e.g. albums/x/001-480.webp
   width: optional(z.number().int().positive()),
   height: optional(z.number().int().positive()),
   caption: optText,
@@ -370,8 +384,22 @@ export const albumSchema = z.strictObject({
   title: text,
   date: isoDate,
   category: z.enum(ALBUM_CATEGORIES).default("기타"),
-  cover: optional(mediaPath), // defaults to the first photo
+  cover: optional(imageRef), // defaults to the first photo
   photos: z.array(photoSchema).min(1, "사진이 한 장 이상 있어야 합니다"),
+  legacy: legacySource,
+});
+
+/**
+ * Special videos (old 특별영상 board): event videos, cantatas, retreats,
+ * member news. Some posts have only photos or text, so `video:` is optional,
+ * and `thumbnail:` (the card cover) may be given without a video.
+ */
+export const videoPostSchema = z.strictObject({
+  title: text,
+  date: isoDate,
+  video: optional(videoRef),
+  thumbnail: optional(imageRef),
+  images: z.array(newsImageSchema).default([]),
   legacy: legacySource,
 });
 
@@ -433,5 +461,6 @@ export type ChurchEvent = WithBody<z.infer<typeof eventSchema>>;
 export type Bulletin = WithBody<z.infer<typeof bulletinSchema>>;
 export type Album = WithBody<z.infer<typeof albumSchema>>;
 export type Photo = z.infer<typeof photoSchema>;
+export type VideoPost = WithBody<z.infer<typeof videoPostSchema>>;
 export type HistoryEntry = z.infer<typeof historySchema>[number];
 export type StaffMember = z.infer<typeof staffSchema>[number];

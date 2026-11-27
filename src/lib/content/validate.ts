@@ -11,6 +11,7 @@ import {
   getSermons,
   getSite,
   getStaff,
+  getVideos,
 } from "./index";
 import { PAGE_GETTERS } from "./pages";
 import { getListPage, listsSchema } from "./lists";
@@ -56,6 +57,7 @@ export function validateAllContent(): void {
     getBulletins,
     getAlbums,
     getEvents,
+    getVideos,
     checkPagesFolder,
     ...Object.values(PAGE_GETTERS),
     ...listsSchema.keyof().options.map((key) => () => getListPage(key)),

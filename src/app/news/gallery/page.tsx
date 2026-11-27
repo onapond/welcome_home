@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import GalleryClient from "@/components/features/gallery/GalleryClient";
 import { NEWS_TABS, PageHero } from "@/components/features/news/shared";
-import { getAlbums } from "@/lib/content";
+import { albumCover, getAlbums } from "@/lib/content";
 import { getListPage } from "@/lib/content/lists";
 import { pageMetadata } from "@/lib/metadata";
 import { thumbUrl } from "@/lib/media";
@@ -18,7 +18,7 @@ export default function GalleryPage() {
     title: a.title,
     date: a.date,
     category: a.category,
-    cover: thumbUrl(a.cover ?? a.photos[0].src),
+    cover: thumbUrl(albumCover(a)),
     count: a.photos.length,
   }));
 

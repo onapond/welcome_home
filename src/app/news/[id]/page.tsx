@@ -4,7 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
-import { fmtDate } from "@/components/features/news/shared";
+import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getNews, getSite } from "@/lib/content";
 import { mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
@@ -13,10 +13,6 @@ export const dynamicParams = false;
 
 export function generateStaticParams() {
   return getNews().map((n) => ({ id: n.id }));
-}
-
-function plainExcerpt(md: string): string {
-  return md.replace(/[#>*_`\[\]()!-]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
