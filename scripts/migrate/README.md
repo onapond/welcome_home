@@ -36,8 +36,19 @@ run does not write — the samples), `--no-download`, `--delay 0.5`.
   iframes and other tags removed; entities decoded; Markdown characters and `{{ }}` escaped.
 - Privacy: author IP / id never written; phone-like numbers masked `010-****-****` (not the church's
   02-714-0041~3 / 02-711-8166); e-mails masked except church@chungpa21.org; staff phones/e-mails omitted.
-  Lists of personal names are NOT changed — the report counts them per board with masked samples so the
-  user can decide.
+  Personal names are kept as-is (user decision 2026-11-27); the report still counts them per board.
+- Home addresses (user decision 2026-11-27) become `(주소 생략)`: a 시/군/구/읍/면 word + road
+  (`…로/…길` + number) or lot (`…동/리/가` + number) + optional building / `N동 N호`, a bare `N동 N호`,
+  and a district-only address right after 「이사」. Kept: the church's own (청파로 · 서계동) and event
+  venues (a venue word — `…교회`, 홀, 웨딩, 회관, 캠핑장, 수양관 … — within 60 chars before, nearer than
+  「이사」). No cue either way → removed and listed as 「판단 불확실」. The report lists each removal by
+  file + legacy board/seq + kind (never the address text).
+- Bulletin PDFs are scanned images (no text layer). An OCR pass (tesseract `kor`) found a home address
+  or personal mobile numbers in 23 of them; `PDF_HOLD` keeps those PDFs out of the repo (entry written
+  without `pdf:`, listed under 「주보 PDF 보류」) until a redacted copy exists. OCR can miss things.
+- 주민등록번호 / 16-digit card-like numbers are masked if present. The report's 「남은 민감 정보 검사」
+  counts (without changing anything) account-like numbers, car plates, leftover phones / e-mails / IPv4
+  and address shapes still in the output, with file names.
 - PDFs: downloaded once into `<crawl>/weekly-pdf/` (`state.json`, resumable, one connection,
   `crawl.Fetcher`, `%PDF-` check, size compared with `binaries.json`), then copied.
 

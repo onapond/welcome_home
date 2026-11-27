@@ -61,6 +61,9 @@ class Report:
         self.counts = {}  # board -> Counter(in, written, skipped)
         self.skips = defaultdict(Counter)  # board -> reason -> n
         self.masks = []  # (file, kind)
+        self.addr = []  # (file, kind): home addresses removed
+        self.addr_kept = []  # files with an event venue address kept
+        self.pdf_held = []  # (bulletin id, kind): PDF not copied (see PDF_HOLD)
         self.vimeo_only = Counter()  # board -> items whose only video was Vimeo
         self.vimeo_dropped = Counter()  # board -> Vimeo links dropped in total
         self.notes = defaultdict(list)  # board -> free text lines
@@ -88,13 +91,106 @@ R = Report()
 
 PHONE = re.compile(r"(?<![\d*])(0\d{1,2})([-. )]{1,2})(\d{3,4})([-. ]{1,2})(\d{4})(?![\d*])")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
+RRN = re.compile(r"(?<!\d)\d{6}\s?-\s?[1-8]\d{6}(?!\d)")  # 주민등록번호
+CARD = re.compile(r"(?<!\d)\d{4}([- ])\d{4}\1\d{4}\1\d{4}(?!\d)")  # 카드번호-like
+
+# Home addresses (user decision 2026-11-27: names stay, home addresses go). An address span needs
+# at least one 시/군/구/읍/면 word, then a road (…로/…길 + number) or lot (…동/리/가 + number),
+# optionally followed by a building and 동/호 unit. The church's own address and venue addresses
+# given for events (a venue word right before the address) are kept; anything else is removed.
+ADDR_PROV = ("서울특별시|서울시|서울|경기도|경기|인천광역시|인천시|인천|부산광역시|부산|대구광역시|대구|"
+             "광주광역시|광주|대전광역시|대전|울산광역시|울산|세종특별자치시|세종|강원특별자치도|강원도|강원|"
+             "충청북도|충청남도|충북|충남|전북특별자치도|전라북도|전라남도|전북|전남|경상북도|경상남도|경북|경남|"
+             "제주특별자치도|제주도|제주")
+ADDR_ADMIN = r"[가-힣]{1,6}(?:시|군|구|읍|면)"
+ADDR_ROAD = r"[가-힣0-9]{1,12}(?:로|길)(?: ?[0-9]{1,4}번?길)? ?[0-9]{1,4}(?:-[0-9]{1,4})?"
+ADDR_LOT = r"[가-힣0-9]{1,10}(?:동|리|가)(?:[0-9]가)? ?[0-9]{1,5}(?:-[0-9]{1,5})?"
+ADDR_UNIT = r"(?:[0-9]{1,4} ?동(?: ?[0-9]{1,4} ?호)?|[0-9]{1,4} ?호|[가-힣A-Za-z]+(?:아파트|빌라|연립|맨션|오피스텔))"
+ADDR_TAIL = r"(?:(?: [가-힣A-Za-z0-9]{1,20}){0,5} %s)?" % ADDR_UNIT
+ADDRESS = re.compile(r"(?<![가-힣0-9])(?:(?:%s) )?(?:%s ){1,3}(?:%s|%s)(?![0-9])%s(?![가-힣0-9])"
+                     % (ADDR_PROV, ADDR_ADMIN, ADDR_ROAD, ADDR_LOT, ADDR_TAIL))
+# District-only home address right after a move notice: "이사하였습니다.(강북구 수유동)".
+ADDR_AREA = re.compile(r"(?<![가-힣])(?:(?:%s) )?(?:%s ){0,2}%s ?[가-힣0-9]{1,8}(?:동|읍|면|리)(?![가-힣])%s(?![가-힣0-9])"
+                       % (ADDR_PROV, ADDR_ADMIN, r"[가-힣]{1,6}(?:시|군|구)", ADDR_TAIL))
+ADDR_UNIT_ONLY = re.compile(r"(?<![0-9])[0-9]{1,4} ?동 ?[0-9]{1,4} ?호(?![가-힣])")
+HAS_UNIT = re.compile(r"[0-9] ?동|[0-9] ?호|단지|아파트|빌라|연립|맨션|오피스텔")
+OWN_ADDRESS = re.compile(r"청파로|서계동")
+HOME_CUE = re.compile(r"이사|자택|거주|집 ?주소")
+# A venue word directly before the address (교회 needs a name attached: 로고스교회, not 「우리 교회」).
+VENUE_CUE = re.compile(r"[가-힣A-Za-z]교회|수양관|기도원|수련원|연수원|센터|호텔|학교|대학|홀|웨딩|예식장|컨벤션|회관|"
+                       r"캠핑장|장례식장|병원|채플|성당|리조트|펜션|공원|빌딩|타워|노회|총회")
+ADDR_WINDOW = 60
+ADDR_MARK = "(주소 생략)"
+
+
+def address_verdict(text, a, b):
+    """'own' | 'venue' | 'home' | 'unsure' for the address text[a:b]."""
+    span = text[a:b]
+    if OWN_ADDRESS.search(span):
+        return "own"
+    if HAS_UNIT.search(span):
+        return "home"
+    before = text[max(0, a - ADDR_WINDOW):a]
+    home = [m.end() for m in HOME_CUE.finditer(before)]
+    venue = [m.end() for m in VENUE_CUE.finditer(before)]
+    if home and (not venue or home[-1] >= venue[-1]):
+        return "home"
+    if venue:
+        return "venue"
+    return "unsure"
+
+
+def remove_addresses(text, where):
+    """Replace home addresses by ADDR_MARK; log each removal / kept venue by kind (never the text)."""
+    out, pos = [], 0
+    spans = []
+    for m in ADDRESS.finditer(text):
+        spans.append((m.start(), m.end(), "full"))
+    for m in ADDR_AREA.finditer(text):
+        if any(a < m.end() and m.start() < b for a, b, _ in spans):
+            continue
+        before = text[max(0, m.start() - 30):m.start()]
+        if HOME_CUE.search(before) and not OWN_ADDRESS.search(m.group(0)):
+            spans.append((m.start(), m.end(), "area"))
+    for m in ADDR_UNIT_ONLY.finditer(text):
+        if not any(a <= m.start() < b for a, b, _ in spans):
+            spans.append((m.start(), m.end(), "unit"))
+    for a, b, how in sorted(spans):
+        if a < pos:
+            continue
+        verdict = "home" if how in ("unit", "area") else address_verdict(text, a, b)
+        if verdict == "own":
+            continue
+        if verdict == "venue":
+            R.addr_kept.append(where)
+            continue
+        kind = {"home": "집 주소", "unsure": "판단 불확실(지움)"}[verdict]
+        if how == "area" and not HAS_UNIT.search(text[a:b]):
+            kind = "집 주소(시 · 구 · 동까지만)"
+        R.addr.append((where, kind))
+        out.append(text[pos:a])
+        out.append(ADDR_MARK)
+        pos = b
+    out.append(text[pos:])
+    return "".join(out)
 
 
 def mask_private(text, where, markdown=False):
-    """Mask phone numbers / e-mail addresses (not the church's own); log each mask by kind."""
+    """Remove home addresses; mask phone numbers / e-mail addresses (not the church's own),
+    주민등록번호 and card-like numbers; log each by kind (never the value)."""
     star = "\\*" if markdown else "*"
     if not text:
         return text
+    text = remove_addresses(text, where)
+
+    def rrn(m):
+        R.masks.append((where, "주민등록번호"))
+        return "(주민번호 생략)"
+
+    def card(m):
+        R.masks.append((where, "카드번호"))
+        return "(카드번호 생략)"
+    text = CARD.sub(card, RRN.sub(rrn, text))
 
     def ph(m):
         digits = m.group(1) + m.group(3) + m.group(5)
@@ -923,6 +1019,18 @@ def download_pdfs(crawl_dir, items, delay):
     return result
 
 
+# Bulletin PDFs are scanned images, so the text rules above cannot reach them. An OCR pass
+# (tesseract kor, 2026-11-27) found a home address or personal mobile numbers (members' and
+# staff's, given as contacts for events) in these; their PDFs are NOT copied into the repo
+# (the entry stays, without `pdf:`) until a redacted copy exists. OCR can miss things.
+PDF_HOLD = {i: "휴대전화" for i in (
+    "2024-07-28", "2024-12-01", "2024-12-08", "2025-01-05-2", "2025-01-12", "2025-01-19", "2025-02-02",
+    "2025-02-09", "2025-02-16", "2025-02-23", "2025-06-08", "2025-06-29", "2026-01-04-2", "2026-01-11",
+    "2026-02-22", "2026-03-08", "2026-03-15", "2026-04-19", "2026-04-26", "2026-05-03", "2026-05-10",
+    "2026-05-17")}
+PDF_HOLD["2025-08-24"] = "집 주소"
+
+
 def conv_bulletins(W, crawl_dir, args):
     board = "weekly"
     items = load_board(crawl_dir, board)
@@ -939,7 +1047,9 @@ def conv_bulletins(W, crawl_dir, args):
         if title:
             front.append("title: %s" % q(title))
         src = local.get(it.get("file") or "")
-        if src:
+        if src and ident in PDF_HOLD:
+            R.pdf_held.append((ident, PDF_HOLD[ident]))
+        elif src:
             front.append("pdf: /bulletins/%s.pdf" % ident)
             W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = src
         else:
@@ -1057,7 +1167,47 @@ def conv_staff(W, crawl_dir, photos):
 # ------------------------------------------------------------------ report file
 
 
-def write_report(path, args):
+SCAN = [
+    ("주민등록번호 모양", RRN),
+    ("카드번호 모양(16자리)", CARD),
+    ("계좌번호 모양(은행 · 계좌 말 근처)", re.compile(
+        r"(?:계좌|은행|농협|국민|신한|우리|하나|기업|우체국|새마을|신협|카카오뱅크|예금주)[^\n]{0,20}?"
+        r"(?<![\d*])(?:\d{2,6}-\d{2,6}-\d{2,8}(?:-\d{1,4})?|\d{10,14})(?![\d*])")),
+    ("차량번호 모양", re.compile(r"(?<![0-9])\d{2,3} ?[가나다라마거너더러머버서어저고노도로모보소오조구누두루무부수우주하허호배]"
+                            r" ?\d{4}(?![0-9])")),
+    ("전화번호(교회 번호 제외, 안 가린 것)", PHONE),
+    ("휴대전화(붙여 쓴 것)", re.compile(r"(?<![\d*])01[016789]\d{7,8}(?![\d*])")),
+    ("이메일(교회 제외)", EMAIL),
+    ("IPv4", re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")),
+    ("주소 모양(지우지 않은 것)", ADDRESS),
+    ("동 · 호 모양", ADDR_UNIT_ONLY),
+]
+
+
+def sensitive_scan(W):
+    """[(kind, [file per hit])] over every written text file (nothing is changed)."""
+    out = []
+    for kind, rx in SCAN:
+        hits = []
+        for rel, text in sorted(W.files.items()):
+            for m in rx.finditer(text):
+                if rx is PHONE and m.group(1) + m.group(3) + m.group(5) in CHURCH_PHONES:
+                    continue
+                if rx is EMAIL and m.group(0).lower() in CHURCH_EMAILS:
+                    continue
+                if rx is ADDRESS and OWN_ADDRESS.search(m.group(0)):
+                    continue
+                hits.append(rel)
+        out.append((kind, hits))
+    return out
+
+
+def legacy_of(W, where):
+    m = re.search(r"\nlegacy:\n  board: (\S+)\n  seq: (\S+)\n", W.files.get(where, ""))
+    return "%s seq %s" % m.groups() if m else "-"
+
+
+def write_report(path, args, W):
     L = ["# 옛 게시판 → content/ 변환 보고 (scripts/migrate/convert.py)", "",
          "- 입력: `%s`" % args.crawl, "- 출력: `%s`" % args.out, "- 공개 파일(PDF): `%s`" % args.public, "",
          "## 게시판별 건수", "", "| 게시판 | 이름 | 들어옴 | 씀 | 건너뜀 | 건너뛴 이유 |", "|---|---|---:|---:|---:|---|"]
@@ -1083,7 +1233,36 @@ def write_report(path, args):
     L += ["", "| 파일 | 종류 | 건수 |", "|---|---|---:|"]
     for (f, k), n in sorted(Counter(R.masks).items()):
         L.append("| %s | %s | %d |" % (f, k, n))
-    L += ["", "## 개인 이름이 들어 있는 글 (사용자 확인 필요)", "",
+    L += ["", "## 집 주소 빼기 (사용자 결정 11/27: 이름은 그대로, 집 주소만 뺌)", "",
+          "시 · 군 · 구 · 읍 · 면 + 도로명(…로/…길 + 번호) 또는 지번(…동/리/가 + 번호) + 건물 · 동 · 호를 「%s」로 "
+          "바꿨다. 교회 주소(청파로 · 서계동)와 행사 장소 주소(바로 앞 %d자 안에 교회 이름 · 홀 · 웨딩 · 회관 · "
+          "캠핑장 같은 장소 말이 있고, 「이사」보다 가까움)는 그대로 뒀다. 판단이 안 서는 것은 지우고 아래에 "
+          "「판단 불확실」로 적었다. 주소 글자는 이 보고에도 적지 않는다." % (ADDR_MARK, ADDR_WINDOW), ""]
+    akinds = Counter(k for _f, k in R.addr)
+    L.append("지운 주소: %d건 (%s) · 행사 장소라 둔 주소: %d건 (%d개 파일)"
+             % (len(R.addr), ", ".join("%s %d" % kv for kv in sorted(akinds.items())) or "없음",
+                len(R.addr_kept), len(set(R.addr_kept))))
+    L += ["", "| 파일 | 옛 글 | 종류 | 건수 |", "|---|---|---|---:|"]
+    for (f, k), n in sorted(Counter(R.addr).items()):
+        L.append("| %s | %s | %s | %d |" % (f, legacy_of(W, f), k, n))
+    L += ["", "행사 장소라 둔 주소가 있는 파일: " + (", ".join("`%s`" % f for f in sorted(set(R.addr_kept))) or "없음")]
+    L += ["", "## 주보 PDF 보류 (스캔 이미지 · OCR로 찾음)", "",
+          "주보 PDF는 글자가 아닌 스캔 그림이라 위 규칙이 닿지 않는다. tesseract(kor) OCR로 찾은 집 주소 · 개인 휴대전화"
+          "(교인 · 교역자의 행사 문의 번호)가 있는 주보는 PDF를 저장소에 넣지 않고 `pdf:` 없이 적었다(사이트에는 「준비 중」). "
+          "원본은 `<crawl>/weekly-pdf/`에 그대로 있다. 가린 사본을 만들면 넣을 수 있다. OCR은 놓칠 수 있다.", "",
+          "보류 %d건: %s" % (len(R.pdf_held), ", ".join("%s %d" % kv for kv in sorted(Counter(k for _i, k in R.pdf_held).items())) or "없음"), ""]
+    L += ["- `bulletins/%s` — %s" % (i, k) for i, k in R.pdf_held]
+    L += ["", "## 남은 민감 정보 검사 (출력 전체 · 바꾸지 않음)", "",
+          "주민등록번호 · 카드번호 모양은 찾으면 가린다(위 「개인정보 가림」에 건수). 그 밖의 것은 사용자 결정"
+          "(11/27: 옛 사이트 그대로 옮기고, 개인정보 검토는 새 사이트에서 나중에)대로 건수와 파일만 적는다. "
+          "차량번호 · 계좌는 모양만 보고 센 것이라 다른 숫자가 섞일 수 있다. 교회 공식 헌금 계좌는 "
+          "content/site.yaml · pages에 아직 없어 따로 빼지 않았다.", ""]
+    L += ["| 종류 | 건수 | 파일 |", "|---|---:|---|"]
+    for kind, hits in sensitive_scan(W):
+        files = sorted(set(hits))
+        shown = ", ".join("`%s`" % f for f in files[:20]) + (" … 외 %d개" % (len(files) - 20) if len(files) > 20 else "")
+        L.append("| %s | %d | %s |" % (kind, len(hits), shown or "-"))
+    L += ["", "## 개인 이름이 들어 있는 글 (사용자 결정 11/27: 그대로 옮김)", "",
           "세례 · 임직 · 등록 명단, 「○○ 권사님」 같은 호칭, 쉼표로 이어진 이름 목록을 찾았다(성씨 + 두 글자, "
           "섬기는 분 명단의 교역자 이름은 뺐다). 출력 파일은 바꾸지 않았다. 아래 예시는 이름을 가렸다(김○○).", ""]
     L += ["| 게시판 | 글 수 |", "|---|---:|"]
@@ -1152,7 +1331,7 @@ def main():
     conv_history(W, args.crawl, public_names)
     conv_staff(W, args.crawl, photos)
     W.flush(args.replace)
-    write_report(report, args)
+    write_report(report, args, W)
     total = sum(c["written"] for c in R.counts.values())
     print("convert: %d items -> %s (%d files, %d PDFs); report %s"
           % (total, args.out, len(W.files), len(W.binaries), report))
