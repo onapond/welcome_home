@@ -66,7 +66,8 @@ class Report:
         self.addr = []  # (file, kind): home addresses removed
         self.addr_kept = []  # files with an event venue address kept
         self.pdf_held = []  # (bulletin id, kind): PDF not copied (see PDF_HOLD)
-        self.pdf_missing = []  # (bulletin id, kept existing public PDF?): no PDF obtained in this run
+        self.pdf_missing = []  # bulletin ids written without a PDF: none obtained in this run
+        self.pdf_restored = []  # bulletin ids whose PDF came from a previous run's public copy
         self.vimeo_only = Counter()  # board -> items whose only video was Vimeo
         self.vimeo_dropped = Counter()  # board -> Vimeo links dropped in total
         self.notes = defaultdict(list)  # board -> free text lines
@@ -553,7 +554,6 @@ class Writer:
         self.files = {}  # relative path -> text
         self.binaries = {}  # absolute dest -> source file
         self.keep = set()  # absolute paths of existing files this run must not delete
-        self.hold = None  # temp folder with copies of previously linked bulletin PDFs (prior_bulletin_pdfs)
         self.used = defaultdict(set)
 
     def new_id(self, coll, base):
@@ -997,12 +997,60 @@ def conv_news(W, crawl_dir, photos, public):
 # ------------------------------------------------------------------ bulletins (PDF download)
 
 
-def prior_bulletin_pdfs(W):
-    """legacy.seq -> a held copy of the PDF the existing bulletin file links to.
+def front_matter(fn):
+    """Top-level scalars of a content file's front matter, plus `legacy.seq` as "legacy.seq".
 
-    Only links written in the current front matter count (a leftover public file nothing links to
-    is never reused), and only complete PDFs. Copies go to a temp folder first, because this run
-    may delete or overwrite the public file before it is needed under its new id.
+    Reads only the plain one-line forms this converter and content/README.md use (`key: value`,
+    'single' or "double" quoted). Anything else under a key read here (a block, a flow value, a
+    missing closing `---`) raises ValueError, so a hand-edited file stops the run before
+    anything is deleted instead of silently losing its PDF link.
+    """
+    text = open(fn, encoding="utf-8").read()
+    m = re.match(r"---\n(.*?\n)---(?:\n|$)", text, re.S)
+    if not m:
+        raise ValueError("%s: front matter (--- ... ---) not found" % fn)
+    out, block = {}, None
+    for line in m.group(1).split("\n"):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        top = re.match(r"([A-Za-z_][\w-]*):(.*)$", line)
+        sub = re.match(r"  ([A-Za-z_][\w-]*):(.*)$", line)
+        if top:
+            block = top.group(1)
+            key, raw = block, top.group(2)
+        elif sub and block == "legacy":
+            key, raw = "legacy." + sub.group(1), sub.group(2)
+        else:
+            continue
+        if key not in ("pdf", "legacy.seq"):
+            continue
+        out[key] = yaml_scalar(raw, "%s: %s" % (fn, key))
+    return out
+
+
+def yaml_scalar(raw, where):
+    v = raw.strip()
+    if v.startswith('"'):
+        m = re.match(r'"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$', v)
+        if not m or "\\" in m.group(1):
+            raise ValueError("%s: unreadable value %r" % (where, v))
+        return m.group(1)
+    if v.startswith("'"):
+        m = re.match(r"'((?:[^']|'')*)'\s*(?:#.*)?$", v)
+        if not m:
+            raise ValueError("%s: unreadable value %r" % (where, v))
+        return m.group(1).replace("''", "'")
+    v = re.sub(r"\s+#.*$", "", v)
+    if not v or v[0] in "[{|>&*!%@`":
+        raise ValueError("%s: unreadable value %r" % (where, v))
+    return v
+
+
+def prior_bulletin_pdfs(W):
+    """legacy.seq -> the public PDF the existing bulletin file's front matter links to.
+
+    Only a `pdf:` written in the current front matter counts (a leftover public file nothing
+    links to is never reused), and only complete PDFs. Read before anything is written.
     """
     d = os.path.join(W.out, "bulletins")
     if not os.path.isdir(d):
@@ -1011,18 +1059,39 @@ def prior_bulletin_pdfs(W):
     for name in sorted(os.listdir(d)):
         if not name.endswith(".md") or name.startswith("_"):
             continue
-        text = open(os.path.join(d, name), encoding="utf-8").read()
-        pdf = re.search(r'^pdf: "?/bulletins/([0-9a-z-]+\.pdf)"?$', text, re.M)
-        seq = re.search(r'^legacy:\n(?:  .*\n)*?  seq: "?([^"\n]+)"?$', text, re.M)
-        src = pdf and os.path.join(W.public, "bulletins", pdf.group(1))
-        if not (pdf and seq and is_pdf_file(src)) or seq.group(1) in out:
-            continue
-        if W.hold is None:
-            W.hold = tempfile.mkdtemp(prefix="convert-pdf-")
-        held = os.path.join(W.hold, pdf.group(1))
-        shutil.copyfile(src, held)
-        out[seq.group(1)] = held
+        fm = front_matter(os.path.join(d, name))
+        pdf, seq = fm.get("pdf"), fm.get("legacy.seq")
+        m = pdf and re.fullmatch(r"/bulletins/([0-9a-z-]+\.pdf)", pdf)
+        src = m and os.path.join(W.public, "bulletins", m.group(1))
+        if seq and src and is_pdf_file(src):
+            out.setdefault(seq, src)
     return out
+
+
+def restore_cache(crawl_dir, items, prior):
+    """For old PDFs this run could not get (`items`), put a previous run's linked public copy back into
+    the cache <crawl>/weekly-pdf/. The cache outlives this run, so a run that fails midway (after
+    deleting or overwriting public files) loses nothing: the next run finds the PDF there.
+    Returns url -> cache file."""
+    d = os.path.join(crawl_dir, "weekly-pdf")
+    restored = {}
+    for it in items:
+        u = it.get("file")
+        src = u and prior.get(hashlib.sha1(u.encode()).hexdigest()[:10])
+        if not src or u in restored:
+            continue
+        fn = os.path.join(d, hashlib.sha1(u.encode()).hexdigest()[:16] + ".pdf")
+        os.makedirs(d, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=d, prefix="." + os.path.basename(fn) + ".", suffix=".part")
+        os.close(fd)
+        try:
+            shutil.copyfile(src, tmp)
+            os.replace(tmp, fn)
+        finally:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        restored[u] = fn
+    return restored
 
 
 def pdf_complete(data):
@@ -1033,8 +1102,12 @@ def pdf_complete(data):
     m = re.search(rb"startxref\s+(\d+)\s+%%EOF\s*$", data[-1024:])
     if not m or int(m.group(1)) >= len(data):
         return False
-    at = data[int(m.group(1)):int(m.group(1)) + 40]
-    return at.startswith(b"xref") or re.match(rb"\d+\s+\d+\s+obj\b", at) is not None
+    at = data[int(m.group(1)):int(m.group(1)) + 4096]
+    if re.match(rb"xref\s", at):
+        return True
+    # a cross-reference stream: an object whose dictionary says /Type /XRef and opens a stream
+    obj = re.match(rb"\d+\s+\d+\s+obj\s*<<(.*?)>>\s*stream\r?\n", at, re.S)
+    return obj is not None and re.search(rb"/Type\s*/XRef\b", obj.group(1)) is not None
 
 
 def is_pdf_file(fn, want=None):
@@ -1136,8 +1209,10 @@ def conv_bulletins(W, crawl_dir, args):
     board = "weekly"
     items = load_board(crawl_dir, board)
     items.sort(key=lambda it: (it.get("date") or "", it.get("file") or ""))
-    local, _missing = download_pdfs(crawl_dir, items, args.delay, offline=args.no_download)
-    prior = prior_bulletin_pdfs(W)
+    prior = prior_bulletin_pdfs(W)  # first: a hand-edited front matter stops the run before any work
+    local, missing = download_pdfs(crawl_dir, items, args.delay, offline=args.no_download)
+    restored = restore_cache(crawl_dir, [it for it in items if it.get("file") in missing], prior)
+    local.update(restored)
     for it in items:
         R.board(board)["in"] += 1
         if not it.get("ok") or not is_date(it.get("date")):
@@ -1153,22 +1228,15 @@ def conv_bulletins(W, crawl_dir, args):
         if src and ident in PDF_HOLD:
             R.pdf_held.append((ident, PDF_HOLD[ident]))
         elif src:
+            if it.get("file") in restored:
+                R.pdf_restored.append(ident)
             front.append("pdf: /bulletins/%s.pdf" % ident)
             W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = src
         else:
-            # No PDF in this run (offline without a cache, or the fetch failed): reuse the PDF a
-            # previous run linked to this same old PDF (legacy.seq), wherever it sat. Ids are date +
-            # order, so a newly added earlier bulletin moves the neighbours' files to new ids.
-            held = None if ident in PDF_HOLD else prior.get(seq)
-            kept = bool(held)
-            R.pdf_missing.append((ident, kept))
-            if held:
-                W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = held
-                front.append("pdf: /bulletins/%s.pdf" % ident)
-                print("warning: %s: PDF not obtained in this run; reusing the PDF a previous run linked to "
-                      "this bulletin (not re-checked against the old site)" % ident, file=sys.stderr)
-            else:
-                R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
+            # No PDF in this run (offline without a cache, or the fetch failed). A previous run's
+            # linked copy would have been put back into the cache above (restore_cache).
+            R.pdf_missing.append(ident)
+            R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
         url = OLD_BASE + it["detail_url"] if (it.get("detail_url") or "").startswith("/") else it.get("detail_url", "")
         front += legacy_lines(board, q(seq) if seq[0].isdigit() else seq, url)
         W.md("bulletins", ident, front, "")
@@ -1366,14 +1434,13 @@ def write_report(path, args, W):
           "원본은 `<crawl>/weekly-pdf/`에 그대로 있다. 가린 사본을 만들면 넣을 수 있다. OCR은 놓칠 수 있다.", "",
           "보류 %d건: %s" % (len(R.pdf_held), ", ".join("%s %d" % kv for kv in sorted(Counter(k for _i, k in R.pdf_held).items())) or "없음"), ""]
     L += ["- `bulletins/%s` — %s" % (i, k) for i, k in R.pdf_held]
-    kept = [i for i, k in R.pdf_missing if k]
-    L += ["", "## 주보 PDF 못 구함 (이번 실행)", "",
-          "캐시(`<crawl>/weekly-pdf/`)에 맞는 파일이 없고 내려받지도 못한(또는 `--no-download`) 주보. "
-          "이미 `public/bulletins/`에 있던 PDF는 지우지 않고(`--replace`여도) 그대로 연결했다 — 이번에 다시 "
-          "확인하지 못했으니 다음 실행에서 받아 확인한다.", "",
-          "못 구함 %d건 · 그중 기존 PDF를 둔 것 %d건 · pdf 없이 적은 것 %d건"
-          % (len(R.pdf_missing), len(kept), len(R.pdf_missing) - len(kept)), ""]
-    L += ["- **경고** `bulletins/%s` — 기존 PDF를 다시 확인하지 못함(그대로 둠)" % i for i in kept]
+    L += ["", "## 주보 PDF 못 구함 · 기존 사본 사용 (이번 실행)", "",
+          "캐시(`<crawl>/weekly-pdf/`)에 맞는 파일이 없던 주보. 이전 실행이 같은 옛 PDF(`legacy.seq`)로 연결해 둔 "
+          "`public/bulletins/` 파일이 있으면 캐시로 되돌려 그대로 썼다 — 옛 사이트와 다시 대조하지는 못했다. "
+          "그것도 없고 내려받지도 못한(또는 `--no-download`) 주보는 pdf 없이 적었다.", "",
+          "기존 사본 사용 %d건 · pdf 없이 적은 것 %d건" % (len(R.pdf_restored), len(R.pdf_missing)), ""]
+    L += ["- **경고** `bulletins/%s` — 기존 사본을 옛 사이트와 다시 대조하지 못함" % i for i in R.pdf_restored]
+    L += ["- `bulletins/%s` — PDF 없음" % i for i in R.pdf_missing]
     L += ["", "## 남은 민감 정보 검사 (출력 전체 · 바꾸지 않음)", "",
           "주민등록번호 · 카드번호 모양은 찾으면 가린다(위 「개인정보 가림」에 건수). 그 밖의 것은 사용자 결정"
           "(11/27: 옛 사이트 그대로 옮기고, 개인정보 검토는 새 사이트에서 나중에)대로 건수와 파일만 적는다. "
@@ -1454,18 +1521,15 @@ def main():
     conv_bulletins(W, args.crawl, args)
     conv_history(W, args.crawl, public_names)
     conv_staff(W, args.crawl, photos)
-    try:
-        W.flush(args.replace)
-    finally:
-        if W.hold:
-            shutil.rmtree(W.hold, ignore_errors=True)
+    W.flush(args.replace)
     write_report(report, args, W)
     total = sum(c["written"] for c in R.counts.values())
     print("convert: %d items -> %s (%d files, %d PDFs); report %s"
           % (total, args.out, len(W.files), len(W.binaries), report))
-    if R.pdf_missing:
-        print("warning: %d bulletin PDFs not obtained in this run (%d existing public copies kept); see the report"
-              % (len(R.pdf_missing), sum(1 for _i, k in R.pdf_missing if k)), file=sys.stderr)
+    if R.pdf_missing or R.pdf_restored:
+        print("warning: bulletin PDFs: %d not obtained (written without a PDF), %d taken from a previous run's "
+              "public copy (not re-checked against the old site); see the report"
+              % (len(R.pdf_missing), len(R.pdf_restored)), file=sys.stderr)
 
 
 if __name__ == "__main__":
