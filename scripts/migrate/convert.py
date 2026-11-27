@@ -1020,15 +1020,10 @@ def download_pdfs(crawl_dir, items, delay):
 
 
 # Bulletin PDFs are scanned images, so the text rules above cannot reach them. An OCR pass
-# (tesseract kor, 2026-11-27) found a home address or personal mobile numbers (members' and
-# staff's, given as contacts for events) in these; their PDFs are NOT copied into the repo
-# (the entry stays, without `pdf:`) until a redacted copy exists. OCR can miss things.
-PDF_HOLD = {i: "휴대전화" for i in (
-    "2024-07-28", "2024-12-01", "2024-12-08", "2025-01-05-2", "2025-01-12", "2025-01-19", "2025-02-02",
-    "2025-02-09", "2025-02-16", "2025-02-23", "2025-06-08", "2025-06-29", "2026-01-04-2", "2026-01-11",
-    "2026-02-22", "2026-03-08", "2026-03-15", "2026-04-19", "2026-04-26", "2026-05-03", "2026-05-10",
-    "2026-05-17")}
-PDF_HOLD["2025-08-24"] = "집 주소"
+# (tesseract kor, 2026-11-27) found a home address or personal mobile numbers in 23 of them.
+# User decision 2026-11-27: migrate the old site as it was and include those PDFs unchanged
+# (privacy review happens later on the new site). Add a bulletin id here to keep its PDF out.
+PDF_HOLD: dict[str, str] = {}
 
 
 def conv_bulletins(W, crawl_dir, args):

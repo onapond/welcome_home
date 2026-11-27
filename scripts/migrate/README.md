@@ -44,8 +44,8 @@ run does not write — the samples), `--no-download`, `--delay 0.5`.
   「이사」). No cue either way → removed and listed as 「판단 불확실」. The report lists each removal by
   file + legacy board/seq + kind (never the address text).
 - Bulletin PDFs are scanned images (no text layer). An OCR pass (tesseract `kor`) found a home address
-  or personal mobile numbers in 23 of them; `PDF_HOLD` keeps those PDFs out of the repo (entry written
-  without `pdf:`, listed under 「주보 PDF 보류」) until a redacted copy exists. OCR can miss things.
+  or personal mobile numbers in 23 of them. User decision 2026-11-27: include them unchanged (privacy
+  review later on the new site). `PDF_HOLD` (empty) can still keep a PDF out (entry written without `pdf:`).
 - 주민등록번호 / 16-digit card-like numbers are masked if present. The report's 「남은 민감 정보 검사」
   counts (without changing anything) account-like numbers, car plates, leftover phones / e-mails / IPv4
   and address shapes still in the output, with file names.
