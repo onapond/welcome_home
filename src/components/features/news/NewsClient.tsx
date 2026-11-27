@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { BookHeart, Megaphone, Newspaper, Pin } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CARD_BORDER, EmptyState, MoreButton, chipStyle, fmtDate } from "./shared";
@@ -12,6 +13,8 @@ export interface NewsItem {
   date: string;
   category: string;
   pinned: boolean;
+  /** Small copy of the first photo (thumb ?? src), or null when the item has no photos. */
+  thumb: string | null;
 }
 
 const PAGE_SIZE = 15;
@@ -64,12 +67,22 @@ export default function NewsClient({ items, categories }: { items: NewsItem[]; c
                     className="group flex items-start gap-4 rounded-2xl p-5 transition-shadow hover:shadow-md"
                     style={{ backgroundColor: "var(--color-white)", border: CARD_BORDER }}
                   >
-                    <span
-                      className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl mt-0.5"
-                      style={{ backgroundColor: "var(--color-bg-warm)" }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color }} strokeWidth={1.75} aria-hidden="true" />
-                    </span>
+                    {n.thumb ? (
+                      // Decorative: the link is already named by the title next to it.
+                      <span
+                        className="shrink-0 relative w-20 h-16 sm:w-24 sm:h-[4.5rem] rounded-xl overflow-hidden mt-0.5"
+                        style={{ backgroundColor: "var(--color-bg-warm)" }}
+                      >
+                        <Image src={n.thumb} alt="" fill sizes="96px" loading="lazy" className="object-cover" />
+                      </span>
+                    ) : (
+                      <span
+                        className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl mt-0.5"
+                        style={{ backgroundColor: "var(--color-bg-warm)" }}
+                      >
+                        <Icon className="w-5 h-5" style={{ color }} strokeWidth={1.75} aria-hidden="true" />
+                      </span>
+                    )}
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-bold tracking-widest" style={{ color }}>

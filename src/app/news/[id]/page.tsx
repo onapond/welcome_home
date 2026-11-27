@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: plainExcerpt(n.body) || `${n.category} · ${fmtDate(n.date)} — ${getSite().name}`,
     path: `/news/${id}`,
     type: "article",
+    image: n.images[0] ? mediaUrl(n.images[0].src) : undefined,
   });
 }
 

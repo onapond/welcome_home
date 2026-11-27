@@ -3,6 +3,7 @@ import { preload } from "react-dom";
 // Noto Serif KR is vendored (scripts/fonts/fetch-noto-serif-kr.mjs) so the
 // build never downloads fonts. Imported before globals.css like next/font was.
 import "./fonts/noto-serif-kr.css";
+import { NOTO_SERIF_KR_PRELOAD } from "./fonts/noto-serif-kr";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,9 +12,10 @@ import { getSite } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
 import { buildSiteSummary } from "@/lib/site-summary";
 
-// Same file next/font preloaded before (the latin subset). Korean slices are
-// fetched on demand through unicode-range.
-const SERIF_PRELOAD = "/fonts/noto-serif-kr/noto-serif-kr-latin.woff2";
+// Same file next/font preloaded before (the latin subset), from the same
+// content-versioned folder as the CSS. Korean slices are fetched on demand
+// through unicode-range.
+const SERIF_PRELOAD = NOTO_SERIF_KR_PRELOAD;
 
 export function generateMetadata(): Metadata {
   const site = getSite();

@@ -135,9 +135,10 @@ export const youtubeId = z.preprocess(
     ),
 );
 
-// Vimeo: vimeo.com/<digits>, vimeo.com/<digits>/<hash> (unlisted),
-// player.vimeo.com/video/<digits>[?h=<hash>]. Other query parameters
-// (e.g. ?share=copy) are ignored.
+// Vimeo: vimeo.com/<digits>[?h=<hash>], vimeo.com/<digits>/<hash> (unlisted),
+// player.vimeo.com/video/<digits>[?h=<hash>]. The unlisted hash `h` is checked
+// and kept wherever it appears; a path hash and a different ?h= is an error.
+// Other query parameters (e.g. ?share=copy) are ignored.
 const VIMEO_ID = /^\d{1,12}$/;
 const VIMEO_HASH = /^[0-9a-f]{4,32}$/i;
 const VIMEO_HOSTS = new Set(["vimeo.com", "www.vimeo.com"]);
@@ -154,11 +155,16 @@ export function parseVimeo(input: string): Video | null {
   const seg = u.pathname.split("/").filter(Boolean);
   let id: string | undefined;
   let hash: string | undefined;
+  const queryHash = u.searchParams.has("h") ? (u.searchParams.get("h") ?? "") : undefined;
   if (VIMEO_HOSTS.has(host) && (seg.length === 1 || seg.length === 2)) {
     [id, hash] = seg;
+    if (queryHash !== undefined) {
+      if (hash !== undefined && hash !== queryHash) return null;
+      hash = queryHash;
+    }
   } else if (host === "player.vimeo.com" && seg.length === 2 && seg[0] === "video") {
     id = seg[1];
-    hash = u.searchParams.get("h") ?? undefined;
+    hash = queryHash;
   }
   if (!id || !VIMEO_ID.test(id)) return null;
   if (hash !== undefined && !VIMEO_HASH.test(hash)) return null;
@@ -177,7 +183,7 @@ export const videoRef = z.string().transform((v, ctx): Video => {
     ctx.addIssue({
       code: "custom",
       message:
-        "영상 주소가 올바르지 않습니다. 유튜브(youtube.com · youtu.be 주소 또는 영상 ID 11자) 또는 비메오(https://vimeo.com/숫자 · https://player.vimeo.com/video/숫자) 주소를 적어 주세요",
+        "영상 주소가 올바르지 않습니다. 유튜브(youtube.com · youtu.be 주소 또는 영상 ID 11자) 또는 비메오(https://vimeo.com/숫자 · 일부 공개 영상은 https://vimeo.com/숫자/비밀값 또는 https://player.vimeo.com/video/숫자?h=비밀값) 주소를 적어 주세요",
     });
     return z.NEVER;
   }

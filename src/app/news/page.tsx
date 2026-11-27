@@ -3,6 +3,7 @@ import NewsClient from "@/components/features/news/NewsClient";
 import { NEWS_TABS, PageHero } from "@/components/features/news/shared";
 import { NEWS_CATEGORIES, getNews } from "@/lib/content";
 import { getListPage } from "@/lib/content/lists";
+import { thumbUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
 export function generateMetadata(): Metadata {
@@ -14,7 +15,14 @@ export default function NewsPage() {
   const news = getNews();
   const page = getListPage("news");
   const categories = NEWS_CATEGORIES.filter((c) => news.some((n) => n.category === c));
-  const items = news.map((n) => ({ id: n.id, title: n.title, date: n.date, category: n.category, pinned: n.pinned }));
+  const items = news.map((n) => ({
+    id: n.id,
+    title: n.title,
+    date: n.date,
+    category: n.category,
+    pinned: n.pinned,
+    thumb: n.images[0] ? thumbUrl(n.images[0]) : null,
+  }));
 
   return (
     <main>

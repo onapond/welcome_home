@@ -103,9 +103,10 @@ date: 2026-11-23
   - 소식 · 영상 `images`: `- { src: news/x/001.webp, thumb: news/x/001-480.webp, alt: 사진 설명 }`
   - 사진 한 장 항목(`cover` · 일정 `image` · `thumbnail`): 경로만 적거나 `{ src: x/001.webp, thumb: x/001-480.webp }`
   - 사진첩 `cover`를 사진 목록 중 하나로 적으면 그 사진의 `thumb`을 함께 씁니다.
+- 소식에 사진(`images`)을 넣으면 첫 사진이 소식 목록에 작은 사진(`thumb`이 있으면 그것, 없으면 원본)으로 나오고, 카카오톡 등 공유 미리 보기에는 첫 사진의 원본이 나옵니다. 사진이 없는 소식은 목록에 분류 아이콘이 나옵니다.
 - 소식 사진에 설명을 붙이려면 `- { src: news/2026-11-23/001.webp, alt: 사진 설명 }`처럼 씁니다. 본문 사진은 `![사진 설명](news/2026-11-23/002.webp)`로 씁니다.
 - 설교 · 찬양 · 영상(`videos/`)의 영상은 `video:`에 적습니다. 영상(`videos/`)은 `video:` 없이 사진 · 글만 있어도 됩니다. 유튜브는 `youtube.com` · `youtu.be` 주소를 그대로 붙이거나 영상 ID(11자)만 씁니다.
-- 비메오는 `https://vimeo.com/숫자`, 일부 공개 영상은 `https://vimeo.com/숫자/비밀값`, 퍼가기 주소 `https://player.vimeo.com/video/숫자?h=비밀값`을 그대로 붙입니다. 다른 주소는 오류가 납니다.
+- 비메오는 `https://vimeo.com/숫자`, 일부 공개 영상은 `https://vimeo.com/숫자/비밀값` 또는 `https://vimeo.com/숫자?h=비밀값`, 퍼가기 주소 `https://player.vimeo.com/video/숫자?h=비밀값`을 그대로 붙입니다. 다른 주소는 오류가 납니다.
 - 비메오는 표지 사진을 자동으로 가져오지 않습니다. `thumbnail:`에 사진 경로(위 사진 경로 규칙과 같음)를 적으면 그 사진이, 없으면 남색 기본 표지가 나옵니다. 유튜브도 `thumbnail:`을 적으면 그 사진이 나옵니다.
 
   ```yaml
