@@ -6,8 +6,9 @@ Input : <crawl>/boards/*.json        (crawl.py)
         <crawl>/binaries.json         (expected PDF sizes)
 Output: <out>/{sermons,praise,videos,albums,events,news,bulletins}/*.md, <out>/history.yaml,
         <out>/staff.yaml, <public>/bulletins/<id>.pdf, and a report (outside the repo).
-        Bulletin PDFs are first downloaded into <crawl>/weekly-pdf/ (resumable, one polite
-        connection, crawl.Fetcher), then copied.
+        Bulletin PDFs come from the cache <crawl>/weekly-pdf/ (checked: %PDF- + expected size);
+        missing ones are downloaded there first (resumable, one polite connection, crawl.Fetcher)
+        unless --no-download. A PDF not obtained in a run never deletes an existing public copy.
 
 Rules (docs/migration-plan.md, docs/검토규칙.md ⑱, content/README.md):
 - s_board_2 (새가족소개) and s_board_4 (중보기도) are never read.
@@ -32,9 +33,10 @@ import os
 import re
 import shutil
 import sys
+import tempfile
 from collections import Counter, defaultdict
 from html.parser import HTMLParser
-from urllib.parse import quote, unquote, urlsplit
+from urllib.parse import quote, unquote, urljoin, urlsplit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location("migrate_crawl", os.path.join(HERE, "crawl.py"))
@@ -64,6 +66,7 @@ class Report:
         self.addr = []  # (file, kind): home addresses removed
         self.addr_kept = []  # files with an event venue address kept
         self.pdf_held = []  # (bulletin id, kind): PDF not copied (see PDF_HOLD)
+        self.pdf_missing = []  # (bulletin id, kept existing public PDF?): no PDF obtained in this run
         self.vimeo_only = Counter()  # board -> items whose only video was Vimeo
         self.vimeo_dropped = Counter()  # board -> Vimeo links dropped in total
         self.notes = defaultdict(list)  # board -> free text lines
@@ -271,8 +274,13 @@ def legacy_lines(board, seq, url):
 B_OPEN, B_CLOSE, BR = "", "", ""
 BLOCK = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ul", "ol", "table", "tbody", "thead",
          "tr", "blockquote", "section", "article", "center", "hr", "pre", "dl", "dt", "dd", "figure"}
-SKIP = {"script", "style", "noscript", "head", "title", "iframe", "object", "embed", "video", "audio",
-        "select", "option", "textarea", "button", "svg", "map"}
+# Elements whose whole content is dropped. A depth is tracked only for these (a stack, so a missing
+# close tag of an inner one cannot swallow the rest of the post). `option` is not here: it is only
+# ever inside <select>, and its close tag is optional, so it would never be popped.
+SKIP = {"script", "style", "noscript", "head", "title", "iframe", "object", "video", "audio",
+        "select", "textarea", "button", "svg", "map"}
+# Void elements (no children, no close tag) that are dropped: only the tag itself is skipped.
+SKIP_VOID = {"embed", "input", "param", "source", "track", "link", "meta", "base", "area", "wbr", "col", "keygen"}
 INNER_CELL = {"br", "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ul", "ol", "center", "blockquote"}
 MD_ESC = re.compile(r"([\\`*_\[\]<>])")
 ENTITY_LIKE = re.compile(r"&(?=#?[A-Za-z0-9]+;)")
@@ -287,12 +295,13 @@ def md_escape(s):
 class ToMarkdown(HTMLParser):
     """Paragraphs, line breaks, links, bold and images; everything else becomes plain text."""
 
-    def __init__(self, image_cb):
+    def __init__(self, image_cb, base_url=OLD_BASE + "/"):
         super().__init__(convert_charrefs=True)
         self.image_cb = image_cb  # src -> markdown image line or None
+        self.base_url = base_url  # the post's old detail URL: relative links resolve against it
         self.blocks = []
         self.cur = []
-        self.skip = 0
+        self.skip = []  # open SKIP elements (innermost last)
         self.bold = 0
         self.link = None  # [href, start index in cur]
         self.li_pending = False
@@ -315,8 +324,10 @@ class ToMarkdown(HTMLParser):
     def handle_starttag(self, tag, attrs):
         tag = tag.lower()
         a = dict(attrs)
+        if tag in SKIP_VOID:
+            return
         if tag in SKIP:
-            self.skip += 1
+            self.skip.append(tag)
             return
         if self.skip:
             return
@@ -350,8 +361,11 @@ class ToMarkdown(HTMLParser):
 
     def handle_endtag(self, tag):
         tag = tag.lower()
+        if tag in SKIP_VOID:
+            return  # a stray </embed> closes nothing
         if tag in SKIP:
-            self.skip = max(0, self.skip - 1)
+            if tag in self.skip:  # close it and anything left open inside it
+                del self.skip[len(self.skip) - 1 - self.skip[::-1].index(tag):]
             return
         if self.skip:
             return
@@ -372,7 +386,7 @@ class ToMarkdown(HTMLParser):
             href, start = self.link
             self.link = None
             inner = "".join(self.cur[start:])
-            url = link_url(href)
+            url = link_url(href, self.base_url)
             if url and inner.strip(B_OPEN + B_CLOSE + BR + " "):
                 del self.cur[start:]
                 self.cur.append("[" + inner + "](" + url + ")")
@@ -390,13 +404,18 @@ class ToMarkdown(HTMLParser):
         return "\n\n".join(self.blocks)
 
 
-def link_url(href):
+def link_url(href, base_url=OLD_BASE + "/"):
+    """An absolute http(s) link for an <a href>, resolved against the post's old detail URL
+    (`../notice.asp`, `/x`, `//host/x`, `?page=2` all work); None for other schemes
+    (javascript:, mailto:, …) and for page-internal `#…` / empty links."""
     href = htmllib.unescape(href or "").strip()
-    if href.startswith("//"):
-        href = "http:" + href
-    elif href.startswith("/"):
-        href = OLD_BASE + href
-    if not re.match(r"^https?://", href):
+    if not href or href.startswith("#"):
+        return None
+    try:
+        href = urljoin(base_url or OLD_BASE + "/", href)
+    except ValueError:
+        return None
+    if not re.match(r"^https?://[^/?#\s]", href, re.I):
         return None
     return href.replace(" ", "%20").replace("(", "%28").replace(")", "%29").replace("<", "%3C").replace(">", "%3E")
 
@@ -459,8 +478,8 @@ def escape_line_start(line):
     return line
 
 
-def html_to_md(body_html, image_cb):
-    p = ToMarkdown(image_cb)
+def html_to_md(body_html, image_cb, base_url=OLD_BASE + "/"):
+    p = ToMarkdown(image_cb, base_url)
     p.feed(body_html or "")
     p.close()
     return p.result().strip()
@@ -533,6 +552,7 @@ class Writer:
         self.public = public
         self.files = {}  # relative path -> text
         self.binaries = {}  # absolute dest -> source file
+        self.keep = set()  # absolute paths of existing files this run must not delete (PDF not obtained)
         self.used = defaultdict(set)
 
     def new_id(self, coll, base):
@@ -565,7 +585,7 @@ class Writer:
         if os.path.isdir(bdir):
             for name in sorted(os.listdir(bdir)):
                 p = os.path.join(bdir, name)
-                if name.endswith(".pdf") and p not in self.binaries:
+                if name.endswith(".pdf") and p not in self.binaries and p not in self.keep:
                     stale.append(("public/bulletins/" + name, p))
         if stale and not replace:
             print("warning: %d existing files are not written by this run (use --replace to remove them): %s"
@@ -655,7 +675,8 @@ def image_line(alt):
     return line
 
 
-def body_md(item, board, photos, where, title, drop_keys=(), keep_images=True):
+def body_md(item, board, photos, where, title, drop_keys=(), keep_images=True, used=None):
+    """Body Markdown; `used` (a list) collects the photo records written into the body, in order."""
     mk = image_line(title)
     misses = []
 
@@ -671,9 +692,11 @@ def body_md(item, board, photos, where, title, drop_keys=(), keep_images=True):
             return None
         if not keep_images or r[0] in drop_keys:
             return None
+        if used is not None:
+            used.append(r)
         return mk(r[0])
 
-    md = html_to_md(item.get("body_html") or "", cb)
+    md = html_to_md(item.get("body_html") or "", cb, legacy_url(item) or OLD_BASE + "/")
     if misses:
         R.notes[board].append("seq %s: 본문 사진 %d장을 목록에서 찾지 못해 뺐습니다" % (item.get("seq"), len(misses)))
     return mask_private(md, where, markdown=True)
@@ -957,8 +980,14 @@ def conv_news(W, crawl_dir, photos, public):
         where = "news/%s.md" % ident
         videos_of(it, board)  # Vimeo only on this board: counted, never written
         front = ["title: %s" % q(front_title(title, where)), "date: %s" % date, "category: 소식"]
+        used = []
+        body = body_md(it, board, photos, where, title, used=used)
+        # The body keeps every photo where it was; the first one (else the item's first photo) also
+        # goes into `images:` so the news list thumbnail and the share preview (OG) can use it.
+        lead = used[0] if used else (photos.item_photos(board, it["seq"]) or [None])[0]
+        if lead:
+            front += ["images:", "  - src: %s" % lead[0], "    thumb: %s" % lead[1]]
         front += legacy_lines(board, it["seq"], legacy_url(it))
-        body = body_md(it, board, photos, where, title)
         record_names(board, where, title + "\n" + body, public)
         W.md("news", ident, front, body)
         R.board(board)["written"] += 1
@@ -967,56 +996,89 @@ def conv_news(W, crawl_dir, photos, public):
 # ------------------------------------------------------------------ bulletins (PDF download)
 
 
-def pdf_store(crawl_dir):
+def is_pdf_file(fn, want=None):
+    """A regular file (not a symlink) that starts like a PDF and, when `want` is given, has that size."""
+    if os.path.islink(fn) or not os.path.isfile(fn):
+        return False
+    if want and os.path.getsize(fn) != want:
+        return False
+    with open(fn, "rb") as f:
+        return f.read(5) == b"%PDF-"
+
+
+def save_json_atomic(path, obj):
+    """Write JSON through a new temp file in the same folder (exclusive create), then replace."""
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix="." + os.path.basename(path) + ".", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(obj, f, ensure_ascii=False, indent=1, sort_keys=True)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.lexists(tmp):
+            os.remove(tmp)
+        raise
+
+
+def download_pdfs(crawl_dir, items, delay, offline=False):
+    """Every weekly PDF from the cache <crawl>/weekly-pdf/, fetching the missing ones unless `offline`.
+    A cached file counts when it is a PDF of the size `binaries.json` (or, without a HEAD size, the
+    state record) gives. Returns (url -> local file, [urls not obtained in this run]).
+    The state file is written only when something changed (never when offline)."""
     d = os.path.join(crawl_dir, "weekly-pdf")
-    os.makedirs(d, exist_ok=True)
-    return d
-
-
-def download_pdfs(crawl_dir, items, delay):
-    """Fetch every weekly PDF into <crawl>/weekly-pdf/ (resumable). Returns url -> local file."""
-    d = pdf_store(crawl_dir)
     state_file = os.path.join(d, "state.json")
     state = json.load(open(state_file, encoding="utf-8")) if os.path.exists(state_file) else {}
-    bins = json.load(open(os.path.join(crawl_dir, "binaries.json"), encoding="utf-8"))
+    before = json.dumps(state, sort_keys=True)
+    bins_file = os.path.join(crawl_dir, "binaries.json")
+    bins = json.load(open(bins_file, encoding="utf-8")) if os.path.exists(bins_file) else {}
     fetcher = None
-    result = {}
+    result, missing = {}, []
     todo = 0
     for it in items:
         u = it.get("file")
-        if not u:
+        if not u or u in result or u in missing:
             continue
         fn = os.path.join(d, hashlib.sha1(u.encode()).hexdigest()[:16] + ".pdf")
         want = (bins.get(u) or {}).get("size")
-        if os.path.exists(fn) and (not want or os.path.getsize(fn) == want):
+        rec = state.get(u) or {}
+        if not want and rec.get("status") == "ok":
+            want = rec.get("bytes")
+        if is_pdf_file(fn, want):
             result[u] = fn
+            continue
+        if offline:
+            missing.append(u)
             continue
         todo += 1
         if fetcher is None:
+            os.makedirs(d, exist_ok=True)
             fetcher = crawl.Fetcher(crawl_dir, delay=delay)
             fetcher.init_session()
         try:
             st, _hl, data = fetcher.raw("GET", u)
         except Exception as e:  # network trouble: keep going, the next run retries
             state[u] = {"status": "failed", "error": str(e)[:200], "at": crawl.now()}
+            missing.append(u)
             continue
         if st != 200 or not data.startswith(b"%PDF-"):
             state[u] = {"status": "failed", "error": "HTTP %s, %d bytes, not a PDF" % (st, len(data)), "at": crawl.now()}
+            missing.append(u)
             continue
-        with open(fn + ".part", "wb") as f:
+        fd, tmp = tempfile.mkstemp(dir=d, prefix="." + os.path.basename(fn) + ".", suffix=".part")
+        with os.fdopen(fd, "wb") as f:
             f.write(data)
-        os.replace(fn + ".part", fn)
+        os.replace(tmp, fn)
         state[u] = {"status": "ok", "bytes": len(data), "file": os.path.basename(fn), "at": crawl.now()}
         if want and want != len(data):
             state[u]["note"] = "size differs from HEAD (%s)" % want
         result[u] = fn
         if todo % 10 == 0:
-            json.dump(state, open(state_file, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=True)
+            save_json_atomic(state_file, state)
             crawl.log("weekly pdf: %d fetched" % todo)
     for u, fn in result.items():
         state.setdefault(u, {"status": "ok", "bytes": os.path.getsize(fn), "file": os.path.basename(fn)})
-    json.dump(state, open(state_file, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=True)
-    return result
+    if not offline and json.dumps(state, sort_keys=True) != before:
+        save_json_atomic(state_file, state)
+    return result, missing
 
 
 # Bulletin PDFs are scanned images, so the text rules above cannot reach them. An OCR pass
@@ -1030,7 +1092,7 @@ def conv_bulletins(W, crawl_dir, args):
     board = "weekly"
     items = load_board(crawl_dir, board)
     items.sort(key=lambda it: (it.get("date") or "", it.get("file") or ""))
-    local = {} if args.no_download else download_pdfs(crawl_dir, items, args.delay)
+    local, _missing = download_pdfs(crawl_dir, items, args.delay, offline=args.no_download)
     for it in items:
         R.board(board)["in"] += 1
         if not it.get("ok") or not is_date(it.get("date")):
@@ -1048,7 +1110,18 @@ def conv_bulletins(W, crawl_dir, args):
             front.append("pdf: /bulletins/%s.pdf" % ident)
             W.binaries[os.path.join(W.public, "bulletins", ident + ".pdf")] = src
         else:
-            R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
+            # No PDF in this run (offline without a cache, or the fetch failed): an existing public
+            # copy is a previous run's good file — keep it (even with --replace) and keep linking it.
+            old = os.path.join(W.public, "bulletins", ident + ".pdf")
+            kept = ident not in PDF_HOLD and is_pdf_file(old)
+            R.pdf_missing.append((ident, kept))
+            if kept:
+                W.keep.add(old)
+                front.append("pdf: /bulletins/%s.pdf" % ident)
+                print("warning: %s: PDF not obtained in this run; keeping the existing public/bulletins/%s.pdf "
+                      "(not re-checked against the old site)" % (ident, ident), file=sys.stderr)
+            else:
+                R.notes[board].append("%s: PDF를 받지 못해 pdf 없이 적었습니다" % ident)
         seq = hashlib.sha1((it.get("file") or "").encode()).hexdigest()[:10]
         url = OLD_BASE + it["detail_url"] if (it.get("detail_url") or "").startswith("/") else it.get("detail_url", "")
         front += legacy_lines(board, q(seq) if seq[0].isdigit() else seq, url)
@@ -1247,6 +1320,14 @@ def write_report(path, args, W):
           "원본은 `<crawl>/weekly-pdf/`에 그대로 있다. 가린 사본을 만들면 넣을 수 있다. OCR은 놓칠 수 있다.", "",
           "보류 %d건: %s" % (len(R.pdf_held), ", ".join("%s %d" % kv for kv in sorted(Counter(k for _i, k in R.pdf_held).items())) or "없음"), ""]
     L += ["- `bulletins/%s` — %s" % (i, k) for i, k in R.pdf_held]
+    kept = [i for i, k in R.pdf_missing if k]
+    L += ["", "## 주보 PDF 못 구함 (이번 실행)", "",
+          "캐시(`<crawl>/weekly-pdf/`)에 맞는 파일이 없고 내려받지도 못한(또는 `--no-download`) 주보. "
+          "이미 `public/bulletins/`에 있던 PDF는 지우지 않고(`--replace`여도) 그대로 연결했다 — 이번에 다시 "
+          "확인하지 못했으니 다음 실행에서 받아 확인한다.", "",
+          "못 구함 %d건 · 그중 기존 PDF를 둔 것 %d건 · pdf 없이 적은 것 %d건"
+          % (len(R.pdf_missing), len(kept), len(R.pdf_missing) - len(kept)), ""]
+    L += ["- **경고** `bulletins/%s` — 기존 PDF를 다시 확인하지 못함(그대로 둠)" % i for i in kept]
     L += ["", "## 남은 민감 정보 검사 (출력 전체 · 바꾸지 않음)", "",
           "주민등록번호 · 카드번호 모양은 찾으면 가린다(위 「개인정보 가림」에 건수). 그 밖의 것은 사용자 결정"
           "(11/27: 옛 사이트 그대로 옮기고, 개인정보 검토는 새 사이트에서 나중에)대로 건수와 파일만 적는다. "
@@ -1305,7 +1386,9 @@ def main():
     ap.add_argument("--report", help="report file (default: <crawl>/convert-report.md)")
     ap.add_argument("--replace", action="store_true",
                     help="delete .md files (not _templates) and bulletin PDFs in <out> that this run does not write")
-    ap.add_argument("--no-download", action="store_true", help="do not fetch missing bulletin PDFs")
+    ap.add_argument("--no-download", action="store_true",
+                    help="offline: use only cached bulletin PDFs (<crawl>/weekly-pdf/); a PDF missing there is not "
+                         "fetched, and an existing public/bulletins/<id>.pdf for it is kept")
     ap.add_argument("--delay", type=float, default=0.5, help="seconds between PDF requests (polite)")
     args = ap.parse_args()
     args.crawl = os.path.abspath(args.crawl)
@@ -1330,6 +1413,9 @@ def main():
     total = sum(c["written"] for c in R.counts.values())
     print("convert: %d items -> %s (%d files, %d PDFs); report %s"
           % (total, args.out, len(W.files), len(W.binaries), report))
+    if R.pdf_missing:
+        print("warning: %d bulletin PDFs not obtained in this run (%d existing public copies kept); see the report"
+              % (len(R.pdf_missing), sum(1 for _i, k in R.pdf_missing if k)), file=sys.stderr)
 
 
 if __name__ == "__main__":

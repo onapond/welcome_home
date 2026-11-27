@@ -14,7 +14,7 @@
 //
 // sharp is resolved from this file's location, then from $SHARP_BASE (a directory whose
 // node_modules contains sharp; photos.py sets it when running from a git worktree without node_modules).
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import fs from "node:fs";
@@ -52,22 +52,41 @@ async function pool(items, n, fn) {
   await Promise.all(workers);
 }
 
+// Write `data` to `dest` through a NEW temp file in dest's folder (photos.py checked that folder):
+// flag "wx" = O_CREAT|O_EXCL, so an existing file or symlink of that name is never opened or followed;
+// rename then replaces `dest` itself (a symlink at `dest` is replaced, its target is not written).
+function writeAtomic(dest, data) {
+  const dir = path.dirname(dest);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = path.join(dir, `.${path.basename(dest)}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`);
+  const fd = fs.openSync(tmp, "wx", 0o644);
+  try {
+    try {
+      fs.writeSync(fd, data);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmp, dest);
+  } catch (e) {
+    fs.rmSync(tmp, { force: true });
+    throw e;
+  }
+}
+
 async function writeWebp(src, dest, edge) {
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  const tmp = dest + ".tmp";
-  const info = await sharp(src, { failOn: "none", animated: false })
+  const { data, info } = await sharp(src, { failOn: "none", animated: false })
     .rotate()
     .resize({ width: edge, height: edge, fit: "inside", withoutEnlargement: true })
     .webp({ quality: QUALITY })
-    .toFile(tmp);
-  fs.renameSync(tmp, dest);
+    .toBuffer({ resolveWithObject: true });
+  writeAtomic(dest, data);
   return info;
 }
 
 const sha256 = (buf) => createHash("sha256").update(buf).digest("hex");
 
 function rmIfThere(f) {
-  for (const p of [f, f + ".tmp"]) fs.rmSync(p, { force: true });
+  fs.rmSync(f, { force: true });
 }
 
 async function doResize(jobsFile, outFile) {
@@ -88,7 +107,7 @@ async function doResize(jobsFile, outFile) {
     done++;
     if (done % 250 === 0) console.error(`resize ${done}/${jobs.length}`);
   });
-  fs.writeFileSync(outFile, JSON.stringify(res));
+  fs.writeFileSync(outFile, JSON.stringify(res), { flag: "wx" }); // photos.py removed any old one first
   console.error(`resize done ${done}/${jobs.length}`);
 }
 
@@ -147,7 +166,7 @@ async function doVerify(listFile, outFile) {
     }
     res[it.id] = r;
   });
-  fs.writeFileSync(outFile, JSON.stringify(res));
+  fs.writeFileSync(outFile, JSON.stringify(res), { flag: "wx" });
 }
 
 const [mode, a, b] = process.argv.slice(2);

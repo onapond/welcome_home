@@ -13,7 +13,7 @@ npm run check:content
 
 Options: `--public DIR` (default `<out>/../public`), `--report FILE` (default `<crawl>/convert-report.md`,
 outside the repo), `--replace` (delete `.md` files other than `_…` templates and bulletin PDFs that this
-run does not write — the samples), `--no-download`, `--delay 0.5`.
+run does not write — the samples), `--no-download` (offline: cached PDFs only, see PDFs below), `--delay 0.5`.
 
 - Mapping = `docs/migration-plan.md`. `s_board_2` / `s_board_4` are never read.
   sermons ← media_1 (주일예배) + media_2 (금요기도회): scripture = `chapter`, preacher = `author`,
@@ -21,7 +21,9 @@ run does not write — the samples), `--no-download`, `--delay 0.5`.
   praise ← media_3 (no body). videos ← s_board_3. albums ← s_board_1 (category from title words,
   else 기타; photos = manifest `key` + `thumbKey` + width/height). events ← s_board_5 (start/end from
   the `YY-MM-DD[~MM-DD]` title prefix, or `M월 D일` + post year; prefix removed from the title).
-  news ← s_board_6 (`category: 소식`, date from the `YY-MM-DD` title prefix when present).
+  news ← s_board_6 (`category: 소식`, date from the `YY-MM-DD` title prefix when present; body photos stay
+  where they are, and the first one — else the post's first photo — is also written as `images: [{src, thumb}]`
+  so the news list thumbnail and the share preview (OG) use it).
   bulletins ← weekly (`pdf: /bulletins/<id>.pdf`, file in `public/bulletins/`). history.yaml, staff.yaml.
 - Video: only YouTube goes into `video:` (first one; more become `[영상 N](https://youtu.be/…)` links).
   Vimeo links are dropped (docs/검토규칙.md ⑱). A videos post without YouTube gets its first photo as `thumbnail`.
@@ -31,9 +33,17 @@ run does not write — the samples), `--no-download`, `--delay 0.5`.
   (files whose content is unchanged are not rewritten).
 - Every collection item has `legacy: {board, seq, url}`; weekly has no post number, so `seq` is the
   first 10 hex of SHA-1(PDF URL). history / staff schemas have no `legacy` field.
-- Body HTML → Markdown: paragraphs, `<br>` (as `\` line ends), links (old-site relative links made
-  absolute), bold, images (`![title](manifest key)`), table rows as `칸 · 칸` lines; scripts, styles,
-  iframes and other tags removed; entities decoded; Markdown characters and `{{ }}` escaped.
+- m5 메모 (옛 주소 연결): 주보는 옛 상세 URL 하나를 여러 주보가 함께 쓴다(141건 · 상세 URL 136개 — 예: 2025년
+  10월 첫 주 PDF 3개). `legacy` 형식(board · seq · url 하나)은 바꾸지 않으므로, m5에서는 **옛 주소 1개 → 그 주차의
+  주보 전부**(같은 `legacy.url`을 가진 주보 모두 — 목록이나 첫 주보로)로 연결한다. URL 하나로 주보 하나를 고르면
+  나머지가 빠진다. 각 주보의 원본 PDF 주소는 `legacy.seq`(= SHA-1(PDF URL) 앞 10자)로 `boards/weekly.json`의
+  `file`에서 되찾는다.
+- Body HTML → Markdown: paragraphs, `<br>` (as `\` line ends), links (relative links — `/x`, `../x`, `?page=2` —
+  resolved against the post's old detail URL with `urljoin` and kept when http(s); `#…`, `mailto:`, `javascript:`
+  dropped, the text stays), bold, images (`![title](manifest key)`), table rows as `칸 · 칸` lines; scripts,
+  styles, iframes and other tags removed with their content (an unclosed inner one closes with its parent);
+  void tags such as `<embed>` are dropped alone, never the text after them; entities decoded; Markdown
+  characters and `{{ }}` escaped.
 - Privacy: author IP / id never written; phone-like numbers masked `010-****-****` (not the church's
   02-714-0041~3 / 02-711-8166); e-mails masked except church@chungpa21.org; staff phones/e-mails omitted.
   Personal names are kept as-is (user decision 2026-11-27); the report still counts them per board.
@@ -50,7 +60,12 @@ run does not write — the samples), `--no-download`, `--delay 0.5`.
   counts (without changing anything) account-like numbers, car plates, leftover phones / e-mails / IPv4
   and address shapes still in the output, with file names.
 - PDFs: downloaded once into `<crawl>/weekly-pdf/` (`state.json`, resumable, one connection,
-  `crawl.Fetcher`, `%PDF-` check, size compared with `binaries.json`), then copied.
+  `crawl.Fetcher`, `%PDF-` check, size compared with `binaries.json`), then copied. The cache is always
+  used — also with `--no-download`, which only skips the network (and never writes `state.json`); a cached
+  file counts when it is a regular file starting `%PDF-` with the expected size. A bulletin whose PDF is
+  not obtained in this run keeps an existing `public/bulletins/<id>.pdf` (never deleted, even with
+  `--replace`) and its `pdf:` line; the report section 「주보 PDF 못 구함」 counts them and warns for each kept
+  file (stderr too). `state.json` is rewritten only when it changed (temp file + rename).
 
 # chungpa21.org inventory crawler
 
@@ -145,16 +160,22 @@ they are listed in `manifest.json` `failures` and only `status: ok` keys are eve
 - Output: `media/original/<key stem>.<ext>`, `media/out/<key>`, `media/manifest.json`
   (URL -> key, thumbKey, width, height, bytes, sha256, references, status + `failures`),
   `media/state/` (resume state, `verify-summary.json`).
-  - `sameFileAs` (on a failed download): another URL of the SAME item has exactly the same file name
-    (e.g. `view_img.asp?filename=X` vs `/file/.../X`), and every such candidate is `ok` with one sha256.
+  - `sameFileAs` (on a failed download that is an alias — `view_img.asp` / `download.asp?filename=X`, which
+    names the file only by `filename=`): another URL of the SAME item has exactly the same file name
+    (e.g. `/file/.../X`), and every such candidate is `ok` with one sha256. A failed plain `/file/.../X`
+    path is never linked: a same-name file in another directory is an independent file (unresolved).
     Candidates are the `/file/` paths of that name (a failed one keeps it unresolved) plus asp aliases
     (`view_img` / `download.asp`) of that name that downloaded; a failed alias is not another file.
     Otherwise the failure stays unresolved, with `sameFileCandidates` for a manual check.
   - `sameContentAs` (on an ok entry): byte-identical (sha256) to an earlier ok key.
 - `verify` reads every output with sharp: webp, no metadata, long edge = min(original, limit),
-  orientation kept, original sha256 = manifest; checks the manifest still matches plan + state; and
+  orientation kept, original sha256 = manifest; checks the manifest still matches plan + state — fields and
+  every reference (board, seq, photo position: convert.py builds each item's photos from them); and
   lists every file in `media/out/` that is not an ok key/thumbKey of the manifest (e.g. a photo now only
   in an excluded board) as a problem — `prune` deletes those. Prints a random sample (always including
   EXIF-rotated photos if any).
 - Upload (m4) must take the file list from the manifest (`status: ok` → `key` + `thumbKey`), never
   "everything under `media/out/`", and only after `verify` exits 0.
+- Every write (state JSON, originals; outputs in `resize.mjs`) goes to a NEW temp file created exclusively
+  in the already-checked folder (`mkstemp` / `wx`, never following an existing file or symlink), then
+  renamed over the target.
