@@ -3,18 +3,21 @@ import {
   LIMITS,
   escapeHtml,
   isBot,
+  isFieldObject,
   optionalText,
   requireChoice,
   requireConsent,
   requirePhone,
   requireText,
   type FieldError,
+  VISIT_COUNT_OPTIONS,
+  visitCountLabel,
 } from "@/lib/forms";
 import { mailConfigured, notificationHtml, sendFormNotification } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getSite } from "@/lib/content";
 
-const COUNT_OPTIONS = ["1", "2", "3", "4", "5명 이상"] as const;
+const COUNT_OPTIONS = VISIT_COUNT_OPTIONS.map((o) => o.value);
 
 // 레이트리밋은 두 단계로 나눈다.
 //
@@ -43,15 +46,20 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Record<string, unknown>;
+  // 파싱 실패와 「필드 객체가 아닌 JSON」(null · 배열 · 숫자)은 같은 400이다.
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
+    parsed = null;
+  }
+  if (!isFieldObject(parsed)) {
     return NextResponse.json(
       { ok: false, message: "요청을 처리하지 못했습니다." },
       { status: 400 }
     );
   }
+  const body = parsed;
 
   // 봇은 성공처럼 응답하고 조용히 버린다 (탐지 사실을 알려주지 않는다)
   if (isBot(body.website)) {
@@ -100,7 +108,7 @@ export async function POST(request: Request) {
       { label: "이름", value: escapeHtml(name) },
       { label: "연락처", value: escapeHtml(phone) },
       { label: "예배", value: escapeHtml(service) },
-      { label: "인원", value: escapeHtml(`${count}명`) },
+      { label: "인원", value: escapeHtml(visitCountLabel(count)) },
       { label: "남기실 말씀", value: escapeHtml(memo) },
     ])
   );

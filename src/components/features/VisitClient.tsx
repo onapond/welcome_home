@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, Users, Clock, MapPin } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { getIcon } from "@/lib/icons";
+import { VISIT_COUNT_OPTIONS } from "@/lib/forms";
 import type { Service } from "@/lib/content/schema";
 import type { VisitPage } from "@/lib/content/pages";
 
@@ -263,8 +264,8 @@ function VisitForm({
               className={inputClass}
               style={{ ...inputStyle, paddingLeft: "2.5rem" }}
             >
-              {["1", "2", "3", "4", "5명 이상"].map((n) => (
-                <option key={n} value={n}>{n}명</option>
+              {VISIT_COUNT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
           </div>
