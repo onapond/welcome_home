@@ -206,7 +206,12 @@ export function loadCollection<S extends z.ZodType>(
 
     for (const name of fs.readdirSync(folder).sort()) {
       if (name.startsWith("_") || IGNORED_FILES.has(name)) continue;
-      const file = path.join(folder, name);
+      // turbopackIgnore: a path built from a folder listing would otherwise be
+      // traced as "every file under content/" (thousands once the old boards
+      // are imported). Pages read content at build time, and the API routes
+      // that read it at runtime list their files in next.config.ts
+      // (outputFileTracingIncludes), so nothing depends on that tracing.
+      const file = path.join(/* turbopackIgnore: true */ folder, name);
       if (!name.endsWith(".md") || !isFile(file)) {
         problems.push(
           `${rel(file)} → 이 폴더에는 .md 파일만 둡니다 (확장자는 소문자 .md. 쓰지 않을 파일은 이름 앞에 _ 를 붙입니다)`,

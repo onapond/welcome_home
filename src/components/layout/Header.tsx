@@ -73,10 +73,10 @@ export default function Header() {
               aria-label={`${site.name} 홈으로`}
             >
               <Image
-                src="/images/logo-mark.png"
+                src="/images/logo-mark-h80.webp"
                 alt={site.name}
-                width={262}
-                height={98}
+                width={214}
+                height={80}
                 className="h-9 w-auto transition-all duration-300"
                 style={
                   solid

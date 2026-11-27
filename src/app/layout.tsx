@@ -4,6 +4,9 @@ import { preload } from "react-dom";
 // build never downloads fonts. Imported before globals.css like next/font was.
 import "./fonts/noto-serif-kr.css";
 import { NOTO_SERIF_KR_PRELOAD } from "./fonts/noto-serif-kr";
+// Pretendard is vendored the same way (scripts/fonts/fetch-pretendard.mjs).
+import "./fonts/pretendard.css";
+import { PRETENDARD_PRELOAD } from "./fonts/pretendard";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -51,6 +54,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   preload(SERIF_PRELOAD, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  // The body-text slice with the most common menu/heading syllables.
+  preload(PRETENDARD_PRELOAD, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   return (
     <html lang="ko" className="h-full">
       <body className="min-h-full flex flex-col antialiased">
