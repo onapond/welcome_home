@@ -16,7 +16,7 @@ import { fullAddress, latestMotto } from "./site-format";
 //   {{motto.latest.<year|text|keyword>}}  {{motto.<연도>}}
 //   {{transport.<교통편 id>}}  (location.yaml 교통편 — location.yaml 안에서는 못 씀)
 //
-// 모르는 이름, 값이 비어 있는 항목, 닫히지 않은 {{ · }}는 파일 · 위치와 함께
+// 모르는 이름, 값이 비어 있는 항목, 짝이 맞지 않는 {{ · }}(여분의 괄호 {{{name}}} 포함)는 파일 · 위치와 함께
 // 빌드를 멈춘다.
 
 export type TokenCtx = {
@@ -101,22 +101,33 @@ function resolveToken(token: string, ctx: TokenCtx): Resolved {
 
 const TOKEN = /\{\{\s*([^{}]*?)\s*\}\}/g;
 
+const BRACE_HINT = "{{ 와 }} 를 두 개씩 짝으로 적어 주세요 (예: {{name}})";
+
 function fillString(value: string, ctx: TokenCtx, file: string, problems: string[], path: string): string {
   const where = `${file} → ${path || "(문구)"}`;
   // Whatever is left after removing complete {{…}} must not hold a brace pair
-  // half: "안내 {{name}" would otherwise reach visitors as-is.
-  if (/\{\{|\}\}/.test(value.replace(TOKEN, ""))) {
-    problems.push(`${where}: 닫히지 않은 자리표시가 있습니다 — {{ 와 }} 를 짝으로 적어 주세요 (예: {{name}})`);
+  // half: "안내 {{name}" would otherwise reach visitors as-is. Three braces in
+  // a row ("{{{name}}}") mean a token with an extra brace that would show as
+  // "{청파중앙교회}". A single brace in normal text is fine.
+  if (/\{\{|\}\}/.test(value.replace(TOKEN, "")) || /\{\{\{|\}\}\}/.test(value)) {
+    problems.push(`${where}: 자리표시의 괄호가 맞지 않습니다 — ${BRACE_HINT}`);
     return value;
   }
-  return value.replace(TOKEN, (whole, token: string) => {
-    const out = resolveToken(token, ctx);
-    if ("problem" in out) {
-      problems.push(`${where}: ${whole} — ${out.problem}`);
+  let failed = false;
+  const out = value.replace(TOKEN, (whole, token: string) => {
+    const res = resolveToken(token, ctx);
+    if ("problem" in res) {
+      problems.push(`${where}: ${whole} — ${res.problem}`);
+      failed = true;
       return whole;
     }
-    return out.value;
+    return res.value;
   });
+  // Nothing brace-like may survive substitution (e.g. from a site.yaml value).
+  if (!failed && /\{\{|\}\}/.test(out)) {
+    problems.push(`${where}: 바꾼 뒤에도 {{ · }} 가 남습니다 — ${BRACE_HINT}`);
+  }
+  return out;
 }
 
 /** Substitute {{ }} tokens in every string of `value`; problems are collected with file · field. */

@@ -5,7 +5,7 @@ import { ChevronLeft, Download, ExternalLink } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { getBulletins, getSite } from "@/lib/content";
-import { isOwnMedia, mediaUrl } from "@/lib/media";
+import { isEmbeddableMedia, mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
@@ -31,9 +31,9 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
   const b = getBulletins().find((x) => x.id === id);
   if (!b) notFound();
   const pdf = b.pdf ? mediaUrl(b.pdf) : null;
-  // Embed only files the church serves (site path · photo store). An outside
-  // https file may not be the PDF its name says, so it gets a plain link.
-  const embed = b.pdf ? isOwnMedia(b.pdf) : false;
+  // Embed only store keys and "/" site paths. Any https:// PDF gets a plain
+  // link: an outside file may not be the PDF its name says.
+  const embed = b.pdf ? isEmbeddableMedia(b.pdf) : false;
   const title = b.title ?? `${fmtDate(b.date)} 주보`;
 
   return (
