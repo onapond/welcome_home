@@ -18,6 +18,7 @@
 2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
 3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림)
 4. ~~이전 준비 Codex 판정~~ — **아홉 번째에서 통과**(11/27 저녁, `docs/reviews/2026-11-27-migration-prep-codex-9.md`). 3~8번째 「고칠 것 있음」은 모두 고침
+4-1. **m6 확인 끝**(11/27 저녁) — 브라우저 표본 21쪽 이상 없음, 옛 글 1,357건 전부 옮겨짐, 사진 키 전부 있음. 유튜브 비공개 · 삭제 영상 21건은 옛 사이트와 같아 그대로(목록은 `docs/migration-plan.md` m6). Codex 판정 `docs/reviews/2026-11-27-m6-codex.md`
 5. 교회 확인 사실 모으기(예배 시간 · 주차 · 점심 · 헌금 계좌 · 우편번호 · 좌표 · 큰 목사 사진). 교회 메일은 `chungpa21c@gmail.com`으로 바꿈(사용자 11/27)
 6. Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함
 
@@ -49,7 +50,7 @@
 
 **끝난 것: 하네스 셋업 (11/27)**
 - `.claude/harness.conf` — 인계 = 이 절(`HANDOFF_SECTION=지금 상태`), CHECK = `npx tsc --noEmit && npm run lint && npm run build`
-- `docs/검토규칙.md` — 20개 규칙(디자인 시스템 · 도메인/URL · S7 렌더링 · 운영), 전부 출처 표기. Sanity 의존 추가 금지 포함
+- `docs/검토규칙.md` — 21개 규칙(㉑ 검토 종료 기준 11/27 추가)(디자인 시스템 · 도메인/URL · S7 렌더링 · 운영), 전부 출처 표기. Sanity 의존 추가 금지 포함
 - CHECK 첫 실행: tsc 0 · lint 0 · build 성공(15페이지)
 - 마지막 대립 검토 = 없음
 
