@@ -56,8 +56,11 @@
 - R1 ✅ `e5ba9f7` 설교 · 찬양 · 소식 · 주보 · 갤러리 라우트 content 기반 정적 생성, `src/lib/sanity` 삭제. 샘플 파일은 이전 때 지울 것(`content/*/` 중 `_template.md` 외 전부 샘플)
 - R2 ✅ W2 합침: 교회 정보 → `site.yaml`, 페이지 문구 → `content/pages/*.yaml`(home · location · about · community · visit · service-times · contact), `history.yaml` · `staff.yaml`, `src/lib/{pages는 content/pages.ts, icons, nav, site-summary}.ts`, `SiteProvider`. 연혁은 /about 안 10년 단위 접이식. `TODO(이전)` 표시 = 옛 사이트 확인 전 문구
 - R3 ✅ Sanity 패키지 5개 · `sanity/` · `/studio` · 시딩 스크립트 · `ClientLayout` 삭제, env 예시에 `NEXT_PUBLIC_MEDIA_BASE_URL`. `6f11f51` GitHub Actions 점검
-- 점검: tsc 0 · lint 0 · build 35페이지 · `next start`로 16경로 200/404 확인. **브라우저 시각 확인은 아직 안 함**(헤더 md 폭 좁음 의심 · 라이트박스 키보드 미시험)
-- R4 다음: Codex 독립 검토(요청서 `docs/reviews/2026-11-27-refactor-request.md`, 범위 `494d7d4..HEAD`) + harness 대립 검토 → 수정 → 재판정
+- R4 검수 진행: Codex · 대립 검토 둘 다 「고칠 것 있음」(`docs/reviews/2026-11-27-refactor-{codex,reviewer}.md`) → A(콘텐츠 검증 · 이미지 · 폼 · `content/README.md`) · B(헤더 · 메타데이터 · 목록 문구 `content/pages/lists.yaml` · 접근성) 병렬 수정 후 합침. 문서 `82fc43b`
+  - 주요 변경: gray-matter 제거(자체 머리말 분리), YAML `CORE_SCHEMA`(날짜 문자열 유지 · 달력 검사 · KST), strict 스키마 + 한국어 오류, 빌드 때 `validateAllContent()`(sitemap.ts에서) 전부 검사, `images.unoptimized: true`, 직원 연락처는 `publishContact: true` 없으면 오류
+  - 점검: tsc 0 · lint 0 · build 35페이지 · 17경로 200/404 · 폼 API null 본문 400
+  - **브라우저 확인(11/27)**: 상세 페이지 흰 헤더 · 갤러리 확대 보기(화살표 · Esc · 포커스 복귀) · 900px 모바일 메뉴(포커스 이동 · Esc · 스크롤 잠금) · 390px 14페이지 가로 넘침 없음 · 콘솔 오류 없음 · 소식 사진(머리말 + 본문) 표시 · 푸터 공동체 링크
+  - 다음: Codex 재판정(같은 요청서, 범위 `72b75d7..HEAD`)
 - 라우트는 전부 정적(`dynamicParams=false`). 사진은 next/image 최적화 안 씀. 「다가오는 일정」은 클라이언트에서 거를 것
 
 ---

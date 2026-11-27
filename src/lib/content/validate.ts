@@ -11,6 +11,7 @@ import {
   getStaff,
 } from "./index";
 import { PAGE_GETTERS } from "./pages";
+import { getListPage, listsSchema } from "./lists";
 
 /**
  * Read and validate every content file, including ones no page renders yet
@@ -30,6 +31,7 @@ export function validateAllContent(): void {
     getAlbums,
     getEvents,
     ...Object.values(PAGE_GETTERS),
+    ...listsSchema.keyof().options.map((key) => () => getListPage(key)),
   ];
   const problems: string[] = [];
   for (const get of getters) {
