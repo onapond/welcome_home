@@ -27,3 +27,6 @@ Thumbs.db
 
 # ─── Claude Code 작업 트리 ───
 .claude/worktrees/
+
+# Python
+__pycache__/
