@@ -28,7 +28,7 @@ npm run dev                        # http://localhost:3000
 npm run check:content   # 빌드 없이 content/ 전체를 몇 초 만에 검사 (빌드와 같은 규칙)
 ```
 
-`content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트(`scripts/setup-hooks.mjs`)로 `core.hooksPath`가 비어 있고 Git이 지금 쓰는 훅 폴더(보통 `.git/hooks`)에 실행 가능한 훅(`.sample` 제외)이 없을 때만 `.githooks`로 설정합니다. 이미 다른 훅 경로를 쓰거나 `.git/hooks`에 훅이 있는 컴퓨터는 바꾸지 않고, 기존 `pre-commit`에서 `npm run check:content` 또는 `.githooks/pre-commit`을 실행하도록 연결하라고 한 줄로 안내합니다(저장소 밖에서는 건너뜀).
+`content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트(`scripts/setup-hooks.mjs`)로 `core.hooksPath`가 비어 있고 Git이 지금 쓰는 훅 폴더(보통 `.git/hooks`)에 `.sample` 말고 다른 파일이 없을 때만 `.githooks`로 설정합니다. 이미 다른 훅 경로나 훅 파일이 있는 컴퓨터(또는 훅 폴더를 읽을 수 없는 경우)는 바꾸지 않고, 그 폴더의 `pre-commit`에 `"$(git rev-parse --show-toplevel)/.githooks/pre-commit" || exit 1` 한 줄을 넣으라고 안내합니다. 연결 방법은 이 한 가지입니다 — `npm run check:content`는 스테이징한 내용이 아니라 작업 파일을 검사하므로 훅 대신 쓰지 않습니다(저장소 밖에서는 건너뜀).
 
 ## 점검
 

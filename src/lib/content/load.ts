@@ -50,15 +50,28 @@ export function fsProblem(e: unknown, file?: string): string | null {
   return `${rel(where)} → 파일을 읽지 못했습니다 (${err.code}). ${hint}`;
 }
 
-/** fs.readFileSync(file, "utf8"), but a read error becomes a ContentError naming the file. */
+/**
+ * fs.readFileSync(file, "utf8"), but a read error becomes a ContentError naming
+ * the file. A NUL character (U+0000) anywhere is an error too: the Markdown
+ * parser silently turns it into U+FFFD, so later path checks would never see it.
+ */
 function readText(file: string): string {
+  let text: string;
   try {
-    return fs.readFileSync(file, "utf8");
+    text = fs.readFileSync(file, "utf8");
   } catch (e) {
     const problem = fsProblem(e, file);
     if (!problem) throw e;
     throw new ContentError([problem]);
   }
+  const nul = text.indexOf("\u0000");
+  if (nul !== -1) {
+    const line = text.slice(0, nul).split("\n").length;
+    throw new ContentError([
+      `${rel(file)} → ${line}번째 줄: 보이지 않는 글자(U+0000)가 있습니다. 그 줄을 다시 입력해 주세요`,
+    ]);
+  }
+  return text;
 }
 
 function formatIssues(file: string, error: z.ZodError): string[] {
