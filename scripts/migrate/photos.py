@@ -37,6 +37,7 @@ import random
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -122,13 +123,28 @@ def jload(fn, default):
     return default
 
 
-def jsave(fn, obj, indent=None):
+def write_atomic(fn, write):
+    """Write `fn` via a NEW temp file in its (checked) folder: created exclusively (mkstemp = O_CREAT|O_EXCL,
+    so an existing file or symlink of that name is never opened or followed), then renamed over `fn`
+    (rename replaces a symlink at `fn` itself, never its target). `write(f)` fills the binary file."""
+    d = os.path.dirname(fn)
     guard(fn)
-    os.makedirs(os.path.dirname(fn), exist_ok=True)
-    tmp = fn + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=indent)
-    os.replace(tmp, fn)
+    os.makedirs(d, exist_ok=True)
+    guard(d)
+    fd, tmp = tempfile.mkstemp(dir=d, prefix="." + os.path.basename(fn) + ".", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            write(f)
+        os.replace(tmp, fn)
+    except BaseException:
+        if os.path.lexists(tmp):
+            os.remove(tmp)
+        raise
+
+
+def jsave(fn, obj, indent=None):
+    data = json.dumps(obj, ensure_ascii=False, indent=indent).encode("utf-8")
+    write_atomic(fn, lambda f: f.write(data))
 
 
 def sha256_file(fn):
@@ -334,11 +350,7 @@ def run_download(P, args):
             elif not kind:
                 res.update(status="failed", error="not an image (content-type %s, %d bytes)" % (h.get("content-type", ""), len(data)))
             else:
-                guard(fn)
-                os.makedirs(os.path.dirname(fn), exist_ok=True)
-                with open(fn + ".part", "wb") as f:
-                    f.write(data)
-                os.replace(fn + ".part", fn)
+                write_atomic(fn, lambda f: f.write(data))
                 res.update(status="ok", bytes=len(data), format=kind, sha256=hashlib.sha256(data).hexdigest(),
                            file=os.path.relpath(fn, P.media))
                 if rec.get("expected_bytes") and rec["expected_bytes"] != len(data):
@@ -393,8 +405,7 @@ def run_node(mode, payload, P, name):
     jin = os.path.join(P.state, name + "-in.json")
     jout = os.path.join(P.state, name + "-out.json")
     jsave(jin, payload)
-    if os.path.exists(jout):
-        os.remove(jout)
+    unlink(jout)  # resize.mjs creates it exclusively ('wx'): an old file or symlink there is removed first
     subprocess.run(["node", os.path.join(HERE, "resize.mjs"), mode, jin, jout], check=True, env=node_env(), cwd=P.state)
     return jload(jout, {})
 
@@ -477,11 +488,13 @@ def build_manifest(P):
             else:
                 first_by_hash[m["sha256"]] = u
 
-    # sameFileAs: a failed download (e.g. view_img.asp?filename=X) is the same photo as another URL of the
-    # SAME item whose file name is exactly X - only if every such candidate is ok and all have one sha256.
+    # sameFileAs: a failed download that is an ALIAS (view_img.asp / download.asp?filename=X: it names the file
+    # by `filename=` only, so it points at whichever stored file is called X) is the same photo as another URL
+    # of the SAME item whose file name is exactly X - only if every such candidate is ok and all have one
+    # sha256. A failed plain path (/file/.../X) is its own file: another directory's X is an independent file,
+    # so it is never linked (left unresolved with the candidates listed for a manual check).
     # Candidates: every /file/... path with that name (a failed one is a separate file we cannot compare ->
-    # unresolved), plus view_img/download.asp aliases of that name only when they downloaded (a failed alias
-    # names the file by `filename=` only, like the failed URL itself, so it is not another file).
+    # unresolved), plus aliases of that name only when they downloaded (a failed alias is not another file).
     by_item_name = {}
     for u, rec in plan.items():
         for ref in rec["references"]:
@@ -500,8 +513,12 @@ def build_manifest(P):
                       and (items[v]["status"] != "download_failed" or not is_asp_link(urlsplit(v).path.lower()))]
         if not cands:
             continue
+        alias = is_asp_link(urlsplit(u).path.lower())
         hashes = {items[v].get("sha256") for v in cands}
-        if all(items[v]["status"] == "ok" for v in cands) and len(hashes) == 1:
+        if not alias:
+            f["sameFileCandidates"] = [{"key": items[v]["key"], "status": items[v]["status"], "sha256": items[v].get("sha256")} for v in cands]
+            f["unresolved"] = "a plain file path; a same-name file elsewhere is an independent file - check by hand"
+        elif all(items[v]["status"] == "ok" for v in cands) and len(hashes) == 1:
             target = first_by_hash[hashes.pop()]
             items[u]["sameFileAs"] = f["sameFileAs"] = items[target]["key"]
         else:
@@ -536,12 +553,21 @@ def run_manifest(P):
 MANIFEST_FIELDS = ("key", "thumbKey", "status", "sha256", "width", "height", "bytes", "thumbBytes", "sameFileAs")
 
 
+def ref_set(refs):
+    """References as comparable (board, seq, position) tuples: convert.py builds each item's photo list from them."""
+    return sorted((str(r.get("board_key")), str(r.get("seq")), int(r.get("position") or 0)) for r in refs or [])
+
+
 def manifest_drift(P, man):
-    """Entries where the saved manifest disagrees with what plan + state say now."""
+    """Entries where the saved manifest disagrees with what plan + state say now, including which items
+    (board, seq, photo position) use each photo: a photo newly used by another album is drift too."""
     want = build_manifest(P)["photos"]
     have = man.get("photos", {})
     diff = sorted(set(want) ^ set(have))
-    diff += [u for u in want if u in have and any(want[u].get(k) != have[u].get(k) for k in MANIFEST_FIELDS)]
+    diff += [u for u in want if u in have and (
+        any(want[u].get(k) != have[u].get(k) for k in MANIFEST_FIELDS)
+        or ref_set(want[u].get("references")) != ref_set(have[u].get("references"))
+        or ref_set(want[u].get("excludedBoardRefs")) != ref_set(have[u].get("excludedBoardRefs")))]
     return diff
 
 
