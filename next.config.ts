@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
   // types, page tokens). Make sure those files ship inside the functions.
   outputFileTracingIncludes: {
     "/api/**/*": ["./content/site.yaml", "./content/pages/*.yaml"],
+    // Old-site redirects (src/app/modu) look posts up by their `legacy` field.
+    "/modu/**/*": [
+      "./content/sermons/*.md",
+      "./content/albums/*.md",
+      "./content/videos/*.md",
+      "./content/news/*.md",
+      "./content/bulletins/*.md",
+    ],
   },
   // Font files in /public/fonts live in a content-versioned folder
   // (scripts/fonts/fetch-noto-serif-kr.mjs): a changed file gets a new URL,

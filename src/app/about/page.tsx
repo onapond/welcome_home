@@ -220,7 +220,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── 3. History ── */}
-      <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
+      <section id="history" className="scroll-mt-16 py-20 lg:py-28" style={{ backgroundColor: "var(--color-bg)" }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             label={page.history.label}
@@ -385,7 +385,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── 5. Staff ── */}
-      <section className="py-20 lg:py-28" style={{ backgroundColor: "var(--color-white)" }}>
+      <section id="staff" className="scroll-mt-16 py-20 lg:py-28" style={{ backgroundColor: "var(--color-white)" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             label={page.staff.label}
