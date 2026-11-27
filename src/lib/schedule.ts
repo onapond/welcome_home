@@ -35,7 +35,7 @@ export function parseWeekdays(day: string): number[] | null {
  */
 export function parseTime(time: string): number | null {
   const t = time.trim();
-  const m = t.match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2})|\s*시(?:\s*(\d{1,2})\s*분)?)?$/);
+  const m = t.match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2})|\s*시(?:\s*(\d{1,2})\s*분)?)$/);
   if (m) {
     const h = Number(m[2]);
     const min = Number(m[3] ?? m[4] ?? 0);

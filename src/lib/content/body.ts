@@ -70,13 +70,14 @@ export function bodyImageUrls(body: string): Set<string> {
 /**
  * A comparable form of an image path: mediaUrl, and for an https:// address
  * the WHATWG serialization, so "예배.webp" and "%EC%98%88%EB%B0%B0.webp" match
- * (already-encoded bytes, "%2F" and the query are left as they are).
+ * and "%ec%98…" matches "%EC%98…" (percent-escapes are upper-cased; the
+ * bytes, "%2F" and the query are otherwise left as they are).
  */
 export function imageUrlKey(src: string): string {
   const url = mediaUrl(src);
   if (!url.startsWith("https://")) return url;
   try {
-    return new URL(url).href;
+    return new URL(url).href.replace(/%[0-9a-f]{2}/gi, (m) => m.toUpperCase());
   } catch {
     return url;
   }

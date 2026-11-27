@@ -36,11 +36,24 @@ for (const b of [...c.getBulletins()].sort((x, y) => x.id.localeCompare(y.id))) 
   if (key) weeks.set(key, [...(weeks.get(key) ?? []), b]);
 }
 const html = (page) => (built.has(page) ? fs.readFileSync(`.next/server/app${page}.html`, "utf8") : "");
+// The HTML escapes "&" in attributes; a local href maps to a regular file under
+// public/ (each segment decoded on its own, so an encoded "/" never becomes a
+// path separator).
+const attr = (v) => v.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+const localFile = (href) => {
+  try {
+    const segs = href.split("?")[0].split("/").slice(1).map(decodeURIComponent);
+    if (segs.some((s) => !s || s === "." || s === ".." || s.includes("/") || s.includes("\\"))) return false;
+    return fs.statSync(path.join("public", ...segs)).isFile();
+  } catch {
+    return false;
+  }
+};
 const pagePdfOk = (b, text) => {
   if (!b.pdf) return true;
   const href = mediaUrl(b.pdf);
-  if (!text.includes(`href="${href}"`)) return false;
-  return !href.startsWith("/") || fs.existsSync(path.join("public", href));
+  if (!text.includes(`href="${attr(href)}"`)) return false;
+  return !href.startsWith("/") || localFile(href);
 };
 for (const [name, items, expect] of all) {
   for (const i of items) {
