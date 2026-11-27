@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: s.title,
     description: `${[s.scripture, s.preacher, fmtDate(s.date)].filter(Boolean).join(" · ")} — ${getSite().name} 설교`,
     path: `/sermons/${id}`,
-    image: videoThumb(s.video, s.thumbnail) ?? undefined,
+    image: videoThumb(s.video, s.thumbnail, "full") ?? undefined,
     type: "article",
   });
 }

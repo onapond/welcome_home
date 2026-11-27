@@ -29,6 +29,7 @@ const DARK_HERO_ROUTES: ReadonlySet<string> = new Set([
   "/news",
   "/news/bulletin",
   "/news/gallery",
+  "/news/videos",
 ]);
 
 export default function Header() {

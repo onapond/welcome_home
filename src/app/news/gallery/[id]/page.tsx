@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import PhotoGrid from "@/components/features/gallery/PhotoGrid";
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
-import { getAlbums, getSite } from "@/lib/content";
+import { albumCover, getAlbums, getSite } from "@/lib/content";
 import { mediaUrl, thumbUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: a.title,
     description: `${fmtDate(a.date)} ${a.category} 사진 ${a.photos.length}장 — ${getSite().name} 갤러리`,
     path: `/news/gallery/${id}`,
-    image: thumbUrl(a.cover ?? a.photos[0].src),
+    image: mediaUrl(albumCover(a).src),
     type: "article",
   });
 }
@@ -34,7 +34,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   if (!a) notFound();
 
   const photos = a.photos.map((p) => ({
-    thumb: thumbUrl(p.src),
+    thumb: thumbUrl(p),
     full: mediaUrl(p.src),
     width: p.width,
     height: p.height,

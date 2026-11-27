@@ -4,7 +4,7 @@ import { ContentError, loadYaml } from "./load";
 import { transportMap } from "./pages";
 import { fillTokens } from "./tokens";
 
-// content/pages/lists.yaml — 설교 · 찬양 · 소식 · 주보 · 갤러리 목록 페이지의 머리글 문구.
+// content/pages/lists.yaml — 설교 · 찬양 · 소식 · 주보 · 갤러리 · 영상 목록 페이지의 머리글 문구.
 
 const FILE = "pages/lists.yaml";
 
@@ -27,6 +27,7 @@ export const listsSchema = z
     news: listPageSchema,
     bulletin: listPageSchema,
     gallery: listPageSchema,
+    videos: listPageSchema,
   })
   .strict();
 

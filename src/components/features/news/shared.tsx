@@ -7,6 +7,11 @@ export function fmtDate(d: string): string {
   return d.replace(/-/g, ".");
 }
 
+/** First ~120 characters of a Markdown body as plain text (page descriptions). */
+export function plainExcerpt(md: string): string {
+  return md.replace(/[#>*_`\[\]()!-]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
 export interface NavTab {
   href: string;
   label: string;
@@ -16,6 +21,7 @@ export const NEWS_TABS: NavTab[] = [
   { href: "/news", label: "공지·소식" },
   { href: "/news/bulletin", label: "주보" },
   { href: "/news/gallery", label: "갤러리" },
+  { href: "/news/videos", label: "영상" },
 ];
 
 export const SERMON_TABS: NavTab[] = [
