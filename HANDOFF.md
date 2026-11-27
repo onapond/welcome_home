@@ -60,7 +60,8 @@
   - 주요 변경: gray-matter 제거(자체 머리말 분리), YAML `CORE_SCHEMA`(날짜 문자열 유지 · 달력 검사 · KST), strict 스키마 + 한국어 오류, 빌드 때 `validateAllContent()`(sitemap.ts에서) 전부 검사, `images.unoptimized: true`, 직원 연락처는 `publishContact: true` 없으면 오류
   - 점검: tsc 0 · lint 0 · build 35페이지 · 17경로 200/404 · 폼 API null 본문 400
   - **브라우저 확인(11/27)**: 상세 페이지 흰 헤더 · 갤러리 확대 보기(화살표 · Esc · 포커스 복귀) · 900px 모바일 메뉴(포커스 이동 · Esc · 스크롤 잠금) · 390px 14페이지 가로 넘침 없음 · 콘솔 오류 없음 · 소식 사진(머리말 + 본문) 표시 · 푸터 공동체 링크
-  - 다음: Codex 재판정(같은 요청서, 범위 `72b75d7..HEAD`)
+  - 재판정 2차(`-codex-2.md`) · 3차(`-codex-3.md`) 지적 수정 합침(`3cf428a` · `ab27cb3`): 커밋 전 콘텐츠 검사(`.githooks/pre-commit` · `npm run check:content` · `scripts/setup-hooks.mjs`는 hooksPath가 비었을 때만 설정), 경로에 공백 · 제어문자 · `?#%` 거부(하이픈 사용), 주보 iframe은 보관소 키 · `/`경로 PDF만(https PDF는 링크), `{{ }}` 여분 괄호 오류, 폴더 자리 파일은 한국어 오류
+  - 다음: Codex 4차 판정(`-request-4.md`, 범위 `605d16c..HEAD`). 「중간」 이상이 없으면 R4 검수를 닫고 옛 사이트 이전으로 (사용자에게 11/27 알림)
 - 라우트는 전부 정적(`dynamicParams=false`). 사진은 next/image 최적화 안 씀. 「다가오는 일정」은 클라이언트에서 거를 것
 
 ---

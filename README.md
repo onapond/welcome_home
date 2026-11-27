@@ -28,7 +28,7 @@ npm run dev                        # http://localhost:3000
 npm run check:content   # 빌드 없이 content/ 전체를 몇 초 만에 검사 (빌드와 같은 규칙)
 ```
 
-`content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트로 `core.hooksPath=.githooks`를 설정합니다(저장소 밖 · 도구가 없는 환경에서는 조용히 건너뜀).
+`content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트(`scripts/setup-hooks.mjs`)로 `core.hooksPath`가 비어 있을 때만 `.githooks`로 설정합니다. 이미 다른 훅 경로를 쓰는 컴퓨터는 덮어쓰지 않고 연결 방법을 한 줄로 안내합니다(저장소 밖에서는 건너뜀).
 
 ## 점검
 
