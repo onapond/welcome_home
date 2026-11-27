@@ -56,10 +56,10 @@ const components: Components = {
   hr: () => <hr className="my-8" style={{ borderColor: "rgba(43,58,140,0.12)" }} />,
   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
   // Body images use the same path rules as front matter (store key, /path,
-  // https://); content loading already rejected bad ones (lib/content/body.ts).
-  // The parser hands over an already percent-encoded src, so
-  // markdownMediaUrl() decodes it first — the same key yields the same URL as
-  // in front matter. Size is unknown, so width/height are only placeholders
+  // https://); content loading already checked each destination as written
+  // (lib/content/body.ts), so it holds no "%" or whitespace. The parser hands
+  // over a percent-encoded src, and markdownMediaUrl() decodes it back to
+  // exactly that key — the same key yields the same URL as in front matter. Size is unknown, so width/height are only placeholders
   // and CSS keeps the real aspect ratio.
   img: ({ src, alt }) =>
     typeof src === "string" && src ? (

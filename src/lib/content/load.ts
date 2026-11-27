@@ -23,8 +23,15 @@ export class ContentError extends Error {
   }
 }
 
-function rel(file: string): string {
+export function rel(file: string): string {
   return path.relative(process.cwd(), file);
+}
+
+/** "content/pages 가 폴더가 아닙니다 …" when `folder` exists but is a file (or similar). */
+export function notFolderProblem(folder: string): string | null {
+  return fs.existsSync(folder) && !fs.statSync(folder).isDirectory()
+    ? `${rel(folder)} 가 폴더가 아닙니다. 폴더를 복구해 주세요 (같은 이름의 파일을 지우고 폴더를 되살립니다)`
+    : null;
 }
 
 function formatIssues(file: string, error: z.ZodError): string[] {
@@ -102,6 +109,9 @@ export function loadYaml<S extends z.ZodType>(name: string, schema: S): z.output
   return memo(`yaml:${name}`, () => {
     const file = path.join(CONTENT_DIR, name);
     if (!fs.existsSync(file)) throw new ContentError([`${rel(file)} 파일이 없습니다`]);
+    if (!fs.statSync(file).isFile()) {
+      throw new ContentError([`${rel(file)} 가 파일이 아닙니다. 파일을 복구해 주세요`]);
+    }
     let data: unknown;
     try {
       data = parseYaml(fs.readFileSync(file, "utf8"));
@@ -120,6 +130,15 @@ type Entry<S extends z.ZodType> = z.output<S> & { id: string; body: string };
 // and OS or git placeholder files. Anything else is reported.
 const IGNORED_FILES = new Set([".gitkeep", ".DS_Store"]);
 
+/** Regular file check that never throws (a broken link counts as "not a file"). */
+function isFile(file: string): boolean {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Read every `*.md` in content/<dir>, validate front matter, and return the
  * items sorted by `sortKey` descending (newest first). Files starting with
@@ -134,7 +153,9 @@ export function loadCollection<S extends z.ZodType>(
 ): Entry<S>[] {
   return memo(`col:${dir}`, () => {
     const folder = path.join(CONTENT_DIR, dir);
-    if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) {
+    const notFolder = notFolderProblem(folder);
+    if (notFolder) throw new ContentError([notFolder]);
+    if (!fs.existsSync(folder)) {
       throw new ContentError([`${rel(folder)} 폴더가 없습니다 (콘텐츠 폴더의 이름을 바꾸거나 지우면 안 됩니다)`]);
     }
 
@@ -144,7 +165,7 @@ export function loadCollection<S extends z.ZodType>(
     for (const name of fs.readdirSync(folder).sort()) {
       if (name.startsWith("_") || IGNORED_FILES.has(name)) continue;
       const file = path.join(folder, name);
-      if (!name.endsWith(".md") || !fs.statSync(file).isFile()) {
+      if (!name.endsWith(".md") || !isFile(file)) {
         problems.push(
           `${rel(file)} → 이 폴더에는 .md 파일만 둡니다 (확장자는 소문자 .md. 쓰지 않을 파일은 이름 앞에 _ 를 붙입니다)`,
         );

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CONTENT_DIR, ContentError } from "./load";
+import { CONTENT_DIR, ContentError, notFolderProblem, rel } from "./load";
 import {
   getAlbums,
   getBulletins,
@@ -25,6 +25,8 @@ const IGNORED_FILES = new Set([".gitkeep", ".DS_Store"]);
 function checkPagesFolder(): void {
   const supported = [...Object.keys(PAGE_GETTERS), "lists"].map((n) => `${n}.yaml`).sort();
   const folder = path.join(CONTENT_DIR, "pages");
+  const notFolder = notFolderProblem(folder);
+  if (notFolder) throw new ContentError([notFolder]);
   if (!fs.existsSync(folder)) return; // reported by the page getters ("파일이 없습니다")
   const problems = fs
     .readdirSync(folder)
@@ -32,7 +34,7 @@ function checkPagesFolder(): void {
     .sort()
     .map(
       (name) =>
-        `${path.relative(process.cwd(), path.join(folder, name))} → 쓰지 않는 파일입니다. pages/ 폴더에는 ${supported.join(" · ")}만 둡니다 (페이지 문구는 이 중 해당 파일을 고칩니다)`,
+        `${rel(path.join(folder, name))} → 쓰지 않는 파일입니다. pages/ 폴더에는 ${supported.join(" · ")}만 둡니다 (페이지 문구는 이 중 해당 파일을 고칩니다)`,
     );
   if (problems.length) throw new ContentError(problems);
 }
@@ -63,8 +65,18 @@ export function validateAllContent(): void {
     try {
       get();
     } catch (e) {
-      if (!(e instanceof ContentError)) throw e;
-      for (const p of e.problems) if (!problems.includes(p)) problems.push(p);
+      // A file-system error (e.g. a file where a folder should be, an
+      // unreadable file) is still a content problem: report it with the path
+      // instead of a stack trace, and keep collecting the others.
+      const fsError = e as NodeJS.ErrnoException;
+      const found =
+        e instanceof ContentError
+          ? e.problems
+          : typeof fsError?.code === "string" && typeof fsError.path === "string"
+            ? [`${rel(fsError.path)} → 파일을 읽지 못했습니다 (${fsError.code}). 파일 · 폴더가 제자리에 있는지 확인해 주세요`]
+            : null;
+      if (!found) throw e;
+      for (const p of found) if (!problems.includes(p)) problems.push(p);
     }
   }
   if (problems.length) throw new ContentError(problems);

@@ -16,6 +16,8 @@ export const MEDIA_BASE_URL = configured || "/media";
  * - "/images/logo.png"          — site path served from /public (not "//")
  * - "https://…"                 — absolute https URL
  * Protocol-relative "//host", "http://", and any other scheme are rejected.
+ * No form may hold whitespace or control characters (a browser strips some of
+ * them, so the URL it opens would differ from the text that was checked).
  * Store keys and site paths are file names only: "?", "#" and "%" are
  * rejected, so the path is percent-encoded exactly once by mediaUrl() and a
  * Markdown body (which arrives already encoded) can be decoded back to the key.
@@ -26,6 +28,9 @@ export function mediaPathProblem(src: string): string | null {
   const GENERIC =
     "사진·파일 경로는 보관소 경로(예: albums/2026-11-23/001.webp), / 로 시작하는 사이트 경로, https:// 주소 중 하나여야 합니다 (http:// · // 는 쓸 수 없습니다)";
   if (!src || src.includes("\\")) return GENERIC;
+  if (/[\s\u0000-\u001f\u007f]/.test(src)) {
+    return "경로에 공백 · 탭 · 줄바꿈 같은 빈칸 글자를 쓸 수 없습니다. 파일 이름의 공백은 하이픈(-)으로 바꿉니다 (예: news/주일-예배.webp)";
+  }
   if (src.startsWith("//")) return GENERIC;
   if (src.startsWith("https://")) {
     try {
@@ -36,11 +41,8 @@ export function mediaPathProblem(src: string): string | null {
     }
   }
   if (/^[a-z][a-z0-9+.-]*:/i.test(src)) return GENERIC; // http:, data:, javascript: …
-  if (/[?#]/.test(src)) {
-    return "보관소 경로 · / 로 시작하는 경로에는 ? 나 # 를 붙이지 않습니다. 파일 경로만 적습니다 (예: bulletins/2026-11-23.pdf)";
-  }
-  if (src.includes("%")) {
-    return "경로에 % 를 쓰지 않습니다. 한글 · 공백이 든 파일 이름도 그대로 적습니다 (예: news/예배.webp)";
+  if (/[?#%]/.test(src)) {
+    return "보관소 경로 · / 로 시작하는 경로에는 ? · # · % 를 쓸 수 없습니다. 파일 이름에서 이 글자를 빼고 필요하면 하이픈(-)을 씁니다 (예: news/주일-예배.webp, bulletins/2026-11-23.pdf)";
   }
   const path = src.startsWith("/") ? src.slice(1) : src;
   return path.split("/").every((seg) => seg !== ".." && seg !== ".") ? null : GENERIC;
@@ -82,34 +84,31 @@ export function mediaUrl(src: string): string {
 }
 
 /**
- * Markdown bodies reach the renderer already percent-encoded (the Markdown
- * parser normalizes every image destination), so "news/예배.webp" arrives as
- * "news/%EC%98%88…". Decode store keys and site paths back to the key the
- * editor typed, so body and front matter produce the identical URL. Returns
- * null when the destination cannot be decoded.
+ * URL for an image destination inside a Markdown body. Bodies reach the
+ * renderer already percent-encoded (the Markdown parser normalizes every image
+ * destination), so "news/예배.webp" arrives as "news/%EC%98%88…". The written
+ * destination was checked to hold no "%" (lib/content/body.ts), so decoding
+ * gives back exactly the key the editor typed and body and front matter
+ * produce the identical URL.
  */
-export function decodeMarkdownSrc(src: string): string | null {
-  if (src.startsWith("https://")) return src;
-  try {
-    return decodeURIComponent(src);
-  } catch {
-    return null;
-  }
-}
-
-/** URL for an image destination inside a Markdown body. */
 export function markdownMediaUrl(src: string): string {
-  return mediaUrl(decodeMarkdownSrc(src) ?? src);
+  if (src.startsWith("https://")) return src;
+  let key = src;
+  try {
+    key = decodeURIComponent(src);
+  } catch {
+    // unreachable for checked content; keep the parser's form
+  }
+  return mediaUrl(key);
 }
 
 /**
- * True when the file is served by the church itself: a site path under
- * /public, a store key, or an https URL under MEDIA_BASE_URL. Only these may
- * be embedded (e.g. the bulletin PDF iframe); other https files get a link.
+ * True when a (validated) media path may be embedded, e.g. the bulletin PDF
+ * iframe: only store keys and "/" site paths. Every https:// URL — even one
+ * under MEDIA_BASE_URL — gets a plain link, so no origin comparison is needed.
  */
-export function isOwnMedia(src: string): boolean {
-  if (!src.startsWith("https://")) return true;
-  return MEDIA_BASE_URL.startsWith("https://") && src.startsWith(`${MEDIA_BASE_URL}/`);
+export function isEmbeddableMedia(src: string): boolean {
+  return !src.startsWith("https://");
 }
 
 /**

@@ -1,19 +1,40 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # 커밋 전에 스테이징한 content/ 를 검사한다 (npm run check:content 와 같은 검사).
 # 공개 저장소라 잘못 올린 내용(예: 공개 동의 없는 연락처)은 지워도 기록에 남는다.
 # 그래서 push 뒤 CI가 아니라 커밋 전에 막는다.
-# `npm ci` / `npm install` 이 package.json 의 prepare 로 이 폴더를 hooksPath 로 켠다.
+# `npm ci` / `npm install` 이 package.json 의 prepare(scripts/setup-hooks.mjs)로
+# core.hooksPath 가 비어 있을 때 이 폴더를 켠다.
+#
+# git 명령이 실패하면 "바뀐 것 없음"으로 넘어가지 않고 커밋을 멈춘다.
+set -euo pipefail
 
-git diff --cached --name-only --diff-filter=ACMRD -- content/ | grep -q . || exit 0
+fail() {
+  echo "$1" >&2
+  echo "커밋을 멈췄습니다." >&2
+  exit 1
+}
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/check-content.XXXXXX") || exit 1
+# content/ 의 모든 스테이징 변경(추가·수정·삭제·이름 변경·종류 변경 T 포함).
+changed=$(git diff --cached --name-only -- content/) || fail "스테이징한 변경을 읽지 못했습니다 (git diff 실패)."
+[ -n "$changed" ] || exit 0
+
+# 바로가기(심볼릭 링크)는 커밋할 수 없다: 검사한 내용과 실제로 읽히는 파일이 달라진다.
+links=$(git -c core.quotePath=false ls-files -s -- content/ | awk '$1 == "120000" { sub(/^[^\t]*\t/, ""); print }') \
+  || fail "스테이징한 파일 목록을 읽지 못했습니다 (git ls-files 실패)."
+if [ -n "$links" ]; then
+  echo "content/ 에 바로가기(심볼릭 링크)가 스테이징되어 있습니다. 실제 파일로 바꿔 주세요:" >&2
+  printf '%s\n' "$links" | sed 's/^/  - /' >&2
+  fail "바로가기를 지우고(git rm --cached <경로>) 실제 파일을 넣은 뒤 다시 커밋해 주세요."
+fi
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/check-content.XXXXXX") || fail "임시 폴더를 만들지 못했습니다."
 trap 'rm -rf "$tmp"' EXIT
 
 # 작업 트리가 아니라 스테이징된(커밋될) 내용을 꺼내 검사한다.
-git ls-files -z -- content/ | xargs -0 git checkout-index --prefix="$tmp/" -- || exit 1
+git ls-files -z -- content/ | xargs -0 git checkout-index --prefix="$tmp/" -- \
+  || fail "스테이징한 content/ 를 꺼내지 못했습니다 (git checkout-index 실패)."
 
 if ! CHECK_CONTENT_ROOT="$tmp" node scripts/check-content.mjs; then
   echo ""
-  echo "커밋을 멈췄습니다: 스테이징한 content/ 파일에 문제가 있습니다."
-  exit 1
+  fail "스테이징한 content/ 파일에 문제가 있습니다."
 fi
