@@ -6,17 +6,16 @@ import LatestSermonSection from "@/components/sections/LatestSermonSection";
 import CommunitySection from "@/components/sections/CommunitySection";
 import LocationSection from "@/components/sections/LocationSection";
 import type { Metadata } from "next";
-import { getLatestSermons } from "@/lib/sanity/queries";
+import { getSermons } from "@/lib/content";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// ISR: 1시간마다 정적 페이지 재생성
-export const revalidate = 3600;
-
-export default async function Home() {
-  const sermons = await getLatestSermons(5);
+export default function Home() {
+  const sermons = getSermons()
+    .slice(0, 5)
+    .map((s) => ({ id: s.id, title: s.title, date: s.date, scripture: s.scripture, preacher: s.preacher }));
 
   return (
     <main>

@@ -1,0 +1,72 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
+import Markdown from "@/components/ui/Markdown";
+import { fmtDate } from "@/components/features/news/shared";
+import { getNews } from "@/lib/content";
+import { mediaUrl } from "@/lib/media";
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getNews().map((n) => ({ id: n.id }));
+}
+
+function plainExcerpt(md: string): string {
+  return md.replace(/[#>*_`\[\]()!-]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const n = getNews().find((x) => x.id === id);
+  if (!n) return {};
+  return {
+    alternates: { canonical: `/news/${id}` },
+    title: n.title,
+    description: plainExcerpt(n.body) || `${n.category} · ${fmtDate(n.date)} — 청파중앙교회`,
+  };
+}
+
+export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const n = getNews().find((x) => x.id === id);
+  if (!n) notFound();
+
+  return (
+    <main style={{ backgroundColor: "var(--color-bg)" }}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+        <Link href="/news" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+          소식 목록
+        </Link>
+        <header className="mt-6 pb-6 border-b" style={{ borderColor: "rgba(43,58,140,0.12)" }}>
+          <p className="text-xs font-bold tracking-widest" style={{ color: "var(--color-primary)" }}>
+            {n.category}
+          </p>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-snug mt-2" style={{ color: "var(--color-dark)" }}>
+            {n.title}
+          </h1>
+          <p className="text-sm mt-3" style={{ color: "var(--color-dark-soft)" }}>
+            {fmtDate(n.date)}
+          </p>
+        </header>
+
+        {n.body && (
+          <article className="mt-6">
+            <Markdown>{n.body}</Markdown>
+          </article>
+        )}
+
+        {n.images.length > 0 && (
+          <div className="mt-8 flex flex-col gap-5">
+            {n.images.map((src) => (
+              // eslint-disable-next-line @next/next/no-img-element -- photos come pre-sized from R2
+              <img key={src} src={mediaUrl(src)} alt="" loading="lazy" decoding="async" className="w-full h-auto rounded-xl" />
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
