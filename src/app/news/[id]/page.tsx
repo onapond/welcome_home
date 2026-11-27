@@ -7,7 +7,7 @@ import Markdown from "@/components/ui/Markdown";
 import ShareButton from "@/components/features/ShareButton";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getNews, getSite } from "@/lib/content";
-import { bodyImageUrls } from "@/lib/content/body";
+import { bodyImageUrls, imageUrlKey } from "@/lib/content/body";
 import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
@@ -41,7 +41,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   // as its thumb, is not drawn twice. A path merely mentioned in text is not.
   const drawn = bodyImageUrls(n.body);
   const gallery = n.images.filter(
-    (img) => !drawn.has(mediaUrl(img.src)) && !(img.thumb && drawn.has(mediaUrl(img.thumb))),
+    (img) => !drawn.has(imageUrlKey(img.src)) && !(img.thumb && drawn.has(imageUrlKey(img.thumb))),
   );
 
   return (

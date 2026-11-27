@@ -69,9 +69,7 @@ function buildIndex(): Index {
   const weeks = new Map<string, string>();
   const bulletins = [...getBulletins()].sort((a, b) => a.id.localeCompare(b.id));
   for (const b of bulletins) {
-    const url = b.legacy?.url && oldSiteUrl(b.legacy.url);
-    if (!url) continue;
-    const key = weekKey(url.searchParams);
+    const key = bulletinWeekKey(b);
     if (key && !weeks.has(key)) weeks.set(key, `/news/bulletin/${b.id}`);
   }
   return { posts, weeks };
@@ -90,6 +88,15 @@ export function oldSiteUrl(value: string): URL | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The old weekly page a bulletin came from, as "year-month-week", or null.
+ * The redirect and the bulletin page's 「이 주의 주보」 group by this same key.
+ */
+export function bulletinWeekKey(b: { legacy?: { url?: string } }): string | null {
+  const url = b.legacy?.url ? oldSiteUrl(b.legacy.url) : null;
+  return (url && weekKey(url.searchParams)) || null;
 }
 
 /** Query values by lower-cased name (old IIS links mix case), trimmed. */

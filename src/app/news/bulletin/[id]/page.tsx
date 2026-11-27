@@ -8,6 +8,7 @@ import { getBulletins, getSite } from "@/lib/content";
 import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { isEmbeddableMedia, mediaUrl } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
+import { bulletinWeekKey } from "@/lib/legacy-redirect";
 
 export const dynamicParams = false;
 
@@ -37,9 +38,11 @@ export default async function BulletinDetailPage({ params }: { params: Promise<{
   const embed = b.pdf ? isEmbeddableMedia(b.pdf) : false;
   const title = b.title ?? `${fmtDate(b.date)} 주보`;
   // Some weeks have several PDFs (often with the same title) and one old
-  // weekly link; each page lists the whole week so none is a dead end.
+  // weekly link; each page lists the whole week so none is a dead end. Grouped
+  // by the old week (the key the redirect uses), else by date for new ones.
+  const key = bulletinWeekKey(b);
   const week = getBulletins()
-    .filter((x) => x.date === b.date)
+    .filter((x) => (key ? bulletinWeekKey(x) === key : !bulletinWeekKey(x) && x.date === b.date))
     .sort((x, y) => x.id.localeCompare(y.id));
 
   return (

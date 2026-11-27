@@ -29,17 +29,20 @@ export function parseWeekdays(day: string): number[] | null {
   return null;
 }
 
-/** "오전 11:00" → 660, "오후 7:30" → 1170, "19:30" → 1170 (자정부터 분). 못 읽으면 null. */
+/**
+ * "오전 11:00" → 660, "오후 7:30" · "오후 7시 30분" → 1170, "19:30" → 1170 (자정부터 분).
+ * 문구 전체가 한 시각일 때만 읽는다("11:00 또는 14:00" · "예배 후" → null).
+ */
 export function parseTime(time: string): number | null {
   const t = time.trim();
-  const m = t.match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2}))?/);
+  const m = t.match(/^(오전|오후)\s*(\d{1,2})(?::(\d{2})|\s*시(?:\s*(\d{1,2})\s*분)?)?$/);
   if (m) {
     const h = Number(m[2]);
-    const min = Number(m[3] ?? 0);
+    const min = Number(m[3] ?? m[4] ?? 0);
     if (h < 1 || h > 12 || min > 59) return null;
     return ((h % 12) + (m[1] === "오후" ? 12 : 0)) * 60 + min;
   }
-  const h24 = t.match(/^(\d{1,2}):(\d{2})(?!\d)/);
+  const h24 = t.match(/^(\d{1,2}):(\d{2})$/);
   if (h24 && Number(h24[1]) <= 23 && Number(h24[2]) <= 59) return Number(h24[1]) * 60 + Number(h24[2]);
   return null;
 }

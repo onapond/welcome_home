@@ -64,5 +64,20 @@ export function bodyImageProblems(body: string): string[] {
  */
 export function bodyImageUrls(body: string): Set<string> {
   if (!body.includes("![")) return new Set();
-  return new Set(bodyImageSources(body).flatMap((f) => ("url" in f && f.url ? [mediaUrl(f.url)] : [])));
+  return new Set(bodyImageSources(body).flatMap((f) => ("url" in f && f.url ? [imageUrlKey(f.url)] : [])));
+}
+
+/**
+ * A comparable form of an image path: mediaUrl, and for an https:// address
+ * the WHATWG serialization, so "예배.webp" and "%EC%98%88%EB%B0%B0.webp" match
+ * (already-encoded bytes, "%2F" and the query are left as they are).
+ */
+export function imageUrlKey(src: string): string {
+  const url = mediaUrl(src);
+  if (!url.startsWith("https://")) return url;
+  try {
+    return new URL(url).href;
+  } catch {
+    return url;
+  }
 }
