@@ -49,7 +49,7 @@ export default function NewHereSection() {
                   {/* Text */}
                   <div>
                     <p
-                      className="text-xs font-semibold tracking-widest uppercase mb-0.5"
+                      className="text-xs font-semibold mb-0.5"
                       style={{ color: "var(--color-primary)" }}
                     >
                       {title}
@@ -100,12 +100,12 @@ export default function NewHereSection() {
               <div
                 className="absolute top-4 left-4 px-4 py-2 rounded-xl"
                 style={{
-                  backgroundColor: "rgba(43,58,140,0.85)",
+                  backgroundColor: "var(--color-primary)",
                   backdropFilter: "blur(8px)",
                 }}
               >
                 <p
-                  className="text-xs font-bold tracking-[4px] uppercase"
+                  className="text-xs font-bold"
                   style={{ color: "var(--color-accent)" }}
                 >
                   {newHere.badge.label}

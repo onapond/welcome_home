@@ -191,17 +191,17 @@ export default function ServiceTimesPage() {
         style={{
           minHeight: "40vh",
           background:
-            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 60%, var(--color-secondary) 100%)",
+            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 70%, var(--color-secondary) 120%)",
         }}
         aria-label="예배 안내 히어로"
       >
         <div className="flex flex-col items-center gap-4 max-w-xl">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-[4px] uppercase"
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold"
             style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              color: "var(--color-accent)",
-              border: "1px solid rgba(212,168,67,0.35)",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-white)",
+              border: "1px solid rgba(143,215,239,0.45)",
             }}
           >
             {page.hero.badge}
@@ -211,7 +211,7 @@ export default function ServiceTimesPage() {
           </h1>
           <p
             className="text-sm sm:text-base leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.75)" }}
+            style={{ color: "rgba(255,255,255,0.85)" }}
           >
             {page.hero.lines.map((line, i) => (
               <span key={i}>

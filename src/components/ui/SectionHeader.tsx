@@ -18,7 +18,7 @@ export default function SectionHeader({
   return (
     <div className={cn(isCenter ? "text-center" : "text-left", className)}>
       <p
-        className="text-xs font-semibold uppercase tracking-[5px] mb-3"
+        className="text-xs font-semibold mb-3"
         style={{ color: "var(--color-primary)" }}
       >
         {label}

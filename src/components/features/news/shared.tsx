@@ -47,7 +47,7 @@ export function PageHero({
     <section style={{ backgroundColor: "var(--color-primary)" }} aria-label={`${title} 머리글`}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32">
         <p
-          className="text-xs font-semibold uppercase tracking-[5px] mb-3"
+          className="text-xs font-semibold mb-3"
           style={{ color: "var(--color-secondary)" }}
         >
           {label}

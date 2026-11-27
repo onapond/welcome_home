@@ -85,7 +85,7 @@ export default function NewsClient({ items, categories }: { items: NewsItem[]; c
                     )}
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-bold tracking-widest" style={{ color }}>
+                        <span className="text-xs font-bold" style={{ color }}>
                           {n.category}
                         </span>
                         {n.pinned && (
