@@ -60,12 +60,17 @@ run does not write — the samples), `--no-download` (offline: cached PDFs only,
   counts (without changing anything) account-like numbers, car plates, leftover phones / e-mails / IPv4
   and address shapes still in the output, with file names.
 - PDFs: downloaded once into `<crawl>/weekly-pdf/` (`state.json`, resumable, one connection,
-  `crawl.Fetcher`, `%PDF-` check, size compared with `binaries.json`), then copied. The cache is always
-  used — also with `--no-download`, which only skips the network (and never writes `state.json`); a cached
-  file counts when it is a regular file starting `%PDF-` with the expected size. A bulletin whose PDF is
-  not obtained in this run keeps an existing `public/bulletins/<id>.pdf` (never deleted, even with
-  `--replace`) and its `pdf:` line; the report section 「주보 PDF 못 구함」 counts them and warns for each kept
-  file (stderr too). `state.json` is rewritten only when it changed (temp file + rename).
+  `crawl.Fetcher`), then copied. A file counts only when it is a complete PDF (`%PDF-` start, final
+  `startxref` pointing at an `xref` table or a `/Type /XRef` stream) of the expected size. The cache is
+  always used — `--no-download` only skips the network. An old PDF this run could not get is taken from
+  the public PDF the existing bulletin file links to (matched by `legacy.seq`, so ids that shifted keep
+  their own PDF): it is copied back into the cache and recorded in `state.json` before anything is
+  written, so a run that fails midway loses nothing. The existing front matter is read strictly; an
+  unusual form (quoted or indented keys, block values under `pdf` / `legacy`) stops the run before any
+  file is touched. The report section 「주보 PDF 못 구함 · 기존 사본 사용」 lists both cases (stderr too).
+- **After every run into the repo**: `git status -- content/bulletins public/bulletins` — no bulletin PDF
+  should be deleted or changed unless you meant it. PDFs are committed, so `git checkout -- public/bulletins`
+  undoes a bad run. Then `npm run check:content`, build, `node scripts/check-legacy-redirects.mjs`, commit.
 
 # chungpa21.org inventory crawler
 
