@@ -16,7 +16,7 @@
 **다음 할 일 (11/28)** — 사용자 「내가 직접해야할 건, 내일 할거니까」
 1. 사용자: Cloudflare R2 켜기(카드) → 버킷 `chungpa-media` → r2.dev 공개 주소 허용 → 버킷 한정 「객체 읽기 및 쓰기」 API 토큰 → `! aws configure --profile chungpa-r2`(region `auto`, 키는 Claude에게 안 보임) → r2.dev 주소 · 계정 ID 전달
 2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
-3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림) → 운영에서 사진 · 옛 주소(`/modu/…`) · 주보 PDF 확인
+3. Claude: 환경 변수를 넣은 뒤 다시 배포 `vercel --prod --yes --archive=tgz --scope onaponds-projects` → 운영에서 옛 사진 확인. **11/27 저녁 배포는 이미 성공**(`--archive=tgz`라 한도에 안 걸림, `94ed749` 기준) — 15개 경로 200 · 옛 주소 308 · 주보 PDF 200 확인, 옛 사진(`/media/…`)만 404(R2 전이라 예상대로)
 4. 그 뒤 로드맵 P3(교회 확인 사실 반영 · 빠진 페이지) → P4(관리자 작업 환경)
 
 **막힌 것 · 담당자 답 대기**
