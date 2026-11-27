@@ -13,25 +13,35 @@
 
 ## 지금 상태 — 2026-11-27
 
-**사용자 결정 (11/27)**: **Sanity CMS는 걷어낸다. Vercel + Supabase로만 운영한다.**
-→ 아래 기록의 Sanity 관련 계획(S4 Studio, S5 NDJSON 임포트, `npx sanity login`)은 재설계 대상. CLAUDE.md 기술 스택의 `CMS: Sanity`도 아직 안 고쳤다.
+**목표 (사용자 11/27)**: 리팩토링해 실제로 쓸 수 있는 수준으로 만든 뒤, **교회 관리자가 Claude Code로 내용을 고치게** 한다. 관리자는 GitHub 팀으로 초대하고, Supabase · Vercel 등은 결국 교회 계정에서 관리한다.
+- 계정: 지금은 사용자 개인 계정 여러 곳에 섞여 있음(`onapond` 아래 `church` 청년부 교적 · `onfamily` 전교인 출석 등). **우선 사용자 계정으로 작업**하고, 정리 · 이전은 나중에 한 곳으로 몰아서 한다. 함께 작업할 사람 = 교회 직원 계정 1 + 교회 직원 개인 계정 1.
+- **배포 단계에 비용이 생기면 안 된다**(사용자 11/27).
 
-**이 폴더 상태 (조사로 확인)**
-- `.git` 없음. 내용은 GitHub `onapond/welcome_home` main `15a2239`과 같다(내려받은 사본으로 보임).
-- `node_modules` 없음 → 점검 전 `npm ci` 필요. `.env.local` 없음.
+**사용자 결정 (11/27)**
+- Sanity CMS는 걷어낸다. Vercel + Supabase 안에서만 운영한다.
+- **콘텐츠(설교 · 공지 · 일정 · 주보)는 저장소 파일(`content/`)** 로 둔다 — Claude Code가 직접 고치고 git이 이력 · 되돌리기를 맡는다.
+
+**비용 제약 조사 (11/27 웹 확인 — 결정 전)**
+- Vercel Hobby: **비공개 저장소**는 커밋 작성자가 Hobby 팀 주인일 때만 배포된다. 조직 소유 비공개 저장소는 Hobby에서 배포 불가. 공개 저장소이거나 Pro($)여야 함 → 직원 2명이 커밋하려면 **저장소 공개**가 무료 조건.
+- Supabase Free: 활성 프로젝트 **2개 한도**(주인 · 관리자인 조직 전체 합산), 1주 활동 없으면 일시정지. `church` · `onfamily`가 이미 있으면 홈페이지용 새 프로젝트 자리가 없을 수 있다.
+- → 제안(미결정): 홈페이지는 Supabase 없이 — 콘텐츠 · 사진은 저장소, 폼은 기존 Resend 메일(S3 코드 있음). 교적 · 출석 DB와 공개 홈페이지를 한 프로젝트에 섞지 않는다.
+
+**이 폴더 상태**
+- git: origin `onapond/welcome_home`, main 추적 · push 완료(`3f17c06`까지). 배포는 여전히 CLI뿐(Git 연동 없음).
+- `node_modules` 설치됨. `.env.local` 없음.
 - 이 문서가 가리키는 `CONTENT_IMPORT.md` · `scripts/import/` · `../chungpa21-crawl/`(구 사이트 자산 1.14GB)은 **이 컴퓨터에도 원격에도 없다** — 8/21 작업한 다른 컴퓨터에만 있을 수 있음. 다시 만들기 전에 그쪽부터 찾을 것.
 
 **끝난 것: 하네스 셋업 (11/27)**
-- git: 기존 원격에 연결(`git init` → origin `onapond/welcome_home` → `reset --mixed origin/main`). 원격 대비 차이는 이 커밋뿐. **push는 안 했다.**
 - `.claude/harness.conf` — 인계 = 이 절(`HANDOFF_SECTION=지금 상태`), CHECK = `npx tsc --noEmit && npm run lint && npm run build`
 - `docs/검토규칙.md` — 20개 규칙(디자인 시스템 · 도메인/URL · S7 렌더링 · 운영), 전부 출처 표기. Sanity 의존 추가 금지 포함
-- CLAUDE.md — 「하네스」 절 추가, 기술 스택 CMS 줄을 「Sanity 제거 예정 → Supabase」로 수정
-- CHECK 첫 실행: `npm ci` 후 tsc 0 · lint 0 · build 성공(15페이지). `.env.local` 없어 `NEXT_PUBLIC_SANITY_PROJECT_ID` 경고만 뜸
+- CHECK 첫 실행: tsc 0 · lint 0 · build 성공(15페이지)
 - 마지막 대립 검토 = 없음
 
+**로드맵 (안)**: P0 정리 → P1 콘텐츠를 `content/` 파일로 + Sanity 제거 → P2 폼 저장 → P3 실제 콘텐츠 · 빠진 페이지 → P4 관리자 작업 환경(안내 문서 · 명령 · 범위 제한 · 자동 점검 · Git 연동 배포) → P5 계정 이전 · 직원 초대 → P6 QA · `chungpa21.org` 전환
+
 **다음 할 일**
-1. push 여부 사용자에게 확인 (이 커밋은 로컬에만 있음)
-2. Sanity 제거 → Supabase 이전 설계 (설계 일이라 계획 모드 · Opus 여부 먼저 묻기)
+1. 사용자 결정: 저장소 공개 여부 · 홈페이지에서 Supabase를 뺄지
+2. P0 정리 → P1 설계
 3. 빠진 자료(`../chungpa21-crawl/` 등) 위치 사용자에게 확인
 
 ---
