@@ -35,6 +35,12 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   const n = getNews().find((x) => x.id === id);
   if (!n) notFound();
 
+  // `images` also feeds the list thumbnail and the share preview; a photo the
+  // body already shows (migrated posts keep it in place) is not drawn twice.
+  const gallery = n.images.filter(
+    (img) => !n.body.includes(img.src) && !n.body.includes(encodeURI(img.src)),
+  );
+
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
       <JsonLd
@@ -70,9 +76,9 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
           </article>
         )}
 
-        {n.images.length > 0 && (
+        {gallery.length > 0 && (
           <div className="mt-8 flex flex-col gap-5">
-            {n.images.map((img) => (
+            {gallery.map((img) => (
               <Image
                 key={img.src}
                 src={mediaUrl(img.src)}

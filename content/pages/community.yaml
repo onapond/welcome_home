@@ -22,6 +22,7 @@ hero:
 
 groups:
   - id: youth
+    image: /images/site/community-youth.webp   # 2026 CU 수련회 (옛 사이트 앨범)
     label: 청년부
     title: 청년부 United
     subtitle: "@chungpa_united"
@@ -40,6 +41,7 @@ groups:
       - { label: 문의, value: "{{phone}}" }
 
   - id: students
+    image: /images/site/community-students.webp   # 2026 CU 수련회 찬양 (옛 사이트 앨범)
     label: 청소년부
     title: 청소년부
     subtitle: 중·고등학생 공동체
@@ -57,6 +59,7 @@ groups:
       - { label: 문의, value: 02-714-0042 }
 
   - id: mission
+    image: /images/site/community-mission.webp   # 캄보디아 단기선교 (옛 사이트 앨범)
     label: 선교
     title: 선교
     subtitle: 국내·해외 선교

@@ -1,0 +1,17 @@
+# Upload only what the Vercel build needs (Hobby CLI upload limit).
+# Allowlist: everything is ignored except the entries below.
+/*
+!/src
+!/public
+!/content
+!/scripts
+!/package.json
+!/package-lock.json
+!/next.config.ts
+!/tsconfig.json
+!/postcss.config.mjs
+!/eslint.config.mjs
+!/next-env.d.ts
+!/.npmrc
+# scripts/migrate is not needed to build
+/scripts/migrate

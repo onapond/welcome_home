@@ -18,9 +18,10 @@ hero:
   # 실시간 예배 주소는 site.yaml sns.live(없으면 유튜브 채널의 /live)
   secondaryCta: { label: 주일 실시간 예배, href: "{{sns.live}}" }
   slides:
-    - { label: 예배 사진 1 }
-    - { label: 예배 사진 2 }
-    - { label: 예배 사진 3 }
+    # 사진: 옛 사이트 앨범에서 고름(2026 CU 몽골 비전트립 · 2025 전교인수련회 · 2025 부활절 칸타타)
+    - { label: 청년 몽골 비전트립, image: /images/site/hero-journey.webp }
+    - { label: 전교인수련회, image: /images/site/hero-together.webp }
+    - { label: 부활절 칸타타, image: /images/site/hero-worship.webp }
 
 journey:
   label: 우리의 여정
@@ -44,7 +45,7 @@ newHere:
     - { icon: baby, title: 키즈, text: 영아부터 청소년까지 연령별 예배와 교육이 준비되어 있습니다 }
     - { icon: parking, title: 주차, text: 교회 인근 공영주차장 이용 가능 (주일 2시간 지원) }
   cta: { label: 방문 예약하기, href: /visit#reservation }
-  image: { label: 교회 사진 }
+  image: { label: 전교인수련회에서 함께 웃는 교인들, src: /images/site/new-here.webp }
   badge: { label: 새가족, text: 누구나 환영합니다 }
   # 사진 아래에 인용하는 표어의 연도. 문구는 site.yaml의 표어에서 가져온다.
   quote: { year: 2024, caption: 청파중앙교회 표어 }

@@ -140,13 +140,13 @@ export default function AboutPage() {
             <div className="flex justify-center">
               <div className="relative w-64 sm:w-72">
                 {page.pastor.photo ? (
-                  <div className="relative aspect-[4/3] w-full">
+                  <div className="relative aspect-[4/5] w-full">
                     <Image
                       src={mediaUrl(page.pastor.photo)}
                       alt={`${site.pastor} 사진`}
                       fill
                       sizes="288px"
-                      className="object-cover rounded-2xl"
+                      className="object-cover object-top rounded-2xl"
                     />
                   </div>
                 ) : (

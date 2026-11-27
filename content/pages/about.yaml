@@ -42,7 +42,7 @@ vision:
 pastor:
   label: 담임목사
   roleLine: 담임목사 · 당회장
-  # photo: /images/pastor.jpg   # 사진 경로를 적으면 자리표시 대신 나온다
+  photo: /images/site/pastor.webp   # 옛 사이트 「섬기는 분」 사진(185×219, 작음 — 큰 사진을 받으면 교체)
   bioLabel: 목사 소개
   bio: >-
     {{pastor}}님은 하나님의 말씀으로 성도들을 세우고,
