@@ -73,5 +73,6 @@ src/components/     # layout · sections · features · ui
 src/lib/content/    # content/ 읽기 · 형식 검사(zod)
 src/lib/media.ts    # 사진 주소 만들기
 public/images/      # 로고 등 고정 이미지
+public/fonts/       # 제목 글꼴 Noto Serif KR(OFL) — 빌드가 내려받지 않게 저장소에 둠. 갱신: node scripts/fonts/fetch-noto-serif-kr.mjs
 docs/               # 검토 규칙 · 검토 기록 · 보관 문서(archive)
 ```
