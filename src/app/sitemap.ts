@@ -8,7 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // (including ones no page shows yet, like events) gets validated.
   validateAllContent();
 
-  const lastModified = new Date();
+  // No lastModified anywhere: the real edit date of a page is unknown (build
+  // time would mark untouched pages as changed, and a publish date is not an
+  // edit date), and a wrong value is worse than none.
 
   const routes: Array<{
     path: string;
@@ -30,15 +32,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const list = routes.map(({ path, changeFrequency, priority }) => ({
     url: `${SITE_URL}${path}`,
-    lastModified,
     changeFrequency,
     priority,
   }));
 
-  const detail = (base: string, items: { id: string; date: string }[], priority: number) =>
+  const detail = (base: string, items: { id: string }[], priority: number) =>
     items.map((i) => ({
       url: `${SITE_URL}${base}/${i.id}`,
-      lastModified: new Date(i.date),
       changeFrequency: "yearly" as const,
       priority,
     }));

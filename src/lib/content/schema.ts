@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isMediaPath, isPdfPath } from "@/lib/media";
+import { isPdfPath, mediaPathProblem } from "@/lib/media";
 
 // ─── Korean error messages ───────────────────────────────────────────────────
 //
@@ -134,10 +134,11 @@ export const youtubeId = z.preprocess(
 
 // Media key in the photo store (R2), e.g. "albums/2024-05-12-sports/001.webp",
 // a site path under /public, e.g. "/images/logo.png", or an https:// URL.
-export const mediaPath = text.refine(
-  isMediaPath,
-  "사진·파일 경로는 보관소 경로(예: albums/2026-11-23/001.webp), / 로 시작하는 사이트 경로, https:// 주소 중 하나여야 합니다 (http:// · // 는 쓸 수 없습니다)",
-);
+export const mediaPath = text.superRefine((v, ctx) => {
+  const problem = mediaPathProblem(v);
+  // continue: false — later checks (e.g. the .pdf check) only run on a valid path.
+  if (problem) ctx.addIssue({ code: "custom", message: problem, continue: false });
+});
 
 export const pdfPath = mediaPath.refine(isPdfPath, "주보 파일은 .pdf 로 끝나는 PDF 경로여야 합니다");
 
@@ -225,10 +226,17 @@ export const praiseSchema = z.strictObject({
 
 export const NEWS_CATEGORIES = ["공지", "소식", "간증"] as const;
 
-/** A news photo: either just a path, or { src, alt } with a description. */
-export const newsImageSchema = z
-  .union([mediaPath, z.strictObject({ src: mediaPath, alt: optText })])
-  .transform((v) => (typeof v === "string" ? { src: v, alt: "" } : { src: v.src, alt: v.alt ?? "" }));
+/**
+ * A news photo: either just a path, or { src, alt } with a description.
+ * A bare path is turned into { src } first, so a typo such as `scr` is
+ * reported against the one object schema (missing src + unknown key).
+ */
+export const newsImageSchema = z.preprocess(
+  (v) => (typeof v === "string" ? { src: v } : v),
+  z
+    .strictObject({ src: mediaPath, alt: optText })
+    .transform((v) => ({ src: v.src, alt: v.alt ?? "" })),
+);
 
 export const newsSchema = z.strictObject({
   title: text,

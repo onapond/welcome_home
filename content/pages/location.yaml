@@ -1,5 +1,5 @@
 # 오시는 길 — 홈 · 새가족 · 예배 안내 페이지 아래에 공통으로 나오는 「오시는 길」 섹션.
-#   주소 · 전화 · 팩스 · 지도 검색어는 site.yaml에서 가져온다. 여기에는 교통편 문구만 둔다.
+#   주소 · 전화 · 팩스 · 지도 검색어는 site.yaml에서 가져온다. 여기에는 지도 버튼 · 길찾기 안내 · 교통편 문구를 둔다.
 #   id는 다른 파일의 문구에서 {{transport.subway}} 처럼 불러 쓸 수 있다(이 파일 안에서는 못 씀). 자리표시 목록은 content/README.md.
 #   icon: train bus map-pin 등 (home.yaml 위쪽 설명의 목록 참고)
 #
@@ -7,6 +7,10 @@
 
 label: 오시는 길
 mapButton: 카카오맵에서 보기
+naverMapButton: 네이버 지도에서 보기
+directions:
+  title: 길찾기
+  text: 지도 앱에서 교회 위치를 확인하고 길찾기를 이용하실 수 있습니다.
 transport:
   - { id: subway, icon: train, label: 지하철, text: 1호선 남영역 3번 출구 도보 8분 }
   - { id: bus, icon: map-pin, label: 버스, text: 청파동 정류장 하차 후 도보 3분 }

@@ -4,6 +4,7 @@ import {
   escapeHtml,
   isBot,
   isFieldObject,
+  normalizeVisitCount,
   optionalText,
   requireChoice,
   requireConsent,
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
   const name = requireText(body.name, "name", "이름", LIMITS.name, errors);
   const phone = requirePhone(body.phone, errors);
   const service = requireChoice(body.service, "service", "예배", serviceOptions, errors);
-  const count = requireChoice(body.count, "count", "인원수", COUNT_OPTIONS, errors);
+  const count = requireChoice(normalizeVisitCount(body.count), "count", "인원수", COUNT_OPTIONS, errors);
   const memo = optionalText(body.memo, LIMITS.message);
   requireConsent(body.consent, errors);
 

@@ -146,3 +146,14 @@ export const VISIT_COUNT_OPTIONS = [
 export function visitCountLabel(value: string): string {
   return VISIT_COUNT_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
+
+/**
+ * 전송된 인원 값을 현재 선택지의 value로 맞춘다. 배포 전에 열어 둔 화면은
+ * 「5명 이상」을 그대로 보냈으므로(지금은 5+), value와 label 모두 받는다.
+ * 맞는 선택지가 없으면 그대로 돌려줘 requireChoice가 거절하게 한다.
+ */
+export function normalizeVisitCount(raw: unknown): unknown {
+  if (typeof raw !== "string") return raw;
+  const v = raw.trim();
+  return VISIT_COUNT_OPTIONS.find((o) => o.value === v || o.label === v)?.value ?? raw;
+}

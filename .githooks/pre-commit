@@ -1,0 +1,19 @@
+#!/bin/sh
+# 커밋 전에 스테이징한 content/ 를 검사한다 (npm run check:content 와 같은 검사).
+# 공개 저장소라 잘못 올린 내용(예: 공개 동의 없는 연락처)은 지워도 기록에 남는다.
+# 그래서 push 뒤 CI가 아니라 커밋 전에 막는다.
+# `npm ci` / `npm install` 이 package.json 의 prepare 로 이 폴더를 hooksPath 로 켠다.
+
+git diff --cached --name-only --diff-filter=ACMRD -- content/ | grep -q . || exit 0
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/check-content.XXXXXX") || exit 1
+trap 'rm -rf "$tmp"' EXIT
+
+# 작업 트리가 아니라 스테이징된(커밋될) 내용을 꺼내 검사한다.
+git ls-files -z -- content/ | xargs -0 git checkout-index --prefix="$tmp/" -- || exit 1
+
+if ! CHECK_CONTENT_ROOT="$tmp" node scripts/check-content.mjs; then
+  echo ""
+  echo "커밋을 멈췄습니다: 스테이징한 content/ 파일에 문제가 있습니다."
+  exit 1
+fi

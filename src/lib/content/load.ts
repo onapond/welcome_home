@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
 import type { z } from "zod";
+import { bodyImageProblems } from "./body";
 
 // All content lives in <repo>/content. Pages are statically generated, so
 // these reads happen at build time; a bad file fails the build (and Vercel
@@ -31,6 +32,23 @@ function formatIssues(file: string, error: z.ZodError): string[] {
     const where = i.path.length ? i.path.join(".") : "(파일 전체)";
     return `${rel(file)} → ${where}: ${i.message}`;
   });
+}
+
+/**
+ * schema.safeParse(), but an unexpected exception inside a check becomes a
+ * reported problem for this file, so one odd value never hides the others.
+ */
+function safeParse<S extends z.ZodType>(
+  schema: S,
+  data: unknown,
+  file: string,
+): { data: z.output<S> } | { problems: string[] } {
+  try {
+    const result = schema.safeParse(data);
+    return result.success ? { data: result.data } : { problems: formatIssues(file, result.error) };
+  } catch (e) {
+    return { problems: [`${rel(file)} → 검사 중 예상 밖 오류가 났습니다 (${(e as Error).message}). 값의 형식을 확인해 주세요`] };
+  }
 }
 
 // CORE_SCHEMA: plain strings, numbers, booleans, null, lists and maps only.
@@ -90,8 +108,8 @@ export function loadYaml<S extends z.ZodType>(name: string, schema: S): z.output
     } catch (e) {
       throw new ContentError([`${rel(file)} → YAML 문법 오류: ${(e as Error).message}`]);
     }
-    const result = schema.safeParse(data);
-    if (!result.success) throw new ContentError(formatIssues(file, result.error));
+    const result = safeParse(schema, data, file);
+    if ("problems" in result) throw new ContentError(result.problems);
     return result.data;
   });
 }
@@ -154,12 +172,16 @@ export function loadCollection<S extends z.ZodType>(
         continue;
       }
 
-      const result = schema.safeParse(parsed.data);
-      if (!result.success) {
-        problems.push(...formatIssues(file, result.error));
+      // Front matter and body images are both checked, so one run lists every problem.
+      const result = safeParse(schema, parsed.data, file);
+      const body = parsed.body.trim();
+      const bodyProblems = bodyImageProblems(body).map((p) => `${rel(file)} → ${p}`);
+      if ("problems" in result || bodyProblems.length) {
+        if ("problems" in result) problems.push(...result.problems);
+        problems.push(...bodyProblems);
         continue;
       }
-      items.push({ ...(result.data as object), id, body: parsed.body.trim() } as Entry<S>);
+      items.push({ ...(result.data as object), id, body } as Entry<S>);
     }
 
     if (problems.length) throw new ContentError(problems);
