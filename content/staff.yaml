@@ -6,10 +6,53 @@
 #   본인이 홈페이지 공개에 동의한 연락처만 적는다. email · phone을 적으려면 publishContact: true 가
 #   함께 있어야 하고, 없으면 빌드가 멈춘다. 공개하지 않을 연락처는 이 파일에 적지 않는다.
 #   자세한 규칙은 content/README.md 「교역자 연락처」.
-#
-# TODO(이전): 옛 사이트 확인 전 — 담임목사 외 교역자(옛 사이트 12명)는 옛 사이트 자료로 채운다.
-#   (이전 화면에 있던 이름 없는 「교역자」 자리표시 카드 3장은 근거가 없어 뺐다.)
+# 옛 사이트 「섬기는 분들」(scripts/migrate/convert.py로 옮김). 옛 사이트의 전화 · 이메일은 옮기지 않았다.
 
 - name: 김항우
   role: 담임목사
-  group: 당회장
+  photo: staff/staff-1/001.webp
+  bio: |-
+    - 안양대학교 신학과(B.A.)
+    - Southern Bapist Bible College (M.A.)
+    - Azusa Pacific University (M.Div)
+    - Concordia Theological Seminary (D.Min.)
+- name: 남승면
+  role: 은퇴목사
+  photo: staff/staff-2/001.webp
+- name: 김홍대
+  role: 은퇴목사
+  photo: staff/staff-3/001.webp
+- name: 전홍균
+  role: 부목사
+  group: 교육, 예배, 전도, 선교 지원
+  photo: staff/staff-4/001.webp
+- name: 박경훈
+  role: 부목사
+  group: 장년, 교구
+  photo: staff/staff-5/001.webp
+- name: 김유창
+  role: 간사
+  group: 방송, 미디어, 행정 지원
+  photo: staff/staff-6/001.webp
+- name: 정순태(고정숙)
+  role: 파송선교사
+  group: 캄보디아 파송선교사
+  photo: staff/staff-7/001.webp
+- name: 강우열(이혜련)
+  role: 파송 선교사
+  group: 일본 파송 선교사
+  photo: staff/staff-8/001.webp
+- name: 정영림
+  role: 원로장로
+  photo: staff/staff-9/001.webp
+- name: 윤완식
+  role: 시무장로
+  photo: staff/staff-10/001.webp
+- name: 임형택
+  role: 시무장로
+  group: 행정위원회
+  photo: staff/staff-11/001.webp
+- name: 정준수
+  role: 시무장로
+  group: 예배위원회
+  photo: staff/staff-12/001.webp
