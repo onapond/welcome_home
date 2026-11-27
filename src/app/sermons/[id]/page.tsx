@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, Calendar, ChevronLeft, ChevronRight, ExternalLink, Layers, User } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
+import ShareButton from "@/components/features/ShareButton";
 import VideoFacade from "@/components/features/VideoFacade";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getSermons, getSite } from "@/lib/content";
@@ -71,13 +72,16 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ i
         ]}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
-        <Link href="/sermons" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
-          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-          설교 목록
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/sermons" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            설교 목록
+          </Link>
+          <ShareButton title={s.title} />
+        </div>
 
         <header className="mt-6">
-          <p className="text-xs font-semibold tracking-[4px]" style={{ color: "var(--color-primary)" }}>
+          <p className="text-xs font-semibold" style={{ color: "var(--color-primary)" }}>
             {s.kind}
           </p>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-snug mt-2" style={{ color: "var(--color-dark)" }}>

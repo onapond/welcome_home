@@ -70,8 +70,15 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* 부드러운 스크롤은 움직임을 줄이지 않은 사용자에게만 */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -95,6 +102,22 @@
     font-family: var(--font-sans);
     font-weight: 600;
     line-height: 1.4;
+  }
+
+  /* 한국어 줄바꿈: 낱말(어절) 중간에서 끊지 않고, 넘칠 때만 어디서든 끊는다 */
+  h1, h2, h3, h4, h5, h6, p, li, dt, dd, blockquote, figcaption, label, legend, summary {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  /*
+    키보드 포커스 표시 — 남색 바깥 고리 + 하늘색 안쪽 고리 두 겹이라
+    흰 배경(남색 고리가 보임)과 남색 배경(하늘색 고리가 보임) 모두에서 보인다.
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--color-secondary-light);
   }
 
   a {
@@ -176,4 +199,41 @@
   .rise-in {
     animation: none;
   }
+}
+
+/* ── 본문 바로가기 ────────────────────────────────────────────── */
+
+/* 평소에는 화면 밖에 두고, 키보드 포커스를 받으면 왼쪽 위에 나타난다 */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ── 휴대폰 아래 고정 버튼 ────────────────────────────────────── */
+
+.mobile-action-bar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-action-bar-spacer {
+  height: calc(4rem + env(safe-area-inset-bottom));
+}
+
+/* 메뉴가 열렸거나 입력 칸에 글을 쓰는 동안(화면 키보드)에는 감춘다 */
+html[data-mobile-nav-open] .mobile-action-bar,
+html:has(input:focus, textarea:focus, select:focus) .mobile-action-bar {
+  display: none;
 }

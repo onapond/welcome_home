@@ -7,7 +7,7 @@
 import type { Service, Site } from "@/lib/content/schema";
 import { type ImageRef, type Video, videoEmbedUrl, videoThumb } from "@/lib/media";
 import { SITE_URL, absoluteUrl } from "@/lib/site";
-import { kakaoMapUrl, naverMapUrl } from "@/lib/site-summary";
+import { kakaoDirectionsUrl, naverMapUrl } from "@/lib/directions";
 
 type Json = Record<string, unknown>;
 
@@ -137,7 +137,7 @@ export function churchJsonLd(site: Site): Json {
     ...(site.geo
       ? { geo: { "@type": "GeoCoordinates", latitude: site.geo.lat, longitude: site.geo.lng } }
       : {}),
-    hasMap: [kakaoMapUrl(site.address), naverMapUrl(site.address)],
+    hasMap: [kakaoDirectionsUrl(site), naverMapUrl(site)],
     ...(sameAs.length ? { sameAs } : {}),
     ...(events.length ? { event: events } : {}),
   };

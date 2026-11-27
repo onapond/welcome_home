@@ -15,7 +15,8 @@ hero:
     - "{{vision}}"
     - 서울 용산, 함께 걸어가는 공동체
   primaryCta: { label: 예배 안내, href: /visit/service-times }
-  secondaryCta: { label: 온라인 예배, href: "{{sns.youtube}}" }
+  # 실시간 예배 주소는 site.yaml sns.live(없으면 유튜브 채널의 /live)
+  secondaryCta: { label: 주일 실시간 예배, href: "{{sns.live}}" }
   slides:
     - { label: 예배 사진 1 }
     - { label: 예배 사진 2 }

@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import PhotoGrid from "@/components/features/gallery/PhotoGrid";
 import VideoFacade from "@/components/features/VideoFacade";
 import Markdown from "@/components/ui/Markdown";
+import ShareButton from "@/components/features/ShareButton";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getSite, getVideos } from "@/lib/content";
 import { JsonLd, breadcrumbJsonLd, videoJsonLd } from "@/lib/jsonld";
@@ -65,10 +66,13 @@ export default async function VideoPostPage({ params }: { params: Promise<{ id: 
         ]}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
-        <Link href="/news/videos" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
-          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-          영상 목록
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/news/videos" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            영상 목록
+          </Link>
+          <ShareButton title={v.title} />
+        </div>
         <header className="mt-6">
           <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-snug" style={{ color: "var(--color-dark)" }}>
             {v.title}

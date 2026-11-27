@@ -30,6 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/news/videos", changeFrequency: "monthly", priority: 0.5 },
     { path: "/community", changeFrequency: "monthly", priority: 0.6 },
     { path: "/contact", changeFrequency: "yearly", priority: 0.5 },
+    { path: "/privacy", changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const list = routes.map(({ path, changeFrequency, priority }) => ({

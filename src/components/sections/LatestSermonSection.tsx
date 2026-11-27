@@ -70,7 +70,7 @@ export default function LatestSermonSection({ sermons }: Props) {
             {/* Content */}
             <div className="relative z-10 p-7 lg:p-8 flex flex-col gap-4">
               <span
-                className="self-start px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase"
+                className="self-start px-3 py-1 rounded-full text-xs font-bold"
                 style={{ backgroundColor: "var(--color-accent)", color: "var(--color-dark)" }}
               >
                 최신 설교

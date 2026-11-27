@@ -44,17 +44,17 @@ export default function AboutPage() {
         style={{
           minHeight: "40vh",
           background:
-            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 60%, var(--color-secondary) 100%)",
+            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 70%, var(--color-secondary) 120%)",
         }}
         aria-label="교회소개 히어로"
       >
         <div className="flex flex-col items-center gap-4 max-w-xl">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-[4px] uppercase"
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold"
             style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              color: "var(--color-accent)",
-              border: "1px solid rgba(212,168,67,0.35)",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-white)",
+              border: "1px solid rgba(143,215,239,0.45)",
             }}
           >
             {page.hero.badge}
@@ -62,7 +62,7 @@ export default function AboutPage() {
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white leading-tight">
             {page.hero.title}
           </h1>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
             {page.hero.lines.map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}
@@ -109,7 +109,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p
-                    className="text-xs font-bold tracking-widest uppercase mb-2"
+                    className="text-xs font-bold mb-2"
                     style={{ color: "var(--color-primary)" }}
                   >
                     {title}
@@ -173,7 +173,7 @@ export default function AboutPage() {
             <div className="flex flex-col gap-5 pt-6 lg:pt-0">
               <div>
                 <p
-                  className="text-xs font-semibold tracking-[4px] uppercase mb-3"
+                  className="text-xs font-semibold mb-3"
                   style={{ color: "var(--color-primary)" }}
                 >
                   {page.pastor.bioLabel}
@@ -188,7 +188,7 @@ export default function AboutPage() {
                 {page.pastor.career.map(({ label, value }) => (
                   <li key={label} className="flex items-start gap-3">
                     <span
-                      className="flex-shrink-0 text-xs font-bold tracking-widest uppercase pt-0.5 w-14"
+                      className="flex-shrink-0 text-xs font-bold pt-0.5 w-14"
                       style={{ color: "var(--color-primary)" }}
                     >
                       {label}
@@ -259,7 +259,7 @@ export default function AboutPage() {
                   <div className="pb-8 flex-1">
                     <div className="flex items-baseline gap-3 mb-1.5">
                       <span
-                        className="text-xs font-bold tracking-widest"
+                        className="text-xs font-bold tracking-wide"
                         style={{ color: "var(--color-primary)" }}
                       >
                         {formatHistoryDate(node.date)}
@@ -337,7 +337,7 @@ export default function AboutPage() {
           {/* Header */}
           <div className="text-center mb-12">
             <p
-              className="text-xs font-semibold uppercase tracking-[5px] mb-3"
+              className="text-xs font-semibold mb-3"
               style={{ color: "var(--color-secondary)" }}
             >
               {page.beliefs.label}
@@ -369,8 +369,8 @@ export default function AboutPage() {
                   {number}
                 </span>
                 <p
-                  className="text-xs font-bold tracking-widest uppercase"
-                  style={{ color: "var(--color-accent)" }}
+                  className="text-xs font-bold"
+                  style={{ color: "var(--color-secondary-light)" }}
                 >
                   {title}
                 </p>

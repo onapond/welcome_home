@@ -57,7 +57,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           갤러리
         </Link>
         <header className="mt-6 mb-8">
-          <p className="text-xs font-bold tracking-widest" style={{ color: "var(--color-primary)" }}>
+          <p className="text-xs font-bold" style={{ color: "var(--color-primary)" }}>
             {a.category}
           </p>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-snug mt-2" style={{ color: "var(--color-dark)" }}>

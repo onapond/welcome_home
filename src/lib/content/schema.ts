@@ -269,8 +269,9 @@ export const siteSchema = z.strictObject({
     mapQuery: text,
     postalCode: optional(postalCode),
   }),
-  // Map position for search engines (decimal degrees). Leave out until the
-  // church has checked the exact point; a wrong pin is worse than none.
+  // Map position (decimal degrees) for search engines and map-app directions.
+  // Leave out until the church has checked the exact point; a wrong pin is
+  // worse than none.
   geo: optional(
     z.strictObject({
       lat: z.number({ error: "위도(lat)는 숫자로 적어야 합니다 (예: 37.5)" }).min(33, "위도(lat)는 33~39 사이입니다").max(39, "위도(lat)는 33~39 사이입니다"),
@@ -290,7 +291,21 @@ export const siteSchema = z.strictObject({
   sns: z.strictObject({
     youtube: optional(httpsUrl),
     instagram: optional(httpsUrl),
+    // 주일 실시간 예배 주소(선택). 비우면 유튜브 채널의 /live 주소를 쓴다.
+    live: optional(httpsUrl),
   }),
+  // 휴대폰 화면 아래 고정 버튼(선택). 비우면 기본 문구를 쓴다.
+  mobileBar: z
+    .strictObject({
+      reserve: z.strictObject({ label: text, href: text }),
+      call: z.strictObject({ label: text }),
+      directions: z.strictObject({ label: text, href: text }),
+    })
+    .default({
+      reserve: { label: "방문 예약", href: "/visit#reservation" },
+      call: { label: "전화" },
+      directions: { label: "길찾기", href: "/visit#location" },
+    }),
   mottos: z
     .array(z.strictObject({ year: z.number().int(), text, keyword: text }))
     .superRefine(uniqueBy((m) => m.year, "year")),

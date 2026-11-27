@@ -41,17 +41,17 @@ export default function CommunityPage() {
         style={{
           minHeight: "40vh",
           background:
-            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 60%, var(--color-secondary) 100%)",
+            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 70%, var(--color-secondary) 120%)",
         }}
         aria-label="공동체 히어로"
       >
         <div className="flex flex-col items-center gap-4 max-w-xl">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-[4px] uppercase"
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold"
             style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              color: "var(--color-accent)",
-              border: "1px solid rgba(212,168,67,0.35)",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-white)",
+              border: "1px solid rgba(143,215,239,0.45)",
             }}
           >
             {page.hero.badge}
@@ -59,7 +59,7 @@ export default function CommunityPage() {
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white">
             {page.hero.title}
           </h1>
-          <p className="text-sm sm:text-base leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <p className="text-sm sm:text-base leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.85)" }}>
             {page.hero.lines.map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}
@@ -74,6 +74,8 @@ export default function CommunityPage() {
       {page.groups.map((group, i) => {
         const isEven = i % 2 === 0;
         const color = GROUP_COLOR[group.color];
+        // 글자는 밝은 배경에서도 읽히도록 남색 계열만 쓴다(하늘색 · 골드는 장식 칸에만).
+        const textColor = group.color === "primary-light" ? "var(--color-primary-light)" : "var(--color-primary)";
         return (
           <section
             key={group.id}
@@ -119,8 +121,8 @@ export default function CommunityPage() {
                       style={{ backgroundColor: color, opacity: 0.12 }}
                     />
                     <span
-                      className="text-xs font-bold tracking-[4px] uppercase"
-                      style={{ color }}
+                      className="text-xs font-bold"
+                      style={{ color: textColor }}
                     >
                       {group.label}
                     </span>
@@ -167,7 +169,7 @@ export default function CommunityPage() {
                           border: "1px solid rgba(43,58,140,0.07)",
                         }}
                       >
-                        <dt className="text-xs font-semibold mb-1" style={{ color }}>
+                        <dt className="text-xs font-semibold mb-1" style={{ color: textColor }}>
                           {label}
                         </dt>
                         <dd className="text-sm font-medium" style={{ color: "var(--color-dark)" }}>

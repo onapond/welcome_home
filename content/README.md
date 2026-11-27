@@ -13,7 +13,7 @@
 | `site.yaml` | 교회 이름 · 주소 · 전화 · SNS · 표어 · 예배 시간 | 파일 하나 |
 | `history.yaml` | 교회 연혁 | 파일 하나 |
 | `staff.yaml` | 교역자 · 직분자 명단 | 파일 하나 |
-| `pages/*.yaml` | 페이지별 문구 (홈 · 교회소개 · 공동체 · 새가족 · 예배 안내 · 문의 · 오시는 길 · 목록 머리글) | 정해진 파일만: `home` `about` `community` `visit` `service-times` `contact` `location` `lists` (`.yaml`). 다른 이름의 파일을 두면 오류 |
+| `pages/*.yaml` | 페이지별 문구 (홈 · 교회소개 · 공동체 · 새가족 · 예배 안내 · 문의 · 오시는 길 · 목록 머리글 · 개인정보 처리방침) | 정해진 파일만: `home` `about` `community` `visit` `service-times` `contact` `location` `lists` `privacy` (`.yaml`). 다른 이름의 파일을 두면 오류 |
 | `sermons/` | 설교 | 한 편 = `.md` 파일 하나 |
 | `praise/` | 찬양 영상 | 한 편 = `.md` 파일 하나 |
 | `news/` | 공지 · 소식 · 간증 | 한 건 = `.md` 파일 하나 |
@@ -77,6 +77,7 @@ date: 2026-11-23
 | `{{address}}` | 도로명 주소 (상세) |
 | `{{address.road}}` `{{address.detail}}` | 도로명 주소 · 상세 |
 | `{{sns.youtube}}` `{{sns.instagram}}` | 유튜브 · 인스타그램 주소 |
+| `{{sns.live}}` | 주일 실시간 예배 주소. `site.yaml`의 `sns.live`가 있으면 그것, 없으면 유튜브 채널 주소 + `/live` |
 | `{{service.예배id.항목}}` | 예배 정보. 예배 id는 `site.yaml` services의 `id`(sunday · wednesday · friday · dawn …), 항목은 `name` `short` `day` `time` `place` `audience`. 예: `{{service.sunday.time}}` |
 | `{{motto.latest.text}}` `{{motto.latest.year}}` `{{motto.latest.keyword}}` | 가장 최근 표어 · 연도 · 키워드 |
 | `{{motto.2024}}` | 그 연도의 표어 |
@@ -115,6 +116,14 @@ date: 2026-11-23
   ```
 
 - 예전 파일의 `youtube:` 항목(유튜브 전용)도 그대로 쓸 수 있습니다. 새로 쓸 때는 `video:`를 쓰고, 한 파일에 `video:`와 `youtube:`를 함께 쓰지 않습니다.
+
+## site.yaml 선택 항목 (휴대폰 아래 버튼 · 길찾기 · 실시간 예배)
+
+- `mobileBar`: 휴대폰 화면 맨 아래에 늘 떠 있는 버튼 3개(방문 예약 · 전화 · 길찾기)의 글자와 연결 주소. 없으면 기본값(「방문 예약」 → `/visit#reservation`, 「전화」 → 대표 전화, 「길찾기」 → `/visit#location`)을 씁니다.
+- `geo`: 교회 좌표 — 아래 「검색엔진」 표 참고. 적으면 카카오맵 「길찾기」도 교회를 목적지로 바로 엽니다.
+- `sns.live`: 실시간 예배 주소를 따로 쓸 때만 적습니다(홈 화면 「주일 실시간 예배」 버튼).
+- `pages/visit.yaml`의 `steps`(선택): 새가족 페이지 「처음 오시면 이렇게 진행돼요」 단계. 아이콘 이름에 `door-open` `hand-heart` `utensils`도 쓸 수 있습니다.
+- `pages/privacy.yaml`: 개인정보 처리방침 본문과 방문 신청 · 문의 양식의 동의 문구(`consent`). 양식에서 받는 항목이나 보유 기간을 바꾸면 두 곳을 함께 고칩니다.
 
 ## 교역자 연락처 (staff.yaml)
 

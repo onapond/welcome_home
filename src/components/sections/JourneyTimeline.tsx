@@ -72,7 +72,7 @@ export default function JourneyTimeline() {
 
                 {/* Year */}
                 <p
-                  className="text-xs font-bold tracking-widest mb-2"
+                  className="text-xs font-bold tracking-wide mb-2"
                   style={{ color: "var(--color-primary)" }}
                 >
                   {node.year}
@@ -153,7 +153,7 @@ export default function JourneyTimeline() {
               {/* Right: Content */}
               <div className="flex-1 pb-8">
                 <p
-                  className="text-xs font-bold tracking-widest mb-1.5"
+                  className="text-xs font-bold tracking-wide mb-1.5"
                   style={{ color: "var(--color-primary)" }}
                 >
                   {node.year}

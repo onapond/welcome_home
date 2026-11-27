@@ -35,16 +35,6 @@ export function telHref(phone: string): string {
   return `tel:${first.replace(/[^\d+]/g, "")}`;
 }
 
-/** 카카오맵 검색 주소 */
-export function kakaoMapUrl(address: Site["address"]): string {
-  return `https://map.kakao.com/?q=${encodeURIComponent(address.mapQuery)}`;
-}
-
-/** 네이버 지도 검색 주소 */
-export function naverMapUrl(address: Site["address"]): string {
-  return `https://map.naver.com/p/search/${encodeURIComponent(address.mapQuery)}`;
-}
-
 export function buildSiteSummary(
   site: Site,
   groups: { id: string; title: string }[] = getCommunityPage().groups,

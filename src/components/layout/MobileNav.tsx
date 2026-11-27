@@ -39,6 +39,8 @@ export default function MobileNav({ isOpen, onClose, returnFocusRef }: MobileNav
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // 열린 동안 휴대폰 아래 고정 버튼을 감춘다 (globals.css)
+    document.documentElement.setAttribute("data-mobile-nav-open", "");
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -73,6 +75,7 @@ export default function MobileNav({ isOpen, onClose, returnFocusRef }: MobileNav
       document.removeEventListener("keydown", onKeyDown);
       desktop.removeEventListener("change", onViewport);
       document.body.style.overflow = previousOverflow;
+      document.documentElement.removeAttribute("data-mobile-nav-open");
     };
   }, [isOpen, returnFocusRef]);
 

@@ -41,7 +41,7 @@ export default function SermonsClient({ items, kinds, series }: Props) {
     return <EmptyState message="아직 등록된 설교가 없습니다." />;
   }
 
-  const label = "text-xs font-semibold tracking-widest mr-1";
+  const label = "text-xs font-semibold mr-1";
 
   return (
     <div>

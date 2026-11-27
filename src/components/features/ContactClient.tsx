@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Phone, MapPin, Clock, Mail, CheckCircle, Send } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
+import PhoneLinkText from "@/components/ui/PhoneLinkText";
 import type { ContactPage } from "@/lib/content/pages";
 
 interface ContactClientProps {
@@ -18,6 +20,8 @@ interface ContactClientProps {
   mapUrl: string;
   /** 지도 박스에 덧붙이는 지하철 안내 (location.yaml) */
   subway?: string;
+  /** 문의 동의 문구 (content/pages/privacy.yaml consent) */
+  consentCopy: { text: string; linkLabel: string };
 }
 
 export default function ContactClient({
@@ -28,6 +32,7 @@ export default function ContactClient({
   email,
   address,
   addressRoad,
+  consentCopy,
   mapUrl,
   subway,
 }: ContactClientProps) {
@@ -105,17 +110,17 @@ export default function ContactClient({
         style={{
           minHeight: "36vh",
           background:
-            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 60%, var(--color-secondary) 100%)",
+            "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 70%, var(--color-secondary) 120%)",
         }}
         aria-label="문의 히어로"
       >
         <div className="flex flex-col items-center gap-4 max-w-xl">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-[4px] uppercase"
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold"
             style={{
-              backgroundColor: "rgba(255,255,255,0.12)",
-              color: "var(--color-accent)",
-              border: "1px solid rgba(212,168,67,0.35)",
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-white)",
+              border: "1px solid rgba(143,215,239,0.45)",
             }}
           >
             {page.hero.badge}
@@ -123,7 +128,7 @@ export default function ContactClient({
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white">
             {page.hero.title}
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
             {page.hero.lines.map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}
@@ -263,7 +268,7 @@ export default function ContactClient({
                         color: "#B91C1C",
                       }}
                     >
-                      {error}
+                      <PhoneLinkText text={error} phone={phone} phoneHref={phoneHref} />
                     </div>
                   )}
 
@@ -370,22 +375,34 @@ export default function ContactClient({
                     />
                   </div>
 
-                  <label className="flex items-start gap-3 text-sm cursor-pointer" style={{ color: "var(--color-dark-soft)" }}>
+                  <div className="flex items-start gap-3 text-sm" style={{ color: "var(--color-dark-soft)" }}>
                     <input
+                      id="contact-consent"
                       type="checkbox"
                       name="consent"
                       checked={consent}
                       onChange={(e) => setConsent(e.target.checked)}
                       required
-                      className="mt-0.5 flex-shrink-0"
+                      className="mt-1 flex-shrink-0 w-4 h-4"
                       style={{ accentColor: "var(--color-primary)" }}
                     />
-                    <span>
-                      답변 안내를 위해 이름과 연락처를 수집하는 데 동의합니다.
-                      수집한 정보는 문의 응대 목적으로만 사용하며, 응대가 끝나면 파기합니다.
-                      <span aria-hidden="true" style={{ color: "#e53e3e" }}> *</span>
-                    </span>
-                  </label>
+                    <div>
+                      <label htmlFor="contact-consent" className="cursor-pointer leading-relaxed">
+                        {consentCopy.text}
+                        <span aria-hidden="true" style={{ color: "#B91C1C" }}> *</span>
+                        <span className="sr-only">(필수)</span>
+                      </label>{" "}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        className="font-semibold underline underline-offset-2"
+                        style={{ color: "var(--color-primary)" }}
+                      >
+                        {consentCopy.linkLabel}
+                        <span className="sr-only">(새 창)</span>
+                      </Link>
+                    </div>
+                  </div>
 
                   <button
                     type="submit"
