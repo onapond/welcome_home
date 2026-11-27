@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
 import yaml from "js-yaml";
 import type { z } from "zod";
 
@@ -12,12 +11,14 @@ export const CONTENT_DIR = path.join(process.cwd(), "content");
 const ID_PATTERN = /^[0-9a-z][0-9a-z-]*$/;
 
 export class ContentError extends Error {
+  readonly problems: string[];
   constructor(problems: string[]) {
     super(
       `콘텐츠 파일 ${problems.length}곳에 문제가 있습니다:\n` +
         problems.map((p) => `  - ${p}`).join("\n"),
     );
     this.name = "ContentError";
+    this.problems = problems;
   }
 }
 
@@ -32,10 +33,41 @@ function formatIssues(file: string, error: z.ZodError): string[] {
   });
 }
 
-// js-yaml turns unquoted `2026-11-23` into a UTC Date; the schema
-// preprocessors in schema.ts normalize those back to strings.
+// CORE_SCHEMA: plain strings, numbers, booleans, null, lists and maps only.
+// Unlike the default schema it never turns `2026-11-23` into a Date, so the
+// text the editor typed is what the schema validates (a bad date such as
+// 2026-02-30 is rejected instead of silently becoming March 2).
 function parseYaml(text: string): unknown {
-  return yaml.load(text);
+  return yaml.load(text, { schema: yaml.CORE_SCHEMA });
+}
+
+/**
+ * Split a Markdown file into YAML front matter and body. Hand-rolled on
+ * purpose: generic front-matter libraries let the file choose its parser
+ * (`---js`), which would evaluate code during the build.
+ */
+function splitFrontMatter(raw: string, file: string): { data: unknown; body: string } {
+  const src = raw.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  const eol = src.indexOf("\n");
+  const firstLine = eol === -1 ? src : src.slice(0, eol);
+  if (firstLine !== "---") {
+    if (firstLine.startsWith("---")) {
+      throw new ContentError([
+        `${rel(file)} → 첫 줄은 --- 만 적어야 합니다 (지금: '${firstLine}'). --- 뒤에 다른 글자를 붙일 수 없습니다`,
+      ]);
+    }
+    throw new ContentError([`${rel(file)} → 파일 첫 줄이 --- 이어야 합니다 (머리말은 --- 와 --- 사이에 적습니다)`]);
+  }
+  const rest = src.slice(4);
+  const close = /^---[ \t]*$/m.exec(rest);
+  if (!close) throw new ContentError([`${rel(file)} → 머리말을 닫는 --- 줄이 없습니다`]);
+  let data: unknown;
+  try {
+    data = parseYaml(rest.slice(0, close.index));
+  } catch (e) {
+    throw new ContentError([`${rel(file)} → 머리말(--- 사이) 문법 오류: ${(e as Error).message}`]);
+  }
+  return { data, body: rest.slice(close.index + close[0].length) };
 }
 
 const cache = new Map<string, unknown>();
@@ -66,10 +98,15 @@ export function loadYaml<S extends z.ZodType>(name: string, schema: S): z.output
 
 type Entry<S extends z.ZodType> = z.output<S> & { id: string; body: string };
 
+// Besides `*.md` items a collection folder may hold templates/drafts (`_…`)
+// and OS or git placeholder files. Anything else is reported.
+const IGNORED_FILES = new Set([".gitkeep", ".DS_Store"]);
+
 /**
  * Read every `*.md` in content/<dir>, validate front matter, and return the
  * items sorted by `sortKey` descending (newest first). Files starting with
- * `_` are ignored so templates can live next to real content.
+ * `_` are ignored so templates can live next to real content. The folder must
+ * exist (it may be empty), and unexpected files fail the build.
  */
 export function loadCollection<S extends z.ZodType>(
   dir: string,
@@ -79,14 +116,22 @@ export function loadCollection<S extends z.ZodType>(
 ): Entry<S>[] {
   return memo(`col:${dir}`, () => {
     const folder = path.join(CONTENT_DIR, dir);
-    if (!fs.existsSync(folder)) return [];
+    if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) {
+      throw new ContentError([`${rel(folder)} 폴더가 없습니다 (콘텐츠 폴더의 이름을 바꾸거나 지우면 안 됩니다)`]);
+    }
 
     const problems: string[] = [];
     const items: Entry<S>[] = [];
 
     for (const name of fs.readdirSync(folder).sort()) {
-      if (!name.endsWith(".md") || name.startsWith("_")) continue;
+      if (name.startsWith("_") || IGNORED_FILES.has(name)) continue;
       const file = path.join(folder, name);
+      if (!name.endsWith(".md") || !fs.statSync(file).isFile()) {
+        problems.push(
+          `${rel(file)} → 이 폴더에는 .md 파일만 둡니다 (확장자는 소문자 .md. 쓰지 않을 파일은 이름 앞에 _ 를 붙입니다)`,
+        );
+        continue;
+      }
       const id = name.slice(0, -3);
 
       if (!ID_PATTERN.test(id)) {
@@ -100,13 +145,12 @@ export function loadCollection<S extends z.ZodType>(
         continue;
       }
 
-      let parsed: matter.GrayMatterFile<string>;
+      let parsed: { data: unknown; body: string };
       try {
-        parsed = matter(fs.readFileSync(file, "utf8"), {
-          engines: { yaml: (s: string) => parseYaml(s) as object },
-        });
+        parsed = splitFrontMatter(fs.readFileSync(file, "utf8"), file);
       } catch (e) {
-        problems.push(`${rel(file)} → 머리말(--- 사이) 문법 오류: ${(e as Error).message}`);
+        if (!(e instanceof ContentError)) throw e;
+        problems.push(...e.problems);
         continue;
       }
 
@@ -115,7 +159,7 @@ export function loadCollection<S extends z.ZodType>(
         problems.push(...formatIssues(file, result.error));
         continue;
       }
-      items.push({ ...(result.data as object), id, body: parsed.content.trim() } as Entry<S>);
+      items.push({ ...(result.data as object), id, body: parsed.body.trim() } as Entry<S>);
     }
 
     if (problems.length) throw new ContentError(problems);

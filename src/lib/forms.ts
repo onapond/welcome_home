@@ -125,3 +125,24 @@ export function requireConsent(raw: unknown, errors: FieldError[]): boolean {
 export function isBot(raw: unknown): boolean {
   return clean(raw).length > 0;
 }
+
+/** JSON 본문이 「필드 이름: 값」 객체인지 — null · 배열 · 숫자 등은 잘못된 요청이다. */
+export function isFieldObject(body: unknown): body is Record<string, unknown> {
+  return typeof body === "object" && body !== null && !Array.isArray(body);
+}
+
+/**
+ * 방문 신청 인원 선택지 — VisitClient(화면)와 /api/visit(검증·메일)가 함께 쓴다.
+ * value는 전송값, label은 화면과 알림 메일에 그대로 나오는 문구.
+ */
+export const VISIT_COUNT_OPTIONS = [
+  { value: "1", label: "1명" },
+  { value: "2", label: "2명" },
+  { value: "3", label: "3명" },
+  { value: "4", label: "4명" },
+  { value: "5+", label: "5명 이상" },
+] as const;
+
+export function visitCountLabel(value: string): string {
+  return VISIT_COUNT_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}

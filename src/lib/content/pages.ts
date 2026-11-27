@@ -1,92 +1,95 @@
 import { z } from "zod";
 import { ICON_KEYS } from "@/lib/icons";
-import { fullAddress, latestMotto } from "@/lib/site-summary";
 import { ContentError, loadYaml } from "./load";
-import { mediaPath, type Service, type Site } from "./schema";
+import { idList, idString, mediaPath, optional, text, type Site } from "./schema";
+import { fullAddress, latestMotto } from "./site-format";
 import { getHistory, getSite, getStaff } from "./index";
 
 // ─── 공통 조각 ───────────────────────────────────────────────────────────────
+// 직원이 고치는 파일이므로 모든 객체는 strict(모르는 항목 = 오류), 문구는
+// 앞뒤 공백을 지운 뒤 비어 있으면 오류다.
 
 const icon = z.enum(ICON_KEYS);
-const link = z.object({ label: z.string(), href: z.string() });
-const lines = z.array(z.string()).min(1); // 줄바꿈 단위로 나눠 적는 문구
-const meta = z.object({
-  title: z.string(),
-  description: z.string(),
-  ogDescription: z.string().optional(),
+const link = z.strictObject({ label: text, href: text });
+const lines = z.array(text).min(1); // 줄바꿈 단위로 나눠 적는 문구
+const meta = z.strictObject({
+  title: text,
+  description: text,
+  ogDescription: optional(text),
 });
-const hero = z.object({ badge: z.string(), title: z.string(), lines });
-const sectionLabel = z.object({ label: z.string(), title: z.string() });
+const hero = z.strictObject({ badge: text, title: text, lines });
+const sectionLabel = z.strictObject({ label: text, title: text });
+const iconItem = z.strictObject({ icon, title: text, text });
 
 // ─── content/pages/home.yaml ─────────────────────────────────────────────────
 
-export const homeSchema = z.object({
-  hero: z.object({
-    badge: z.string(),
-    headline: z.string(),
+export const homeSchema = z.strictObject({
+  hero: z.strictObject({
+    badge: text,
+    headline: text,
     lines,
     primaryCta: link,
     secondaryCta: link,
     // 슬라이드 배경 사진. image를 비우면 「사진 준비 중」 자리표시가 나온다.
-    slides: z.array(z.object({ label: z.string(), image: mediaPath.optional() })).min(1),
+    slides: z.array(z.strictObject({ label: text, image: optional(mediaPath) })).min(1),
   }),
-  journey: z.object({
-    label: z.string(),
-    title: z.string(),
+  journey: z.strictObject({
+    label: text,
+    title: text,
     // 표어(site.yaml mottos)와 연도로 짝지어진다.
-    nodes: z.array(z.object({ year: z.number().int(), subtitle: z.string(), icon })),
+    nodes: z.array(z.strictObject({ year: z.number().int(), subtitle: text, icon })),
   }),
-  newHere: z.object({
-    label: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    items: z.array(z.object({ icon, title: z.string(), text: z.string() })),
+  newHere: z.strictObject({
+    label: text,
+    title: text,
+    intro: text,
+    items: z.array(iconItem),
     cta: link,
-    image: z.object({ label: z.string(), src: mediaPath.optional() }),
-    badge: z.object({ label: z.string(), text: z.string() }),
-    quote: z.object({ year: z.number().int(), caption: z.string() }),
+    image: z.strictObject({ label: text, src: optional(mediaPath) }),
+    badge: z.strictObject({ label: text, text }),
+    quote: z.strictObject({ year: z.number().int(), caption: text }),
   }),
-  community: z.object({ label: z.string(), title: z.string(), linkLabel: z.string() }),
+  community: z.strictObject({ label: text, title: text, linkLabel: text }),
 });
 
 // ─── content/pages/location.yaml ─────────────────────────────────────────────
 
-export const locationSchema = z.object({
-  label: z.string(),
-  mapButton: z.string(),
-  transport: z.array(z.object({ id: z.string(), icon, label: z.string(), text: z.string() })),
+export const locationSchema = z.strictObject({
+  label: text,
+  mapButton: text,
+  transport: idList(z.strictObject({ id: idString, icon, label: text, text })),
 });
 
 // ─── content/pages/about.yaml ────────────────────────────────────────────────
 
-export const aboutSchema = z.object({
+export const aboutSchema = z.strictObject({
   meta,
   hero,
-  vision: z.object({
-    label: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    items: z.array(z.object({ icon, title: z.string(), text: z.string() })),
+  vision: z.strictObject({
+    label: text,
+    title: text,
+    intro: text,
+    items: z.array(iconItem),
   }),
-  pastor: z.object({
-    label: z.string(),
-    roleLine: z.string(),
-    photo: mediaPath.optional(),
-    bioLabel: z.string(),
-    bio: z.string(),
-    career: z.array(z.object({ label: z.string(), value: z.string() })),
-    quote: z.object({ text: z.string(), by: z.string() }),
+  pastor: z.strictObject({
+    label: text,
+    roleLine: text,
+    photo: optional(mediaPath),
+    bioLabel: text,
+    bio: text,
+    career: z.array(z.strictObject({ label: text, value: text })),
+    quote: z.strictObject({ text, by: text }),
   }),
-  history: z.object({
-    label: z.string(),
-    title: z.string(),
-    allLabel: z.string(),
+  history: z.strictObject({
+    label: text,
+    title: text,
+    allLabel: text,
   }),
-  beliefs: z.object({
-    label: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    items: z.array(z.object({ title: z.string(), text: z.string() })),
+  beliefs: z.strictObject({
+    label: text,
+    title: text,
+    intro: text,
+    items: z.array(z.strictObject({ title: text, text })),
   }),
   staff: sectionLabel,
 });
@@ -95,30 +98,30 @@ export const aboutSchema = z.object({
 
 export const GROUP_COLORS = ["primary", "secondary", "accent", "primary-light"] as const;
 
-export const communitySchema = z.object({
+export const communitySchema = z.strictObject({
   meta,
   hero,
-  groups: z.array(
-    z.object({
-      id: z.string().regex(/^[a-z0-9-]+$/, "id는 영문 소문자·숫자·하이픈만 씁니다"),
-      label: z.string(),
-      title: z.string(),
-      subtitle: z.string(),
-      summary: z.string(), // 홈 카드용 한 줄 소개
-      tag: z.string(), // 홈 카드 우하단 배지
+  groups: idList(
+    z.strictObject({
+      id: idString,
+      label: text,
+      title: text,
+      subtitle: text,
+      summary: text, // 홈 카드용 한 줄 소개
+      tag: text, // 홈 카드 우하단 배지
       showOnHome: z.boolean().default(true),
-      description: z.string(),
-      tags: z.array(z.string()).default([]),
+      description: text,
+      tags: z.array(text).default([]),
       color: z.enum(GROUP_COLORS).default("primary"),
-      image: mediaPath.optional(),
-      details: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+      image: optional(mediaPath),
+      details: z.array(z.strictObject({ label: text, value: text })).default([]),
       showSnsLinks: z.boolean().default(false), // site.yaml의 인스타그램 · 유튜브 버튼
     }),
   ),
-  cta: z.object({
-    label: z.string(),
-    title: z.string(),
-    text: z.string(),
+  cta: z.strictObject({
+    label: text,
+    title: text,
+    text,
     primary: link,
     secondary: link,
   }),
@@ -126,33 +129,33 @@ export const communitySchema = z.object({
 
 // ─── content/pages/visit.yaml ────────────────────────────────────────────────
 
-export const visitSchema = z.object({
+export const visitSchema = z.strictObject({
   meta,
   hero,
-  faq: z.object({
-    label: z.string(),
-    title: z.string(),
-    items: z.array(z.object({ question: z.string(), answer: z.string() })),
+  faq: z.strictObject({
+    label: text,
+    title: text,
+    items: z.array(z.strictObject({ question: text, answer: text })),
   }),
   services: sectionLabel,
-  reservation: z.object({
-    label: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    successMessage: z.string(),
-    submitLabel: z.string(),
+  reservation: z.strictObject({
+    label: text,
+    title: text,
+    intro: text,
+    successMessage: text,
+    submitLabel: text,
   }),
 });
 
 // ─── content/pages/service-times.yaml ────────────────────────────────────────
 
-export const serviceTimesSchema = z.object({
+export const serviceTimesSchema = z.strictObject({
   meta,
   hero,
   regular: sectionLabel,
   special: sectionLabel,
-  cta: z.object({
-    title: z.string(),
+  cta: z.strictObject({
+    title: text,
     lines,
     primary: link,
     secondary: link,
@@ -161,21 +164,21 @@ export const serviceTimesSchema = z.object({
 
 // ─── content/pages/contact.yaml ──────────────────────────────────────────────
 
-export const contactSchema = z.object({
+export const contactSchema = z.strictObject({
   meta,
   hero,
-  info: z.object({
-    label: z.string(),
-    title: z.string(),
-    officeHoursLabel: z.string(),
-    officeHours: z.string(),
+  info: z.strictObject({
+    label: text,
+    title: text,
+    officeHoursLabel: text,
+    officeHours: text,
   }),
-  form: z.object({
-    label: z.string(),
-    title: z.string(),
-    successTitle: z.string(),
-    successText: z.string(),
-    inquiryTypes: z.array(z.string()).min(1),
+  form: z.strictObject({
+    label: text,
+    title: text,
+    successTitle: text,
+    successText: text,
+    inquiryTypes: z.array(text).min(1),
   }),
 });
 
@@ -191,90 +194,157 @@ export type CommunityGroup = CommunityPage["groups"][number];
 // ─── {{자리표시}} 치환 ───────────────────────────────────────────────────────
 //
 // 페이지 파일의 문구 안에서 교회 정보를 {{ }}로 부를 수 있다. 정보가 바뀌어도
-// 한 곳(site.yaml)만 고치면 모든 문구가 따라온다.
+// 한 곳(site.yaml)만 고치면 모든 문구가 따라온다. 직원용 목록은
+// content/README.md 「자리표시」 절에 있다 — 여기를 바꾸면 그 표도 고친다.
 //
-//   {{phone}} {{fax}} {{email}} {{name}} {{pastor}} {{denomination}} {{founded}}
-//   {{address}}            도로명 (상세)
-//   {{address.road}}       {{sns.youtube}}  {{sns.instagram}}
-//   {{service.sunday.time}} 예배 id.항목(name day time place audience)
-//   {{motto.latest.text}}  {{motto.latest.year}}   가장 최근 표어
-//   {{motto.2024}}         해당 연도 표어
-//   {{transport.subway}}   location.yaml 교통편 id
+//   {{name}} {{nameEn}} {{denomination}} {{pastor}} {{founded}} {{vision}}
+//   {{description}} {{phone}} {{fax}} {{email}}
+//   {{address}} (도로명 (상세))  {{address.road}}  {{address.detail}}
+//   {{sns.youtube}}  {{sns.instagram}}
+//   {{service.<예배 id>.<name|short|day|time|place|audience>}}
+//   {{motto.latest.<year|text|keyword>}}  {{motto.<연도>}}
+//   {{transport.<교통편 id>}}  (location.yaml 교통편 — location.yaml 안에서는 못 씀)
+//
+// 모르는 이름이나 값이 비어 있는 항목을 부르면 파일 · 위치와 함께 빌드가 멈춘다.
 
-type Ctx = { site: Site; transport: Record<string, string>; file: string };
+type Ctx = { site: Site; transport: Record<string, string> | null };
+type Resolved = { value: string } | { problem: string };
 
-function resolveToken(token: string, ctx: Ctx): string | undefined {
-  const { site } = ctx;
-  const parts = token.split(".");
+const SITE_TOKENS = [
+  "name",
+  "nameEn",
+  "denomination",
+  "pastor",
+  "founded",
+  "vision",
+  "description",
+  "phone",
+  "fax",
+  "email",
+] as const;
+const SERVICE_FIELDS = ["name", "short", "day", "time", "place", "audience"] as const;
+const MOTTO_FIELDS = ["year", "text", "keyword"] as const;
 
-  if (token === "address") return fullAddress(site.address);
+const UNKNOWN: Resolved = { problem: "알 수 없는 자리표시입니다 (content/README.md의 자리표시 목록 참고)" };
 
-  if (parts[0] === "service" && parts.length === 3) {
-    const svc = site.services.find((s: Service) => s.id === parts[1]);
-    const value = svc?.[parts[2] as keyof Service];
-    return typeof value === "string" ? value : undefined;
-  }
-  if (parts[0] === "motto" && parts.length >= 2) {
-    if (parts[1] === "latest") {
-      const m = latestMotto(site);
-      return m && parts[2] ? String(m[parts[2] as "year" | "text" | "keyword"]) : undefined;
-    }
-    return site.mottos.find((m) => String(m.year) === parts[1])?.text;
-  }
-  if (parts[0] === "transport" && parts.length === 2) return ctx.transport[parts[1]];
-
-  let cur: unknown = site;
-  for (const p of parts) {
-    if (cur && typeof cur === "object" && p in cur) cur = (cur as Record<string, unknown>)[p];
-    else return undefined;
-  }
-  return typeof cur === "string" || typeof cur === "number" ? String(cur) : undefined;
+function has<T extends string>(list: readonly T[], v: string | undefined): v is T {
+  return v !== undefined && (list as readonly string[]).includes(v);
 }
 
-function fillDeep<T>(value: T, ctx: Ctx, problems: string[], path = ""): T {
+function present(v: string | number | undefined, where: string): Resolved {
+  return v === undefined || v === "" ? { problem: `${where} 값이 비어 있습니다` } : { value: String(v) };
+}
+
+function resolveToken(token: string, ctx: Ctx): Resolved {
+  const { site } = ctx;
+  const parts = token.split(".");
+  const [head, a, b] = parts;
+
+  switch (head) {
+    case "address":
+      if (parts.length === 1) return { value: fullAddress(site.address) };
+      if (parts.length === 2 && (a === "road" || a === "detail")) {
+        return present(site.address[a], `site.yaml의 address.${a}`);
+      }
+      return UNKNOWN;
+    case "sns":
+      if (parts.length === 2 && (a === "youtube" || a === "instagram")) {
+        return present(site.sns[a], `site.yaml의 sns.${a}`);
+      }
+      return UNKNOWN;
+    case "service": {
+      if (parts.length !== 3 || !has(SERVICE_FIELDS, b)) return UNKNOWN;
+      const svc = site.services.find((s) => s.id === a);
+      if (!svc) return { problem: `site.yaml에 id가 '${a}'인 예배가 없습니다` };
+      return present(svc[b], `site.yaml 예배 '${a}'의 ${b}`);
+    }
+    case "motto": {
+      if (parts.length === 3 && a === "latest" && has(MOTTO_FIELDS, b)) {
+        const m = latestMotto(site);
+        return m ? present(m[b], "site.yaml의 mottos") : { problem: "site.yaml에 표어(mottos)가 없습니다" };
+      }
+      if (parts.length === 2 && /^\d{4}$/.test(a)) {
+        const m = site.mottos.find((x) => String(x.year) === a);
+        return m ? { value: m.text } : { problem: `site.yaml에 ${a}년 표어가 없습니다` };
+      }
+      return UNKNOWN;
+    }
+    case "transport": {
+      if (parts.length !== 2) return UNKNOWN;
+      if (!ctx.transport) return { problem: "location.yaml 안에서는 {{transport.…}}를 쓸 수 없습니다" };
+      const t = ctx.transport[a];
+      return t === undefined ? { problem: `location.yaml에 id가 '${a}'인 교통편이 없습니다` } : { value: t };
+    }
+    default:
+      if (parts.length === 1 && has(SITE_TOKENS, head)) return present(site[head], `site.yaml의 ${head}`);
+      return UNKNOWN;
+  }
+}
+
+function fillDeep<T>(value: T, ctx: Ctx, file: string, problems: string[], path = ""): T {
   if (typeof value === "string") {
-    return value.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (whole, token: string) => {
+    return value.replace(/\{\{\s*([^}]*?)\s*\}\}/g, (whole, token: string) => {
       const out = resolveToken(token, ctx);
-      if (out === undefined) {
-        problems.push(`${ctx.file} → ${path || "(문구)"}: 알 수 없는 자리표시 ${whole}`);
+      if ("problem" in out) {
+        problems.push(`${file} → ${path || "(문구)"}: ${whole} — ${out.problem}`);
         return whole;
       }
-      return out;
+      return out.value;
     }) as T;
   }
   if (Array.isArray(value)) {
-    return value.map((v, i) => fillDeep(v, ctx, problems, `${path}[${i}]`)) as T;
+    return value.map((v, i) => fillDeep(v, ctx, file, problems, `${path}.${i}`.replace(/^\./, ""))) as T;
   }
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, fillDeep(v, ctx, problems, path ? `${path}.${k}` : k)]),
+      Object.entries(value).map(([k, v]) => [k, fillDeep(v, ctx, file, problems, path ? `${path}.${k}` : k)]),
     ) as T;
   }
   return value;
 }
 
-function transportMap(): Record<string, string> {
-  const loc = loadYaml("pages/location.yaml", locationSchema);
-  return Object.fromEntries(loc.transport.map((t) => [t.id, t.text]));
-}
-
-function loadPage<S extends z.ZodType>(name: string, schema: S): z.output<S> {
+/** Validate content/pages/<name>.yaml, then substitute {{ }} tokens. */
+function loadPage<S extends z.ZodType>(
+  name: string,
+  schema: S,
+  transport: Record<string, string> | null,
+): z.output<S> {
   const raw = loadYaml(`pages/${name}.yaml`, schema);
   const problems: string[] = [];
-  const out = fillDeep(raw, { site: getSite(), transport: transportMap(), file: `content/pages/${name}.yaml` }, problems);
+  const out = fillDeep(raw, { site: getSite(), transport }, `content/pages/${name}.yaml`, problems);
   if (problems.length) throw new ContentError(problems);
   return out;
 }
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
 
-export const getHomePage = (): HomePage => loadPage("home", homeSchema);
-export const getAboutPage = (): AboutPage => loadPage("about", aboutSchema);
-export const getCommunityPage = (): CommunityPage => loadPage("community", communitySchema);
-export const getVisitPage = (): VisitPage => loadPage("visit", visitSchema);
-export const getServiceTimesPage = (): ServiceTimesPage => loadPage("service-times", serviceTimesSchema);
-export const getContactPage = (): ContactPage => loadPage("contact", contactSchema);
-export const getLocationInfo = (): LocationInfo => loadYaml("pages/location.yaml", locationSchema);
+/** location.yaml — its strings go through the same substitution (without transport tokens). */
+export const getLocationInfo = (): LocationInfo => loadPage("location", locationSchema, null);
+
+function transportMap(): Record<string, string> {
+  return Object.fromEntries(getLocationInfo().transport.map((t) => [t.id, t.text]));
+}
+
+const page = <S extends z.ZodType>(name: string, schema: S) => (): z.output<S> =>
+  loadPage(name, schema, transportMap());
+
+export const getHomePage: () => HomePage = page("home", homeSchema);
+export const getAboutPage: () => AboutPage = page("about", aboutSchema);
+export const getCommunityPage: () => CommunityPage = page("community", communitySchema);
+export const getVisitPage: () => VisitPage = page("visit", visitSchema);
+export const getServiceTimesPage: () => ServiceTimesPage = page("service-times", serviceTimesSchema);
+export const getContactPage: () => ContactPage = page("contact", contactSchema);
+
+/** Every page getter — used by validateAllContent(). */
+export const PAGE_GETTERS = {
+  location: getLocationInfo,
+  home: getHomePage,
+  about: getAboutPage,
+  community: getCommunityPage,
+  visit: getVisitPage,
+  "service-times": getServiceTimesPage,
+  contact: getContactPage,
+} as const;
 
 // ─── 연혁 · 교역자 보조 ──────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@ import {
   LIMITS,
   escapeHtml,
   isBot,
+  isFieldObject,
   requireChoice,
   requireConsent,
   requirePhone,
@@ -41,15 +42,20 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Record<string, unknown>;
+  // 파싱 실패와 「필드 객체가 아닌 JSON」(null · 배열 · 숫자)은 같은 400이다.
+  let parsed: unknown;
   try {
-    body = await request.json();
+    parsed = await request.json();
   } catch {
+    parsed = null;
+  }
+  if (!isFieldObject(parsed)) {
     return NextResponse.json(
       { ok: false, message: "요청을 처리하지 못했습니다." },
       { status: 400 }
     );
   }
+  const body = parsed;
 
   // 봇은 성공처럼 응답하고 조용히 버린다
   if (isBot(body.website)) {

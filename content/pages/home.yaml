@@ -1,7 +1,7 @@
 # 홈페이지(/) 문구 — 첫 화면(히어로) · 표어 여정 · 새가족 안내 · 공동체 섹션 제목.
 #   - 예배 시간 바는 site.yaml의 예배 목록, 공동체 카드는 community.yaml, 오시는 길은 location.yaml을 읽는다.
 #   - 문구 안의 {{phone}} {{address}} {{service.sunday.time}} {{motto.latest.text}} 같은 표시는
-#     site.yaml의 값으로 바뀐다(사용법은 src/lib/content/pages.ts 위쪽 설명 참고).
+#     site.yaml의 값으로 바뀐다(쓸 수 있는 이름 목록은 content/README.md 「자리표시」).
 #   - icon 값은 정해진 이름만 쓸 수 있다: sun moon heart sunrise users music target book-open shield
 #     globe baby parking map-pin clock train bus home footprints arrow-up-right
 #   - 사진은 image/src에 경로를 적으면 자리표시 대신 나온다(비워 두면 「사진 준비 중」).

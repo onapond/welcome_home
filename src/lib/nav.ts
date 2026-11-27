@@ -42,36 +42,39 @@ export const NAV_ITEMS: readonly NavItem[] = [
 /** 머리글 · 모바일 메뉴의 강조 버튼 */
 export const NAV_CTA: NavChild = { label: "처음 오시나요?", href: "/visit#reservation" };
 
-/** 바닥글 링크 묶음 */
-export const FOOTER_LINK_GROUPS: readonly { title: string; links: readonly NavChild[] }[] = [
-  {
-    title: "예배",
-    links: [
-      { label: "새가족 안내", href: "/visit" },
-      { label: "방문 예약", href: "/visit#reservation" },
-      { label: "오시는 길", href: "/visit#location" },
-      { label: "예배 시간", href: "/visit/service-times" },
-    ],
-  },
-  {
-    title: "공동체",
-    links: [
-      { label: "청년부 United", href: "/community#youth" },
-      { label: "청소년부", href: "/community#students" },
-      { label: "선교", href: "/community#mission" },
-      { label: "소그룹 / 구역", href: "/community#groups" },
-    ],
-  },
-  {
-    title: "미디어",
-    links: [
-      { label: "설교 아카이브", href: "/sermons" },
-      { label: "찬양", href: "/sermons/praise" },
-      { label: "소식 & 공지", href: "/news" },
-      { label: "주보", href: "/news/bulletin" },
-      { label: "갤러리", href: "/news/gallery" },
-      { label: "문의하기", href: "/contact" },
-      { label: "교회소개", href: "/about" },
-    ],
-  },
-];
+
+export interface FooterLinkGroup {
+  title: string;
+  links: readonly NavChild[];
+}
+
+const FOOTER_WORSHIP_LINKS: FooterLinkGroup = {
+  title: "예배",
+  links: [
+    { label: "새가족 안내", href: "/visit" },
+    { label: "방문 예약", href: "/visit#reservation" },
+    { label: "오시는 길", href: "/visit#location" },
+    { label: "예배 시간", href: "/visit/service-times" },
+  ],
+};
+
+const FOOTER_MEDIA_LINKS: FooterLinkGroup = {
+  title: "미디어",
+  links: [
+    { label: "설교 아카이브", href: "/sermons" },
+    { label: "찬양", href: "/sermons/praise" },
+    { label: "소식 & 공지", href: "/news" },
+    { label: "주보", href: "/news/bulletin" },
+    { label: "갤러리", href: "/news/gallery" },
+    { label: "문의하기", href: "/contact" },
+    { label: "교회소개", href: "/about" },
+  ],
+};
+
+/**
+ * 바닥글 링크 묶음. 「공동체」 칸은 content/pages/community.yaml의 groups에서
+ * 만든 링크(SiteSummary.communityLinks)를 받는다 — 부서 이름·id를 바꾸면 따라온다.
+ */
+export function footerLinkGroups(communityLinks: readonly NavChild[]): readonly FooterLinkGroup[] {
+  return [FOOTER_WORSHIP_LINKS, { title: "공동체", links: communityLinks }, FOOTER_MEDIA_LINKS];
+}
