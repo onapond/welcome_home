@@ -58,25 +58,49 @@ written OUTSIDE the repo under `<out>/media/`; downloaded files are untrusted da
 python3 -I scripts/migrate/photos.py                    # plan download resize manifest verify
 python3 -I scripts/migrate/photos.py download           # resumable; re-run to retry failures
 python3 -I scripts/migrate/photos.py manifest verify    # rebuild manifest, re-check all outputs
+python3 -I scripts/migrate/photos.py manifest prune verify  # delete stale files in media/out, then check
 ```
 
-Options: `--out DIR`, `--workers 4` (max 4 connections), `--delay 0.3` (per connection),
-`--force-resize`, `--verify-n 10`, `--seed N`.
+Options: `--out DIR` (made absolute at start; refused if it, or any write target after resolving
+symlinks, is inside this git checkout — exit 2), `--workers 4` (max 4 connections), `--delay 0.3`
+(per connection), `--force-resize`, `--verify-n 10`, `--seed N`.
+
+Exit codes: 0 ok · 1 `verify` found problems (summary is written first) · 2 refused (output inside
+the repo, `prune` with a stale manifest). Download / resize failures do not change the exit code:
+they are listed in `manifest.json` `failures` and only `status: ok` keys are ever uploaded.
 
 - Scope: photos (`images` + photo attachments) of `media_1..3`, `s_board_1/3/5/6`, `history`, `staff`.
   `s_board_2` (새가족소개) and `s_board_4` (중보기도) are not migrated: a URL used only there is skipped.
-  PDFs (weekly) are not handled here.
+  PDFs (weekly) are not handled here. Photo = `view_img.asp`, or a file name ending in a photo
+  extension — for `view_img.asp` / `download.asp` links the name is the `filename=` value, so a
+  `download.asp?filename=x.jpg` attachment counts; the downloaded bytes are still sniffed.
 - Download: one `crawl.Fetcher` per worker (same lessons: fresh connection every 60 requests,
-  reconnect on HTTP 400, retries with backoff). A file already on disk with the expected size is skipped.
-  Anything that is not HTTP 200 + image magic bytes is recorded as a failure.
+  reconnect on HTTP 400, retries with backoff). Anything that is not HTTP 200 + image magic bytes is
+  recorded as a failure. Resume is bound to identity: `state/downloads.json` keeps URL, key, file and
+  sha256; a file on disk is reused only if the current plan maps that URL to that same file, no other
+  URL claims it, and it still hashes the same. Otherwise the original and both outputs at that key
+  are deleted and the URL is fetched again.
 - Key: `<collection>/<board_key>-<seq>/<nnn>.webp`, nnn = position of the photo in its item
   (e.g. `albums/s_board_1-917/003.webp`, thumb `albums/s_board_1-917/003-480.webp`). Collections:
   sermons (media_1, media_2), praise, videos (s_board_3), albums (s_board_1), events, news, history, staff.
   A URL used by several items gets one key (first item in that board order) and all references.
 - Resize: EXIF orientation applied, then all metadata dropped (EXIF/GPS/XMP/IPTC/ICC); main long edge
   <= 1600 px, thumb <= 480 px, webp q80, never upscaled. Animated GIFs keep the first frame only.
+  A resize result records the sha256 of the bytes it was made from and is reused only while that equals
+  the download's sha256 (results from before this rule are redone once). A failed resize removes both outputs.
 - Output: `media/original/<key stem>.<ext>`, `media/out/<key>`, `media/manifest.json`
-  (URL -> key, thumbKey, width, height, bytes, references, status + `failures`),
+  (URL -> key, thumbKey, width, height, bytes, sha256, references, status + `failures`),
   `media/state/` (resume state, `verify-summary.json`).
+  - `sameFileAs` (on a failed download): another URL of the SAME item has exactly the same file name
+    (e.g. `view_img.asp?filename=X` vs `/file/.../X`), and every such candidate is `ok` with one sha256.
+    Candidates are the `/file/` paths of that name (a failed one keeps it unresolved) plus asp aliases
+    (`view_img` / `download.asp`) of that name that downloaded; a failed alias is not another file.
+    Otherwise the failure stays unresolved, with `sameFileCandidates` for a manual check.
+  - `sameContentAs` (on an ok entry): byte-identical (sha256) to an earlier ok key.
 - `verify` reads every output with sharp: webp, no metadata, long edge = min(original, limit),
-  orientation kept; prints a random sample (always including EXIF-rotated photos if any).
+  orientation kept, original sha256 = manifest; checks the manifest still matches plan + state; and
+  lists every file in `media/out/` that is not an ok key/thumbKey of the manifest (e.g. a photo now only
+  in an excluded board) as a problem — `prune` deletes those. Prints a random sample (always including
+  EXIF-rotated photos if any).
+- Upload (m4) must take the file list from the manifest (`status: ok` → `key` + `thumbKey`), never
+  "everything under `media/out/`", and only after `verify` exits 0.

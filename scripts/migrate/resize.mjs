@@ -1,17 +1,20 @@
 // Resize / verify helper for photos.py. Uses the repo's existing `sharp` (no new deps).
 //
 //   node resize.mjs resize <jobs.json> <results.json>
-//     jobs: [{id, in, main, thumb}] -> results: {id: {ok, width, height, bytes, thumbWidth, thumbHeight, thumbBytes} | {ok:false, error}}
+//     jobs: [{id, in, main, thumb}] -> results: {id: {ok, srcSha256, width, height, bytes, thumbWidth, thumbHeight, thumbBytes} | {ok:false, error}}
+//     srcSha256 = sha256 of the exact bytes the outputs were made from (photos.py ties resume to it).
+//     On failure both outputs are removed, so a half pair never stays in out/.
 //     main  = long edge <= 1600 px, webp q80; thumb = long edge <= 480 px, webp q80.
 //     EXIF orientation is applied first (rotate()), then all metadata is dropped (sharp's default:
 //     no withMetadata/keepMetadata -> EXIF, XMP, IPTC, ICC are not written; colours converted to sRGB).
 //     Never upscales (withoutEnlargement). Animated GIFs: first frame only.
 //
 //   node resize.mjs verify <list.json> <results.json>
-//     list: [{id, original, main, thumb}] -> per id: metadata of the outputs + expected sizes from the original.
+//     list: [{id, original, main, thumb}] -> per id: metadata of the outputs + expected sizes and sha256 of the original.
 //
 // sharp is resolved from this file's location, then from $SHARP_BASE (a directory whose
 // node_modules contains sharp; photos.py sets it when running from a git worktree without node_modules).
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import fs from "node:fs";
@@ -61,16 +64,25 @@ async function writeWebp(src, dest, edge) {
   return info;
 }
 
+const sha256 = (buf) => createHash("sha256").update(buf).digest("hex");
+
+function rmIfThere(f) {
+  for (const p of [f, f + ".tmp"]) fs.rmSync(p, { force: true });
+}
+
 async function doResize(jobsFile, outFile) {
   const jobs = JSON.parse(fs.readFileSync(jobsFile, "utf8"));
   const res = {};
   let done = 0;
   await pool(jobs, 4, async (j) => {
     try {
-      const m = await writeWebp(j.in, j.main, MAIN);
-      const t = await writeWebp(j.in, j.thumb, THUMB);
-      res[j.id] = { ok: true, width: m.width, height: m.height, bytes: m.size, thumbWidth: t.width, thumbHeight: t.height, thumbBytes: t.size };
+      const src = fs.readFileSync(j.in); // read once: both outputs and the hash come from the same bytes
+      const m = await writeWebp(src, j.main, MAIN);
+      const t = await writeWebp(src, j.thumb, THUMB);
+      res[j.id] = { ok: true, srcSha256: sha256(src), width: m.width, height: m.height, bytes: m.size, thumbWidth: t.width, thumbHeight: t.height, thumbBytes: t.size };
     } catch (e) {
+      rmIfThere(j.main);
+      rmIfThere(j.thumb);
       res[j.id] = { ok: false, error: String(e && e.message ? e.message : e) };
     }
     done++;
@@ -118,7 +130,9 @@ async function doVerify(listFile, outFile) {
     const r = {};
     try {
       if (it.original) {
-        const o = await sharp(it.original, { failOn: "none", animated: false }).metadata();
+        const buf = fs.readFileSync(it.original);
+        r.originalSha256 = sha256(buf);
+        const o = await sharp(buf, { failOn: "none", animated: false }).metadata();
         r.original = meta(o);
         // display size after EXIF orientation (5..8 swap width/height)
         const swap = (o.orientation ?? 1) >= 5;
