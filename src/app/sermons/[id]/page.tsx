@@ -5,7 +5,7 @@ import { BookOpen, Calendar, ChevronLeft, ChevronRight, ExternalLink, Layers, Us
 import Markdown from "@/components/ui/Markdown";
 import { fmtDate } from "@/components/features/news/shared";
 import { getSermons, getSite } from "@/lib/content";
-import { youtubeThumb } from "@/lib/media";
+import { videoEmbedAllow, videoEmbedUrl, videoThumb } from "@/lib/media";
 import { pageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: s.title,
     description: `${[s.scripture, s.preacher, fmtDate(s.date)].filter(Boolean).join(" · ")} — ${getSite().name} 설교`,
     path: `/sermons/${id}`,
-    image: s.youtube ? youtubeThumb(s.youtube) : undefined,
+    image: videoThumb(s.video, s.thumbnail) ?? undefined,
     type: "article",
   });
 }
@@ -70,13 +70,13 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ i
         </header>
 
         <div className="mt-8 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--color-dark)" }}>
-          {s.youtube ? (
+          {s.video ? (
             <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
               <iframe
-                src={`https://www.youtube-nocookie.com/embed/${s.youtube}`}
+                src={videoEmbedUrl(s.video)}
                 title={`${s.title} 영상`}
                 loading="lazy"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow={videoEmbedAllow(s.video)}
                 allowFullScreen
                 referrerPolicy="strict-origin-when-cross-origin"
                 className="absolute inset-0 w-full h-full border-0"

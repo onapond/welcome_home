@@ -130,6 +130,41 @@ export function thumbUrl(src: string): string {
   return mediaUrl(i === -1 ? `thumb/${key}` : `${key.slice(0, i)}/thumb/${key.slice(i + 1)}`);
 }
 
+// ─── Video (sermons · praise) ─────────────────────────────────────────────────
+
+/** A parsed `video:` field (lib/content/schema.ts). */
+export type Video = { provider: "youtube"; id: string } | { provider: "vimeo"; id: string; hash?: string };
+
 export function youtubeThumb(id: string): string {
   return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+}
+
+/** iframe src: youtube-nocookie for YouTube, player.vimeo.com with dnt=1 for Vimeo. */
+export function videoEmbedUrl(v: Video): string {
+  if (v.provider === "youtube") return `https://www.youtube-nocookie.com/embed/${v.id}`;
+  return `https://player.vimeo.com/video/${v.id}?dnt=1${v.hash ? `&h=${v.hash}` : ""}`;
+}
+
+/** iframe `allow` attribute for each provider. */
+export function videoEmbedAllow(v: Video): string {
+  return v.provider === "youtube"
+    ? "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    : "autoplay; fullscreen; picture-in-picture";
+}
+
+/** Public page of the video (opened in a new tab). */
+export function videoWatchUrl(v: Video): string {
+  if (v.provider === "youtube") return `https://www.youtube.com/watch?v=${v.id}`;
+  return `https://vimeo.com/${v.id}${v.hash ? `/${v.hash}` : ""}`;
+}
+
+/**
+ * Cover image for a video: the content's `thumbnail:` when given, else the
+ * YouTube still. Vimeo has no static thumbnail URL without an API call, so a
+ * Vimeo video without `thumbnail:` gets null (cards draw a placeholder).
+ */
+export function videoThumb(v: Video | undefined, thumbnail?: string): string | null {
+  if (!v) return null;
+  if (thumbnail) return mediaUrl(thumbnail);
+  return v.provider === "youtube" ? youtubeThumb(v.id) : null;
 }
