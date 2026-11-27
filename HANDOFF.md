@@ -17,7 +17,11 @@
 1. 사용자: Cloudflare R2 켜기(카드) → 버킷 `chungpa-media` → r2.dev 공개 주소 허용 → 버킷 한정 「객체 읽기 및 쓰기」 API 토큰 → `! aws configure --profile chungpa-r2`(region `auto`, 키는 Claude에게 안 보임) → r2.dev 주소 · 계정 ID 전달
 2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
 3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림)
-4. 세 번째 Codex 판정(두 번째 지적 수정분 + 랜딩 사진)
+4. 세 번째 Codex 판정 — 11/27 오후 돌림(요청서 `docs/reviews/2026-11-27-migration-prep-request-3.md`, 결과 `-codex-3.md`). 「고칠 것 있음」이면 고치고 다시 판정
+5. 교회 확인 사실 모으기(예배 시간 · 주차 · 점심 · 헌금 계좌 · 우편번호 · 좌표 · 큰 목사 사진). 옛 사이트 바닥글 메일은 `chungpa21c@gmail.com`(site.yaml은 `church@chungpa21.org` TODO) — 사용자 확인 후 교체
+6. Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함
+
+**끝난 것 (11/27 오후)**: 머리글 설명 대비 · 모바일 방문 단계 세로선(`8444e7a`), **m5 옛 주소 연결**(`67e0645` — `/modu/*` 라우트 핸들러, 게시물 1,498건 308, 검사 `node scripts/check-legacy-redirects.mjs`). 「3년의 발걸음」 섹션 흐림은 전체 캡처 착시(실제 정상).
 
 **목표 (사용자 11/27)**: 리팩토링해 실제로 쓸 수 있는 수준으로 만든 뒤, **교회 관리자가 Claude Code로 내용을 고치게** 한다. 관리자는 GitHub 팀으로 초대하고, Supabase · Vercel 등은 결국 교회 계정에서 관리한다.
 - 계정: 지금은 사용자 개인 계정 여러 곳에 섞여 있음(`onapond` 아래 `church` 청년부 교적 · `onfamily` 전교인 출석 등). **우선 사용자 계정으로 작업**하고, 정리 · 이전은 나중에 한 곳으로 몰아서 한다. 함께 작업할 사람 = 교회 직원 계정 1 + 교회 직원 개인 계정 1.
