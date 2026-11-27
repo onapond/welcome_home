@@ -71,7 +71,9 @@
     - 개인정보: 섬기는 분 전화 · 메일(4명), 작성자 IP(922건), 새가족 사진 · 이름, 중보기도 내용, 소식 12건에 전화번호 형태, 연혁 · 소식의 세례 · 등록 명단
     - 8/21 수치와 어긋나는 것(앨범 글 수 · 영상 · 파일 수)은 `notes.md`에 미확인으로 적힘
   - **사용자 결정(11/27)**: 중보기도 · 새가족소개는 옮기지 않음(원본은 저장소 밖 보관만, 작성자 IP는 버림, 섬기는 분 연락처는 비공개 기본값 유지) · Vimeo 재생 지원 추가 · 글꼴을 저장소에 넣음(`next/font/local`) · push 완료
-  - 다음: Vimeo 지원 · 글꼴 로컬화(병렬, 진행 중) → 이전 계획 `docs/migration-plan.md`의 m1~m6 (주보 PDF는 평균 260KB라 압축 안 함 · ghostscript 불필요) — 표본 콘텐츠 삭제, `content/` 변환, R2 업로드(사용자 Cloudflare 계정 필요), PDF 압축(ghostscript 설치 전 확인), 옛 주소 연결
+  - 글꼴 저장소화 합침: `public/fonts/noto-serif-kr/`(범위별 woff2 124개 · OFL, 약 6.6MB) + `src/app/fonts/noto-serif-kr.css`, 다시 받기 `scripts/fonts/fetch-noto-serif-kr.mjs`, `/fonts/*` 30일 캐시(`next.config.ts`). 빌드가 구글 글꼴에 의존하지 않음. Pretendard는 실행 때 jsDelivr에서 받음(빌드 무관)
+  - Vimeo 지원 합침: 설교 · 찬양에 `video:`(유튜브 · 비메오 주소), 선택 `thumbnail:`(없으면 남색 기본 표지 + Play), 예전 `youtube:`도 유지
+  - 다음: 사진 내려받기 · 줄이기(m3, 진행 중, 키 `<묶음>/<board>-<seq>/<nnn>.webp` + `-480` 썸네일) → 목록 화면이 `-480` 썸네일을 쓰게(m1에 포함) → 변환기(m2). 계획 `docs/migration-plan.md` (주보 PDF는 평균 260KB라 압축 안 함) — 표본 콘텐츠 삭제, `content/` 변환, R2 업로드(사용자 Cloudflare 계정 필요), PDF 압축(ghostscript 설치 전 확인), 옛 주소 연결
 - 라우트는 전부 정적(`dynamicParams=false`). 사진은 next/image 최적화 안 씀. 「다가오는 일정」은 클라이언트에서 거를 것
 
 ---

@@ -12,6 +12,16 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**/*": ["./content/site.yaml", "./content/pages/*.yaml"],
   },
+  // Font files in /public/fonts are fetched by a script and never edited by
+  // hand; cache them for 30 days so repeat visits skip the 304 round trip.
+  async headers() {
+    return [
+      {
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
