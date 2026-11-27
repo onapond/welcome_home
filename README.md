@@ -1,183 +1,69 @@
 # 청파중앙교회 홈페이지
 
-서울 용산구 청파중앙교회(대한예수교 장로회)의 공식 홈페이지입니다.
+서울 용산구 청파중앙교회(대한예수교 장로회) 홈페이지입니다.
 
-- **사이트**: https://chungpa21.org
-- **기술 스택**: Next.js 16 · Tailwind CSS v4 · TypeScript · Sanity CMS
-- **배포**: Vercel
+- **지금 주소**: https://welcomehome-seven.vercel.app (`chungpa21.org` 연결은 도메인 이전 단계에서 한다)
+- **기술 스택**: Next.js 16 · Tailwind CSS v4 · TypeScript
+- **콘텐츠**: 저장소의 `content/` 파일 (설교 · 소식 · 주보 · 사진첩 · 교회 정보 · 페이지 문구). 데이터베이스·CMS 없음
+- **사진**: Cloudflare R2 (`NEXT_PUBLIC_MEDIA_BASE_URL`)
+- **폼**: 방문 신청 · 문의 → Resend 메일
 
 ---
 
 ## 로컬 실행
 
-### 요구사항
-
-- Node.js 20+
-- npm 10+
-
-### 설치 및 실행
-
 ```bash
-# 1. 저장소 클론
-git clone https://github.com/onapond/welcome_home.git
-cd welcome_home
-
-# 2. 패키지 설치
-npm install
-
-# 3. 환경변수 설정
-cp .env.local.example .env.local
-# .env.local 파일을 열어 값 채우기 (아래 환경변수 섹션 참고)
-
-# 4. 개발 서버 실행
-npm run dev
-# → http://localhost:3000
+npm ci
+cp .env.local.example .env.local   # 값은 비워 둬도 화면은 뜬다 (폼만 503 안내)
+npm run dev                        # http://localhost:3000
 ```
 
----
+## 콘텐츠 고치기
+
+`content/README.md`에 폴더 · 파일 이름 · 날짜 형식 · 사진 경로 규칙이 있습니다. 각 폴더의 `_template.md`를 복사해 새 항목을 만듭니다.
+
+형식이 틀린 파일은 **빌드가 실패**하고, 어느 파일의 어느 항목이 틀렸는지 한국어로 알려 줍니다. 잘못된 내용이 사이트에 올라가지 않습니다.
+
+## 점검
+
+```bash
+npx tsc --noEmit && npm run lint && npm run build
+```
+
+GitHub Actions(`.github/workflows/check.yml`)가 push · PR마다 같은 점검을 돌립니다.
+
+## 커밋
+
+- 고친 파일만 지정해서 올립니다(`git add content/sermons/2026-11-30.md`). `git add .` · `git add -A`를 쓰지 않습니다 — `.env.local` 같은 로컬 설정이 섞이지 않게.
+- 메시지 형식: `[역할] 작업 내용` (예: `[content] 11월 30일 주일설교 추가`)
+
+## 배포
+
+```bash
+vercel --prod --yes --scope onaponds-projects
+```
+
+지금은 이 명령이 유일한 배포 경로입니다(push는 배포하지 않음).
 
 ## 환경변수
 
-`.env.local` 파일에 아래 변수를 입력합니다. (`.env.local.example` 참고)
+`.env.local.example` 참고. 비밀값은 커밋하지 않습니다.
 
-| 변수명 | 필수 | 설명 |
-|--------|------|------|
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | ✅ | Sanity 프로젝트 ID |
-| `NEXT_PUBLIC_SANITY_DATASET` | ✅ | 기본값: `production` |
-| `NEXT_PUBLIC_SANITY_API_VERSION` | ✅ | 기본값: `2024-01-01` |
-| `SANITY_API_READ_TOKEN` | — | Draft 미리보기용 Sanity 토큰 |
-| `SANITY_API_WRITE_TOKEN` | — | 시딩 스크립트 전용 토큰 |
-| `NEXT_PUBLIC_KAKAO_MAP_API_KEY` | — | 카카오맵 JavaScript 앱 키 |
-| `NEXT_PUBLIC_SITE_URL` | — | 배포 도메인 (기본: `https://chungpa21.org`) |
+| 변수 | 용도 |
+|---|---|
+| `NEXT_PUBLIC_MEDIA_BASE_URL` | 사진 저장소(R2) 공개 주소 |
+| `RESEND_API_KEY` · `FORM_NOTIFY_TO` · `FORM_NOTIFY_FROM` | 폼 알림 메일 |
+| `NEXT_PUBLIC_SITE_URL` | canonical · OG · sitemap 기준 주소. 도메인 이전 전에는 등록하지 않는다 |
+| `NEXT_PUBLIC_KAKAO_MAP_API_KEY` | (아직 안 씀) 카카오맵 SDK를 붙일 때 |
 
-> **Sanity 미설정 시:** 폴백 데이터로 UI가 정상 표시됩니다. 실제 콘텐츠 편집을 위해서는 Sanity 설정이 필요합니다.
-
----
-
-## Sanity CMS 설정
-
-### 1. Sanity 프로젝트 생성
-
-```bash
-# sanity.io/get-started 에서 프로젝트 생성 후
-# Project ID를 .env.local에 입력
-```
-
-### 2. Sanity Studio 실행 (로컬)
-
-```bash
-cd sanity
-npm install
-npm run dev
-# → http://localhost:3333
-```
-
-### 3. 샘플 데이터 시딩
-
-```bash
-# 루트 디렉토리에서
-npm install -D tsx
-npx tsx scripts/seed-sanity.ts
-```
-
----
-
-## Vercel 배포
-
-### 1. GitHub에 푸시
-
-```bash
-git init
-git add .
-git commit -m "초기 커밋"
-git branch -M main
-git remote add origin https://github.com/onapond/welcome_home.git
-git push -u origin main
-```
-
-### 2. Vercel 연결
-
-1. [vercel.com](https://vercel.com) 로그인
-2. **Add New Project** → GitHub 저장소 선택
-3. **Framework Preset**: Next.js (자동 감지)
-4. **Environment Variables** 탭에서 환경변수 입력:
-   - `NEXT_PUBLIC_SANITY_PROJECT_ID`
-   - `NEXT_PUBLIC_SANITY_DATASET` = `production`
-   - `NEXT_PUBLIC_SANITY_API_VERSION` = `2024-01-01`
-   - `SANITY_API_READ_TOKEN`
-   - `NEXT_PUBLIC_KAKAO_MAP_API_KEY`
-5. **Deploy** 클릭
-
-### 3. 커스텀 도메인 연결
-
-Vercel Dashboard → 프로젝트 → Settings → Domains → `chungpa21.org` 추가
-
----
-
-## 프로젝트 구조
+## 폴더
 
 ```
-welcome_home/
-├── src/
-│   ├── app/                    # Next.js App Router 페이지
-│   │   ├── page.tsx            # 홈 (ISR 1h)
-│   │   ├── about/page.tsx      # 교회소개
-│   │   ├── visit/page.tsx      # 새가족 안내
-│   │   ├── sermons/page.tsx    # 설교 아카이브 (ISR 1h)
-│   │   ├── news/page.tsx       # 소식 (ISR 1h)
-│   │   ├── not-found.tsx       # 404 페이지
-│   │   ├── sitemap.ts          # /sitemap.xml 자동 생성
-│   │   └── robots.ts           # /robots.txt 자동 생성
-│   ├── components/
-│   │   ├── layout/             # Header, Footer, MobileNav
-│   │   ├── sections/           # 홈페이지 섹션 컴포넌트
-│   │   ├── features/           # SermonsClient, VisitClient
-│   │   └── ui/                 # Button, SectionHeader, ImagePlaceholder
-│   └── lib/
-│       └── sanity/             # client.ts, queries.ts, types.ts
-├── sanity/                     # Sanity Studio (별도 실행)
-│   └── schemas/                # sermon, event, bulletin, post, gallery
-├── scripts/
-│   └── seed-sanity.ts          # 초기 데이터 시딩
-├── public/
-│   └── images/
-│       └── logo.png            # 교회 로고
-└── .env.local.example          # 환경변수 예시
-```
-
----
-
-## 페이지 목록
-
-| 경로 | 페이지 | 비고 |
-|------|--------|------|
-| `/` | 홈 | ISR 1h |
-| `/about` | 교회소개 | 정적 |
-| `/visit` | 새가족 안내 | 정적 |
-| `/sermons` | 설교 아카이브 | ISR 1h |
-| `/news` | 소식 & 주보 | ISR 1h |
-
----
-
-## 디자인 시스템
-
-브랜드 컬러는 교회 로고(`public/images/logo.png`)에서 추출한 **남색 + 하늘색 2톤**입니다.
-
-| 변수 | 값 | 용도 |
-|------|----|------|
-| `--color-primary` | `#2B3A8C` | 네비게이션, CTA, 섹션 배경 |
-| `--color-secondary` | `#6EC6E6` | 호버, 배지, 장식 |
-| `--color-accent` | `#D4A843` | 표어 라벨, 특별 강조 |
-
-> **아이콘**: Lucide React만 사용. 이모지/Font Awesome 금지.
-
----
-
-## 로컬 스크립트
-
-```bash
-npm run dev      # 개발 서버 (localhost:3000)
-npm run build    # 프로덕션 빌드
-npm run start    # 프로덕션 서버 실행
-npm run lint     # ESLint 검사
+content/            # 사이트 내용 (직원이 고치는 곳)
+src/app/            # 페이지 (전부 빌드 때 정적 생성)
+src/components/     # layout · sections · features · ui
+src/lib/content/    # content/ 읽기 · 형식 검사(zod)
+src/lib/media.ts    # 사진 주소 만들기
+public/images/      # 로고 등 고정 이미지
+docs/               # 검토 규칙 · 검토 기록 · 보관 문서(archive)
 ```

@@ -33,7 +33,7 @@
 - **프레임워크**: Next.js 14+ (App Router)
 - **스타일링**: Tailwind CSS
 - **언어**: TypeScript
-- **콘텐츠**: 저장소 파일(`content/`) — Claude Code가 고치고 git이 이력을 맡는다. ~~Sanity~~ 제거 예정(기존 코드는 P1까지 남음 — 새 의존 추가 금지). 홈페이지는 Supabase를 쓰지 않는다(무료 한도 · 교적 DB와 분리). 폼 = Resend 메일 (사용자 결정 2026-11-27)
+- **콘텐츠**: 저장소 파일(`content/`) — Claude Code가 고치고 git이 이력을 맡는다. Sanity는 제거함(2026-11-27 · 새 의존 추가 금지). 홈페이지는 Supabase를 쓰지 않는다(무료 한도 · 교적 DB와 분리). 폼 = Resend 메일 (사용자 결정 2026-11-27)
 - **배포**: Vercel
 - **지도**: Kakao Maps API
 - **영상**: YouTube embed (설교 아카이브)
@@ -190,7 +190,8 @@ src/
 │   ├── sections/           # 홈페이지 섹션 컴포넌트
 │   └── features/           # 설교 플레이어, 지도, 폼 등
 ├── lib/
-│   ├── sanity/             # Sanity CMS 클라이언트
+│   ├── content/            # content/ 파일 읽기 · 형식 검사
+│   ├── media.ts            # 사진 주소
 │   └── utils.ts
 ├── styles/
 │   └── globals.css         # Tailwind + 커스텀 CSS variables
