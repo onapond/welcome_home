@@ -1000,9 +1000,10 @@ def conv_news(W, crawl_dir, photos, public):
 def front_matter(fn):
     """Top-level scalars of a content file's front matter, plus `legacy.seq` as "legacy.seq".
 
-    Reads only the plain one-line forms this converter and content/README.md use (`key: value`,
-    'single' or "double" quoted). Anything else under a key read here (a block, a flow value, a
-    missing closing `---`) raises ValueError, so a hand-edited file stops the run before
+    Reads only the plain forms this converter and content/README.md use: `key: value` ('single'
+    or "double" quoted allowed) and `legacy:` followed by two-space `  key: value` lines. Anything
+    else under `pdf` or `legacy` (a block or flow value, other indentation, a missing closing
+    `---`) raises ValueError naming the file and key, so a hand-edited file stops the run before
     anything is deleted instead of silently losing its PDF link.
     """
     text = open(fn, encoding="utf-8").read()
@@ -1018,8 +1019,14 @@ def front_matter(fn):
         if top:
             block = top.group(1)
             key, raw = block, top.group(2)
-        elif sub and block == "legacy":
+            if key == "legacy":
+                if raw.strip() and not raw.strip().startswith("#"):
+                    raise ValueError("%s: legacy: write it as a block of `  key: value` lines" % fn)
+                continue
+        elif block == "legacy" and sub:
             key, raw = "legacy." + sub.group(1), sub.group(2)
+        elif block in ("pdf", "legacy"):
+            raise ValueError("%s: %s: unsupported indentation %r" % (fn, block, line))
         else:
             continue
         if key not in ("pdf", "legacy.seq"):
@@ -1071,9 +1078,12 @@ def prior_bulletin_pdfs(W):
 def restore_cache(crawl_dir, items, prior):
     """For old PDFs this run could not get (`items`), put a previous run's linked public copy back into
     the cache <crawl>/weekly-pdf/. The cache outlives this run, so a run that fails midway (after
-    deleting or overwriting public files) loses nothing: the next run finds the PDF there.
+    deleting or overwriting public files) loses nothing: the next run finds the PDF there. Each copy
+    is recorded in state.json with its size at once, so the next run accepts it as this run did
+    (instead of rejecting it on an older expected size and restoring again from changed public files).
     Returns url -> cache file."""
     d = os.path.join(crawl_dir, "weekly-pdf")
+    state_file = os.path.join(d, "state.json")
     restored = {}
     for it in items:
         u = it.get("file")
@@ -1090,6 +1100,11 @@ def restore_cache(crawl_dir, items, prior):
         finally:
             if os.path.exists(tmp):
                 os.remove(tmp)
+        state = json.load(open(state_file, encoding="utf-8")) if os.path.exists(state_file) else {}
+        state[u] = {"status": "ok", "bytes": os.path.getsize(fn), "file": os.path.basename(fn),
+                    "note": "restored from a previous run's public copy (not re-checked against the old site)",
+                    "at": crawl.now()}
+        save_json_atomic(state_file, state)
         restored[u] = fn
     return restored
 
@@ -1102,12 +1117,60 @@ def pdf_complete(data):
     m = re.search(rb"startxref\s+(\d+)\s+%%EOF\s*$", data[-1024:])
     if not m or int(m.group(1)) >= len(data):
         return False
-    at = data[int(m.group(1)):int(m.group(1)) + 4096]
-    if re.match(rb"xref\s", at):
+    at = int(m.group(1))
+    if re.match(rb"xref\s", data[at:at + 5]):
         return True
-    # a cross-reference stream: an object whose dictionary says /Type /XRef and opens a stream
-    obj = re.match(rb"\d+\s+\d+\s+obj\s*<<(.*?)>>\s*stream\r?\n", at, re.S)
-    return obj is not None and re.search(rb"/Type\s*/XRef\b", obj.group(1)) is not None
+    # a cross-reference stream: the object there opens with a dictionary that says /Type /XRef
+    # (at its own top level) and is followed directly by `stream`
+    head = re.compile(rb"\d+\s+\d+\s+obj\s*<<").match(data, at)
+    if not head:
+        return False
+    end, top = pdf_dict_end(data, head.end())
+    return (end is not None and re.match(rb"\s*stream\r?\n", data[end:end + 12]) is not None
+            and re.search(rb"/Type\s*/XRef(?![\w#])", top) is not None)
+
+
+def pdf_dict_end(data, i):
+    """Scan a PDF dictionary whose `<<` ends just before `i`. Returns (index after its `>>`, the
+    bytes at its own top level with nested dictionaries, arrays and strings removed), or (None, b"")
+    when it does not close inside `data`."""
+    depth, top, n = 1, bytearray(), len(data)
+    while i < n:
+        c = data[i:i + 1]
+        if c == b"(":  # literal string: balanced parentheses, backslash escapes
+            level, i = 1, i + 1
+            while i < n and level:
+                ch = data[i:i + 1]
+                if ch == b"\\":
+                    i += 1
+                elif ch == b"(":
+                    level += 1
+                elif ch == b")":
+                    level -= 1
+                i += 1
+            continue
+        if data.startswith(b"<<", i):
+            depth, i = depth + 1, i + 2
+            continue
+        if data.startswith(b">>", i):
+            depth, i = depth - 1, i + 2
+            if depth == 0:
+                return i, bytes(top)
+            continue
+        if c == b"<":  # hex string
+            j = data.find(b">", i)
+            if j < 0:
+                return None, b""
+            i = j + 1
+            continue
+        if c == b"%":  # comment to end of line
+            while i < n and data[i:i + 1] not in (b"\r", b"\n"):
+                i += 1
+            continue
+        if depth == 1:
+            top += c
+        i += 1
+    return None, b""
 
 
 def is_pdf_file(fn, want=None):
