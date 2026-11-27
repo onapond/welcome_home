@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Markdown from "@/components/ui/Markdown";
+import ShareButton from "@/components/features/ShareButton";
 import { fmtDate, plainExcerpt } from "@/components/features/news/shared";
 import { getNews, getSite } from "@/lib/content";
 import { mediaUrl } from "@/lib/media";
@@ -36,12 +37,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   return (
     <main style={{ backgroundColor: "var(--color-bg)" }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 lg:pt-32 pb-20">
-        <Link href="/news" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
-          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-          소식 목록
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/news" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            소식 목록
+          </Link>
+          <ShareButton title={n.title} />
+        </div>
         <header className="mt-6 pb-6 border-b" style={{ borderColor: "rgba(43,58,140,0.12)" }}>
-          <p className="text-xs font-bold tracking-widest" style={{ color: "var(--color-primary)" }}>
+          <p className="text-xs font-bold" style={{ color: "var(--color-primary)" }}>
             {n.category}
           </p>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-snug mt-2" style={{ color: "var(--color-dark)" }}>

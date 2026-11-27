@@ -58,10 +58,12 @@ export default function Footer({ buildYear }: { buildYear: number }) {
 
             <address
               className="not-italic text-sm space-y-1"
-              style={{ color: "rgba(255,255,255,0.4)" }}
+              style={{ color: "rgba(255,255,255,0.7)" }}
             >
               <p>{site.address}</p>
-              <p>Tel. {site.phone}</p>
+              <p>
+                Tel. <a href={site.phoneHref} className="hover:text-white">{site.phone}</a>
+              </p>
               {site.fax && <p>Fax. {site.fax}</p>}
             </address>
 
@@ -94,7 +96,7 @@ export default function Footer({ buildYear }: { buildYear: number }) {
             ({ title: category, links }) => (
               <div key={category}>
                 <h3
-                  className="text-xs font-semibold uppercase tracking-widest mb-4"
+                  className="text-xs font-semibold mb-4"
                   style={{ color: "var(--color-secondary)" }}
                 >
                   {category}
@@ -133,16 +135,16 @@ export default function Footer({ buildYear }: { buildYear: number }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p
             className="text-xs"
-            style={{ color: "rgba(255,255,255,0.3)" }}
+            style={{ color: "rgba(255,255,255,0.6)" }}
           >
             &copy; {currentYear} {site.name} ({site.nameEn}). All rights reserved.
           </p>
-          <p
-            className="text-xs"
-            style={{ color: "rgba(255,255,255,0.2)" }}
-          >
-            {site.denomination}
-          </p>
+          <div className="flex items-center gap-4 text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <Link href="/privacy" className="font-bold hover:text-white" style={{ color: "rgba(255,255,255,0.85)" }}>
+              개인정보 처리방침
+            </Link>
+            <p>{site.denomination}</p>
+          </div>
         </div>
       </div>
     </footer>

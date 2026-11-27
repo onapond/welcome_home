@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 // Noto Serif KR is vendored (scripts/fonts/fetch-noto-serif-kr.mjs) so the
 // build never downloads fonts. Imported before globals.css like next/font was.
@@ -7,6 +7,7 @@ import { NOTO_SERIF_KR_PRELOAD } from "./fonts/noto-serif-kr";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import MobileActionBar from "@/components/layout/MobileActionBar";
 import { SiteProvider } from "@/components/layout/SiteProvider";
 import { getSite } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
@@ -45,6 +46,9 @@ export function generateMetadata(): Metadata {
   };
 }
 
+// 아이폰 홈 표시줄 영역까지 그려야 env(safe-area-inset-bottom)이 잡힌다(휴대폰 아래 고정 버튼).
+export const viewport: Viewport = { viewportFit: "cover" };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,12 +58,19 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full">
       <body className="min-h-full flex flex-col antialiased">
+        {/* 첫 Tab 위치 — 머리글 메뉴를 건너뛰고 본문으로 간다 */}
+        <a href="#main-content" className="skip-link">
+          본문 바로가기
+        </a>
         <SiteProvider site={buildSiteSummary(getSite())}>
           <Header />
           {/* Pages render their own <main>; a second one here would nest landmarks. */}
-          <div className="flex-1">{children}</div>
+          <div id="main-content" tabIndex={-1} className="flex-1 outline-none shadow-none">
+            {children}
+          </div>
           {/* 빌드한 해를 넘겨 서버 HTML과 첫 클라이언트 렌더의 연도를 맞춘다 */}
           <Footer buildYear={new Date().getFullYear()} />
+          <MobileActionBar />
         </SiteProvider>
       </body>
     </html>

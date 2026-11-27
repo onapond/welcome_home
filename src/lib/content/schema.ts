@@ -259,10 +259,26 @@ export const siteSchema = z.strictObject({
   phone: text,
   fax: optText,
   email: optional(z.email({ error: "이메일 형식이 올바르지 않습니다" })),
+  // 교회 위치 좌표(선택). 있으면 지도 앱 길찾기가 목적지를 바로 잡는다.
+  geo: optional(z.strictObject({ lat: z.number(), lng: z.number() })),
   sns: z.strictObject({
     youtube: optional(httpsUrl),
     instagram: optional(httpsUrl),
+    // 주일 실시간 예배 주소(선택). 비우면 유튜브 채널의 /live 주소를 쓴다.
+    live: optional(httpsUrl),
   }),
+  // 휴대폰 화면 아래 고정 버튼(선택). 비우면 기본 문구를 쓴다.
+  mobileBar: z
+    .strictObject({
+      reserve: z.strictObject({ label: text, href: text }),
+      call: z.strictObject({ label: text }),
+      directions: z.strictObject({ label: text, href: text }),
+    })
+    .default({
+      reserve: { label: "방문 예약", href: "/visit#reservation" },
+      call: { label: "전화" },
+      directions: { label: "길찾기", href: "/visit#location" },
+    }),
   mottos: z
     .array(z.strictObject({ year: z.number().int(), text, keyword: text }))
     .superRefine(uniqueBy((m) => m.year, "year")),

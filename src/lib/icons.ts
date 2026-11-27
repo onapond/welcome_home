@@ -4,8 +4,10 @@ import {
   BookOpen,
   Bus,
   Clock,
+  DoorOpen,
   Footprints,
   Globe,
+  HandHeart,
   Heart,
   House,
   MapPin,
@@ -18,6 +20,7 @@ import {
   Target,
   Train,
   Users,
+  Utensils,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +46,9 @@ export const ICONS = {
   home: House,
   footprints: Footprints,
   "arrow-up-right": ArrowUpRight,
+  "door-open": DoorOpen,
+  "hand-heart": HandHeart,
+  utensils: Utensils,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;

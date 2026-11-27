@@ -17,6 +17,7 @@ import {
 import { mailConfigured, notificationHtml, sendFormNotification } from "@/lib/mail";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getSite } from "@/lib/content";
+import { formatKoreanDate, isAcceptableVisitDate, VISIT_DATE_UNDECIDED } from "@/lib/schedule";
 
 const COUNT_OPTIONS = VISIT_COUNT_OPTIONS.map((o) => o.value);
 
@@ -73,6 +74,14 @@ export async function POST(request: Request) {
   const service = requireChoice(body.service, "service", "예배", serviceOptions, errors);
   const count = requireChoice(normalizeVisitCount(body.count), "count", "인원수", COUNT_OPTIONS, errors);
   const memo = optionalText(body.memo, LIMITS.message);
+  // 방문 희망일: 오늘부터 90일 안의 날짜(YYYY-MM-DD) 또는 「아직 정하지 않음」
+  const date = typeof body.date === "string" ? body.date.trim() : "";
+  if (!date) {
+    errors.push({ field: "date", message: "방문 희망일을 선택해 주세요." });
+  } else if (date !== VISIT_DATE_UNDECIDED && !isAcceptableVisitDate(date)) {
+    errors.push({ field: "date", message: "방문 희망일을 다시 선택해 주세요." });
+  }
+  const dateLabel = date === VISIT_DATE_UNDECIDED ? "미정" : date ? formatKoreanDate(date) : "";
   requireConsent(body.consent, errors);
 
   if (errors.length > 0) {
@@ -104,10 +113,11 @@ export async function POST(request: Request) {
   }
 
   const result = await sendFormNotification(
-    `[방문 신청] ${name}님 — ${service}`,
+    `[방문 신청] ${name}님 — ${dateLabel} ${service}`,
     notificationHtml("새가족 방문 신청", [
       { label: "이름", value: escapeHtml(name) },
       { label: "연락처", value: escapeHtml(phone) },
+      { label: "방문 희망일", value: escapeHtml(dateLabel) },
       { label: "예배", value: escapeHtml(service) },
       { label: "인원", value: escapeHtml(visitCountLabel(count)) },
       { label: "남기실 말씀", value: escapeHtml(memo) },

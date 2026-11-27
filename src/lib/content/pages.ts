@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ICON_KEYS } from "@/lib/icons";
 import { ContentError, loadYaml } from "./load";
-import { idList, idString, mediaPath, optional, text } from "./schema";
+import { idList, idString, isoDate, mediaPath, optional, text } from "./schema";
 import { fillTokens } from "./tokens";
 import { getHistory, getSite, getStaff } from "./index";
 
@@ -140,6 +140,14 @@ export const visitSchema = z.strictObject({
     title: text,
     items: z.array(z.strictObject({ question: text, answer: text })),
   }),
+  // 「처음 오시면 이렇게 진행돼요」 단계 안내(선택). 비우면 이 섹션이 나오지 않는다.
+  steps: optional(
+    z.strictObject({
+      label: text,
+      title: text,
+      items: z.array(iconItem).min(1),
+    }),
+  ),
   services: sectionLabel,
   reservation: z.strictObject({
     label: text,
@@ -185,6 +193,34 @@ export const contactSchema = z.strictObject({
   }),
 });
 
+// ─── content/pages/privacy.yaml ──────────────────────────────────────────────
+
+export const privacySchema = z.strictObject({
+  meta,
+  title: text,
+  intro: text,
+  // 조항 — 문단(paragraphs)과 목록(items) 중 하나 이상
+  sections: z
+    .array(
+      z
+        .strictObject({
+          title: text,
+          paragraphs: z.array(text).default([]),
+          items: z.array(text).default([]),
+        })
+        .refine((s) => s.paragraphs.length + s.items.length > 0, "paragraphs 또는 items 중 하나는 있어야 합니다"),
+    )
+    .min(1),
+  effectiveDate: isoDate,
+  // 방문 신청 · 문의 양식의 동의 문구
+  consent: z.strictObject({
+    visit: text,
+    contact: text,
+    linkLabel: text,
+  }),
+});
+
+export type PrivacyPage = z.infer<typeof privacySchema>;
 export type HomePage = z.infer<typeof homeSchema>;
 export type LocationInfo = z.infer<typeof locationSchema>;
 export type AboutPage = z.infer<typeof aboutSchema>;
@@ -226,6 +262,7 @@ export const getCommunityPage: () => CommunityPage = page("community", community
 export const getVisitPage: () => VisitPage = page("visit", visitSchema);
 export const getServiceTimesPage: () => ServiceTimesPage = page("service-times", serviceTimesSchema);
 export const getContactPage: () => ContactPage = page("contact", contactSchema);
+export const getPrivacyPage: () => PrivacyPage = page("privacy", privacySchema);
 
 /** Every page getter — used by validateAllContent(). */
 export const PAGE_GETTERS = {
@@ -236,6 +273,7 @@ export const PAGE_GETTERS = {
   visit: getVisitPage,
   "service-times": getServiceTimesPage,
   contact: getContactPage,
+  privacy: getPrivacyPage,
 } as const;
 
 // ─── 연혁 · 교역자 보조 ──────────────────────────────────────────────────────

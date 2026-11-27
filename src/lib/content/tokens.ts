@@ -1,5 +1,5 @@
 import type { Site } from "./schema";
-import { fullAddress, latestMotto } from "./site-format";
+import { fullAddress, latestMotto, liveUrl } from "./site-format";
 
 // ─── {{자리표시}} 치환 ───────────────────────────────────────────────────────
 //
@@ -11,7 +11,7 @@ import { fullAddress, latestMotto } from "./site-format";
 //   {{name}} {{nameEn}} {{denomination}} {{pastor}} {{founded}} {{vision}}
 //   {{description}} {{phone}} {{fax}} {{email}}
 //   {{address}} (도로명 (상세))  {{address.road}}  {{address.detail}}
-//   {{sns.youtube}}  {{sns.instagram}}
+//   {{sns.youtube}}  {{sns.instagram}}  {{sns.live}} (없으면 유튜브 채널 /live)
 //   {{service.<예배 id>.<name|short|day|time|place|audience>}}
 //   {{motto.latest.<year|text|keyword>}}  {{motto.<연도>}}
 //   {{transport.<교통편 id>}}  (location.yaml 교통편 — location.yaml 안에서는 못 씀)
@@ -67,6 +67,7 @@ function resolveToken(token: string, ctx: TokenCtx): Resolved {
       if (parts.length === 2 && (a === "youtube" || a === "instagram")) {
         return present(site.sns[a], `site.yaml의 sns.${a}`);
       }
+      if (parts.length === 2 && a === "live") return present(liveUrl(site), "site.yaml의 sns.live(또는 sns.youtube 채널 주소)");
       return UNKNOWN;
     case "service": {
       if (parts.length !== 3 || !has(SERVICE_FIELDS, b)) return UNKNOWN;
