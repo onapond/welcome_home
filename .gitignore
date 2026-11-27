@@ -26,3 +26,6 @@ Thumbs.db
 *.tsbuildinfo
 .vercel
 .env.local.example.bak
+
+# ─── Claude Code 작업 트리 ───
+.claude/worktrees/

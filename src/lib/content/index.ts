@@ -31,7 +31,7 @@ export const getStaff = (): StaffMember[] => loadYaml("staff.yaml", staffSchema)
 
 // ─── Collections (newest first) ──────────────────────────────────────────────
 
-export const getSermons = (): Sermon[] => loadCollection("sermons", sermonSchema, (s) => s.date);
+export const getSermons = (): Sermon[] => loadCollection("sermons", sermonSchema, (s) => s.date, ["praise"]);
 export const getPraise = (): Praise[] => loadCollection("praise", praiseSchema, (p) => p.date);
 export const getBulletins = (): Bulletin[] => loadCollection("bulletins", bulletinSchema, (b) => b.date);
 export const getAlbums = (): Album[] => loadCollection("albums", albumSchema, (a) => a.date);
@@ -39,7 +39,7 @@ export const getEvents = (): ChurchEvent[] => loadCollection("events", eventSche
 
 /** Pinned items first, then newest. */
 export function getNews(): News[] {
-  const all = loadCollection("news", newsSchema, (n) => n.date);
+  const all = loadCollection("news", newsSchema, (n) => n.date, ["bulletin", "gallery", "calendar"]);
   return [...all.filter((n) => n.pinned), ...all.filter((n) => !n.pinned)];
 }
 

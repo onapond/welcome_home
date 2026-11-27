@@ -75,6 +75,7 @@ export function loadCollection<S extends z.ZodType>(
   dir: string,
   schema: S,
   sortKey: (item: z.output<S>) => string,
+  reserved: readonly string[] = [],
 ): Entry<S>[] {
   return memo(`col:${dir}`, () => {
     const folder = path.join(CONTENT_DIR, dir);
@@ -92,6 +93,10 @@ export function loadCollection<S extends z.ZodType>(
         problems.push(
           `${rel(file)} → 파일 이름은 영문 소문자·숫자·하이픈만 씁니다 (예: 2026-11-23.md, 2026-11-23-2.md)`,
         );
+        continue;
+      }
+      if (reserved.includes(id)) {
+        problems.push(`${rel(file)} → '${id}'는 페이지 주소로 이미 쓰이는 이름이라 파일 이름으로 쓸 수 없습니다`);
         continue;
       }
 
