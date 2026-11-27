@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
-import ClientLayout from "@/components/layout/ClientLayout";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { SiteProvider } from "@/components/layout/SiteProvider";
 import { getSite } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
@@ -51,7 +52,10 @@ export default function RootLayout({
     <html lang="ko" className={`${notoSerifKR.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         <SiteProvider site={buildSiteSummary(getSite())}>
-          <ClientLayout>{children}</ClientLayout>
+          <Header />
+          {/* Pages render their own <main>; a second one here would nest landmarks. */}
+          <div className="flex-1">{children}</div>
+          <Footer />
         </SiteProvider>
       </body>
     </html>

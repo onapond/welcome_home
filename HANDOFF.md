@@ -51,19 +51,14 @@
 
 **사용자 지시 (11/27)**: 「지금 구조 그대로 가지 않는다. 변경할 것을 먼저 바꾸고 마이그레이션한다. 리팩토링은 검수한다. 병렬로 가능한 것은 바로 진행.」
 
-**리팩토링 R (진행 중)** — 이전보다 먼저
-- R0 ✅ `642efec` 콘텐츠 계층: `src/lib/content/`(zod 스키마 · md/yaml 로더 · 한국어 오류) · `src/lib/media.ts`(R2 URL · 썸네일 규칙) · `content/site.yaml`. 패키지 gray-matter · zod · react-markdown · js-yaml(사용자 승인)
-- R1 (병렬 · 작업 트리) 설교 · 소식 · 주보 · 갤러리 라우트 → content 기반, 정적 생성, `src/lib/sanity` 삭제
-- R2 (병렬 · 작업 트리) 정적 페이지 · 레이아웃의 교회 정보 · 문구 → `site.yaml` · `content/pages/*.yaml` · `history.yaml` · `staff.yaml`
-- R3 (R1 · R2 합친 뒤) Sanity 패키지 · `sanity/` · `/studio` · `ClientLayout` · `next.config` 정리
-- R4 검수: Codex 독립 검토(아스트라 · high · fast) + harness 대립 검토 → 지적 수정 → 재판정
-- 라우트: `/sermons` · `/sermons/[id]` · `/sermons/praise` · `/news` · `/news/[id]` · `/news/bulletin(/[id])` · `/news/gallery(/[id])` — 전부 정적(`dynamicParams=false`, `revalidate` 없음). 사진은 next/image 최적화를 쓰지 않음(R2에서 미리 줄인 파일)
-- 주의: 정적 페이지라 「다가오는 일정」은 빌드 시점 기준이 되면 안 됨(클라이언트에서 거르기)
-
-**다음 할 일**
-1. R1 · R2 결과 합치기 → R3 → R4 검수
-2. 옛 사이트 목록 수집 결과(`../chungpa21-crawl/inventory.md`)로 스키마 보정 → 이전(M) 단계
-3. README는 P4(관리자 안내)에서 다시 씀
+**리팩토링 R** — 이전보다 먼저
+- R0 ✅ `642efec` 콘텐츠 계층 `src/lib/content/` · `src/lib/media.ts` · `content/site.yaml` (+ `5cfa116` 하위 라우트와 겹치는 id 거부)
+- R1 ✅ `e5ba9f7` 설교 · 찬양 · 소식 · 주보 · 갤러리 라우트 content 기반 정적 생성, `src/lib/sanity` 삭제. 샘플 파일은 이전 때 지울 것(`content/*/` 중 `_template.md` 외 전부 샘플)
+- R2 ✅ W2 합침: 교회 정보 → `site.yaml`, 페이지 문구 → `content/pages/*.yaml`(home · location · about · community · visit · service-times · contact), `history.yaml` · `staff.yaml`, `src/lib/{pages는 content/pages.ts, icons, nav, site-summary}.ts`, `SiteProvider`. 연혁은 /about 안 10년 단위 접이식. `TODO(이전)` 표시 = 옛 사이트 확인 전 문구
+- R3 ✅ Sanity 패키지 5개 · `sanity/` · `/studio` · 시딩 스크립트 · `ClientLayout` 삭제, env 예시에 `NEXT_PUBLIC_MEDIA_BASE_URL`. `6f11f51` GitHub Actions 점검
+- 점검: tsc 0 · lint 0 · build 35페이지 · `next start`로 16경로 200/404 확인. **브라우저 시각 확인은 아직 안 함**(헤더 md 폭 좁음 의심 · 라이트박스 키보드 미시험)
+- R4 다음: Codex 독립 검토(요청서 `docs/reviews/2026-11-27-refactor-request.md`, 범위 `494d7d4..HEAD`) + harness 대립 검토 → 수정 → 재판정
+- 라우트는 전부 정적(`dynamicParams=false`). 사진은 next/image 최적화 안 씀. 「다가오는 일정」은 클라이언트에서 거를 것
 
 ---
 
