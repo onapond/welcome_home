@@ -17,7 +17,7 @@
 1. 사용자: Cloudflare R2 켜기(카드) → 버킷 `chungpa-media` → r2.dev 공개 주소 허용 → 버킷 한정 「객체 읽기 및 쓰기」 API 토큰 → `! aws configure --profile chungpa-r2`(region `auto`, 키는 Claude에게 안 보임) → r2.dev 주소 · 계정 ID 전달
 2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
 3. Claude: **14:30 이후** `vercel --prod --yes --archive=tgz --scope onaponds-projects`(11/27 Hobby 하루 업로드 5,000개 한도에 걸림)
-4. 이전 준비 Codex 판정 — 3 · 4번째 「고칠 것 있음」 → 고침(`c9309e5` · `d29553c` · `7298e17`). 5 · 6번째도 고침 → **일곱 번째 판정** 11/27 저녁 돌림(요청서 `docs/reviews/2026-11-27-migration-prep-request-7.md`, 결과 `-codex-7.md`). 「고칠 것 있음」이면 고치고 다시 판정
+4. 이전 준비 Codex 판정 — 3 · 4번째 「고칠 것 있음」 → 고침(`c9309e5` · `d29553c` · `7298e17`). 5 · 6 · 7번째도 고침 → **여덟 번째 판정** 11/27 저녁 돌림(요청서 `docs/reviews/2026-11-27-migration-prep-request-8.md`, 결과 `-codex-8.md`). 「고칠 것 있음」이면 고치고 다시 판정
 5. 교회 확인 사실 모으기(예배 시간 · 주차 · 점심 · 헌금 계좌 · 우편번호 · 좌표 · 큰 목사 사진). 교회 메일은 `chungpa21c@gmail.com`으로 바꿈(사용자 11/27)
 6. Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함
 
