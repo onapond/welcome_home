@@ -1016,6 +1016,10 @@ def front_matter(fn):
             continue
         top = re.match(r"([A-Za-z_][\w-]*):(.*)$", line)
         sub = re.match(r"  ([A-Za-z_][\w-]*):(.*)$", line)
+        if not top and not line.startswith(" "):
+            # a quoted ('legacy':), complex (? key) or otherwise unusual top-level key could be
+            # `pdf` or `legacy` in disguise — never guess "not there"
+            raise ValueError("%s: unsupported front matter line %r (write keys unquoted: `key: value`)" % (fn, line))
         if top:
             block = top.group(1)
             key, raw = block, top.group(2)
@@ -1126,18 +1130,21 @@ def pdf_complete(data):
     if not head:
         return False
     end, top = pdf_dict_end(data, head.end())
-    return (end is not None and re.match(rb"\s*stream\r?\n", data[end:end + 12]) is not None
+    return (end is not None and re.compile(rb"\s*stream\r?\n").match(data, end) is not None
             and re.search(rb"/Type\s*/XRef(?![\w#])", top) is not None)
 
 
 def pdf_dict_end(data, i):
     """Scan a PDF dictionary whose `<<` ends just before `i`. Returns (index after its `>>`, the
-    bytes at its own top level with nested dictionaries, arrays and strings removed), or (None, b"")
-    when it does not close inside `data`."""
+    bytes at its own top level with each string and nested dictionary replaced by " () ", so
+    "/Type (Catalog) /XRef 1" never reads as "/Type /XRef"), or (None, b"") when it does not close
+    inside `data`."""
     depth, top, n = 1, bytearray(), len(data)
     while i < n:
         c = data[i:i + 1]
         if c == b"(":  # literal string: balanced parentheses, backslash escapes
+            if depth == 1:
+                top += b" () "
             level, i = 1, i + 1
             while i < n and level:
                 ch = data[i:i + 1]
@@ -1150,6 +1157,8 @@ def pdf_dict_end(data, i):
                 i += 1
             continue
         if data.startswith(b"<<", i):
+            if depth == 1:
+                top += b" () "
             depth, i = depth + 1, i + 2
             continue
         if data.startswith(b">>", i):
@@ -1161,6 +1170,8 @@ def pdf_dict_end(data, i):
             j = data.find(b">", i)
             if j < 0:
                 return None, b""
+            if depth == 1:
+                top += b" () "
             i = j + 1
             continue
         if c == b"%":  # comment to end of line
