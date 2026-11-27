@@ -1031,6 +1031,9 @@ def front_matter(fn):
             key, raw = "legacy." + sub.group(1), sub.group(2)
         elif block in ("pdf", "legacy"):
             raise ValueError("%s: %s: unsupported indentation %r" % (fn, block, line))
+        elif block is None:
+            # an indented first key (the whole mapping shifted right) would hide every key
+            raise ValueError("%s: front matter must start with an unindented `key: value`, not %r" % (fn, line))
         else:
             continue
         if key not in ("pdf", "legacy.seq"):
