@@ -12,13 +12,14 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**/*": ["./content/site.yaml", "./content/pages/*.yaml"],
   },
-  // Font files in /public/fonts are fetched by a script and never edited by
-  // hand; cache them for 30 days so repeat visits skip the 304 round trip.
+  // Font files in /public/fonts live in a content-versioned folder
+  // (scripts/fonts/fetch-noto-serif-kr.mjs): a changed file gets a new URL,
+  // so the old URL can be cached for a year without revalidation.
   async headers() {
     return [
       {
         source: "/fonts/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
     ];
   },
