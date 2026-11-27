@@ -1,0 +1,92 @@
+# 교회 기본 정보 — 사이트 전체(머리글·바닥글·오시는 길·예배 안내·폼)가 이 파일을 읽는다.
+# 고친 뒤에는 `npm run build`가 통과해야 한다(형식이 틀리면 빌드가 어디가 틀렸는지 알려 준다).
+#
+# TODO(이전): 예배 시간·장소·안내 문구는 옛 사이트(chungpa21.org) 확인 전 값이다.
+#   옛 사이트 「예배안내」와 대조해 바로잡을 것. 특히 details의 주차 지원 문구는 출처 미확인.
+
+name: 청파중앙교회
+nameEn: Chungpa JoongAng Church
+denomination: 대한예수교 장로회
+pastor: 김항우 목사
+founded: 1962
+vision: 21세기 지도자를 길러내는 교회
+description: 서울 용산구 청파동에 위치한 청파중앙교회입니다. 21세기 지도자를 길러내는 대한예수교 장로회 교회.
+
+address:
+  road: 서울특별시 용산구 청파로73길 58
+  detail: 서계동
+  mapQuery: 서울 용산구 청파로73길 58
+
+phone: 02-714-0041~3
+fax: 02-711-8166
+email: church@chungpa21.org   # TODO(이전): 옛 서버 메일 수신 여부 확인 필요
+
+sns:
+  youtube: https://www.youtube.com/channel/UC7Fk-mpsIQlgykLK4lW3t7g
+  instagram: https://www.instagram.com/chungpa_united
+
+# 표어 — 홈 「표어 여정」 타임라인
+mottos:
+  - { year: 2024, text: 우리는 한 가족입니다, keyword: 소속감 }
+  - { year: 2025, text: 우리는 여행하는 사람들입니다, keyword: 순례 }
+  - { year: 2026, text: 일어나 함께가자, keyword: 동행 }
+
+# 정기 예배 — icon: sun | moon | heart | sunrise | users | music
+services:
+  - id: sunday
+    name: 주일예배
+    day: 매주 일요일
+    time: 오전 11:00
+    place: 본당 (2층)
+    audience: 전 교인 및 방문객
+    icon: sun
+    featured: true
+    description: 한 주의 첫 날, 온 교회가 함께 드리는 주일 본 예배입니다. 찬양과 말씀, 성찬으로 하나님 앞에 나아갑니다.
+    details:
+      - 예배 15분 전 도착하시면 자리 안내를 받으실 수 있습니다.
+      - 아이들은 본당 입구에서 각 연령부로 안내해 드립니다.
+      - 주일예배 후 교회 식당에서 점심 식사를 함께합니다.
+      - "주차 지원: 인근 공영주차장 2시간 교회 지원"
+  - id: wednesday
+    name: 수요예배
+    day: 매주 수요일
+    time: 오후 7:30
+    place: 본당 (2층)
+    audience: 전 교인
+    icon: moon
+    description: 한 주의 중간, 바쁜 일상 속에서 하나님 앞에 잠시 멈추는 예배입니다. 말씀을 듣고 기도로 새 힘을 얻습니다.
+    details:
+      - 약 1시간 내외로 진행됩니다.
+      - 직장인도 참석하기 편한 저녁 시간에 진행됩니다.
+      - 말씀 중심의 예배로 진행됩니다.
+  - id: friday
+    name: 금요기도회
+    short: 금요기도
+    day: 매주 금요일
+    time: 오후 9:00
+    place: 본당 (2층)
+    audience: 전 교인
+    icon: heart
+    description: 교회와 나라, 이웃을 위해 뜨겁게 기도하는 시간입니다. 중보기도와 찬양으로 한 주를 마무리합니다.
+    details:
+      - 자유로운 분위기로 진행됩니다.
+      - 중보기도 제목을 미리 준비해 오셔도 좋습니다.
+      - 늦게 도착하셔도 함께 참여하실 수 있습니다.
+  - id: dawn
+    name: 새벽기도
+    day: 월요일 ~ 토요일
+    time: 오전 5:30
+    place: 본당 (2층)
+    audience: 전 교인
+    icon: sunrise
+    description: 하루를 하나님께 드리며 시작하는 새벽 기도회입니다. 짧은 말씀 묵상과 기도로 하루를 엽니다.
+    details:
+      - 약 40분 내외로 진행됩니다.
+      - 매일 다른 말씀으로 진행됩니다.
+      - 조용한 새벽, 개인 기도 시간도 가질 수 있습니다.
+
+specialServices:
+  - { name: 부활절 연합예배, schedule: 매년 부활절 주일, description: 부활의 기쁨을 온 교회가 함께 나누는 특별 연합예배입니다. }
+  - { name: 성탄절 예배, schedule: 매년 12월 25일, description: 예수님의 탄생을 기뻐하며 드리는 성탄 예배와 찬양제입니다. }
+  - { name: 맥추감사절, schedule: 매년 7월 첫째 주일, description: 한 해의 첫 결실에 감사드리는 맥추감사절 예배입니다. }
+  - { name: 추수감사절, schedule: 매년 11월 셋째 주일, description: 한 해의 모든 은혜에 감사드리는 추수감사절 예배입니다. }
