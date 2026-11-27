@@ -30,6 +30,8 @@ npm run check:content   # 빌드 없이 content/ 전체를 몇 초 만에 검사
 
 `content/`를 바꾼 커밋은 커밋 직전 검사(`.githooks/pre-commit`)가 **스테이징한 내용**을 같은 규칙으로 먼저 검사하고, 문제가 있으면 커밋을 멈춥니다. 공개 저장소라 공개 동의 없는 연락처 같은 내용은 커밋되는 순간 기록에 남기 때문입니다. `npm ci` · `npm install`이 `prepare` 스크립트(`scripts/setup-hooks.mjs`)로 `core.hooksPath`가 비어 있고 Git이 지금 쓰는 훅 폴더(보통 `.git/hooks`)에 `.sample` 말고 다른 파일이 없을 때만 `.githooks`로 설정합니다. 이미 훅 설정이 있는 컴퓨터는 아무것도 바꾸지 않고 「검사가 꺼져 있다」고 한 줄로 알립니다. 그때 이 저장소에서 켜려면 `git config core.hooksPath .githooks`를 실행합니다(이 저장소에서는 기존 훅 대신 `.githooks`를 씀). 다른 훅과 함께 쓰도록 연결하는 것은 개발자가 판단합니다(저장소 밖에서는 건너뜀).
 
+켠 뒤에는 `git config --show-scope --get core.hooksPath`로 실제 적용값이 `local … .githooks`인지 확인합니다. `worktree`로 나오면 그 작업 트리에서 `git config --worktree core.hooksPath .githooks`를 실행하고, 「여러 값」 오류가 나면 `git config --local --get-all core.hooksPath`로 기존 값을 본 뒤 `git config --local --replace-all core.hooksPath .githooks`로 하나만 남깁니다.
+
 ## 점검
 
 ```bash
