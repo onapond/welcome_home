@@ -1,0 +1,34 @@
+# 모든 push · PR에서 점검(CHECK)을 돌린다.
+# content/ 파일 형식이 틀리면 build 단계가 실패하고, 어느 파일의 어느 항목인지 로그에 한국어로 나온다.
+# 공개 저장소라 GitHub Actions 사용료가 들지 않는다.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: 타입 검사
+        run: npx tsc --noEmit
+      - name: 린트
+        run: npm run lint
+      - name: 빌드 (콘텐츠 형식 검사 포함)
+        run: npm run build
