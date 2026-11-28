@@ -27,7 +27,11 @@
 1. **m1 스키마 (끝 · 11/27)** — `video:`(유튜브 · 비메오) · `thumb:` · `content/videos/`(`/news/videos`).
 2. **m2 변환기** `scripts/migrate/convert.py` — `boards/*.json` → `content/` 파일. 사진은 m3 목록(`../chungpa21-crawl/media/manifest.json`)의 키(`<묶음>/<board>-<seq>/<nnn>.webp`, 썸네일 `…-480.webp` → `thumb:`)로만 적는다. `sameFileAs`가 있는 실패 항목은 건너뛴다. Vimeo 영상은 `video:`를 비운다(⑱). 개인정보 거르기(IP 제거, 전화번호 가림, 연락처 비공개) 후 `npm run check:content` 통과.
 3. **m3 사진 (끝 · 11/27)** — 4,141장 받음(1,030MB), 1600px 271MB + 480px 86MB, EXIF · GPS 전부 제거 확인. 결과 `../chungpa21-crawl/media/out/`, 목록 `media/manifest.json`. 스크립트 `scripts/migrate/photos.py` · `resize.mjs`.
-4. **m4 R2 업로드** — 사용자 Cloudflare 계정 필요(R2 켜기 · 버킷 · API 토큰 · `aws configure --profile chungpa-r2`는 사용자). **결정(사용자 11/27)**: 정식 사이트가 아닌 지금은 r2.dev 임시 주소로 먼저 연결(`NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소, Production). r2.dev는 속도 제한이 있어 P6 DNS 전환 때 R2 커스텀 도메인으로 환경 변수만 바꾼다. 업로드 = `aws s3 sync ../chungpa21-crawl/media/out s3://<버킷> --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`.
+4. **m4 R2 업로드 — 끝 (11/28)** — **결정(사용자 11/27)**: 정식 사이트가 아닌 지금은 r2.dev 임시 주소로 먼저 연결. r2.dev는 속도 제한이 있어 P6 DNS 전환 때 R2 커스텀 도메인으로 환경 변수만 바꾼다. **결정(사용자 11/28)**: 버킷은 처음부터 교회 Cloudflare 계정에(버킷은 계정 사이에 못 옮김).
+   - 교회 계정 `chungpa21c@gmail.com`(계정 ID `20c857021f064823e1d0369000396b98`) · 버킷 `chungpa-media`(아시아 태평양 · Standard) · r2.dev `https://pub-81316758abd24473bf4c850d33e94ed5.r2.dev`.
+   - 업로드 = `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://20c857021f064823e1d0369000396b98.r2.cloudflarestorage.com --profile chungpa-r2 --content-type image/webp --cache-control "public, max-age=604800"` → 8,282개 · 357,019,702바이트(사진 폴더와 같음). 키는 계정 토큰 `chungpa-media-upload`(이 버킷만 객체 읽기 · 쓰기) → `aws` 프로필 `chungpa-r2`.
+   - Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소 → 재배포 `dpl_5EBDoarUo3fR7zH5PyRvPCdKSMuX`. 운영 `/news/gallery` R2 주소 237개, 표본 12장 200, 브라우저에서 깨진 사진 0.
+   - 요금 알림 $1 → `chungpa21c@gmail.com`(R2에는 결제 상한 기능이 없다).
    - 랜딩용 사진(히어로 · 새가족 · 공동체 · 담임목사 8장)은 저장소 `public/images/site/`에 둔다(11/27).
 5. **m5 옛 주소 연결 — 끝 (11/27)** — `/modu/*`에만 걸리는 라우트 핸들러(`src/app/modu/[...path]/route.ts` + `src/lib/legacy-redirect.ts`). 옛 주소는 쿼리로 글을 가려 설정 리디렉션이면 글마다 규칙 1개(약 1,500개, Vercel 경로 한도 근처)라 함수로 했다. 일반 페이지 요청에는 돌지 않고, 응답은 CDN이 캐시(308 = 1년 · 302 = 1시간)해 같은 옛 링크는 함수 호출이 다시 생기지 않는다.
    - 게시물 1,498건 전부 308 → 자기 새 페이지(설교 487 · 찬양 94 → 찬양 목록 · 앨범 238 · 영상 210 · 소식 270 · 일정 58 → 소식 목록 · 주보 141 → 그 주 첫 주보). 검사 = `npm run build` 뒤 `node scripts/check-legacy-redirects.mjs`(불일치 0).
@@ -44,4 +48,4 @@
 ## 사용자 확인이 필요한 것
 
 - ~~교회소식 · 연혁 · 특별영상 안의 개인 이름 — 그대로 옮길지~~ → **결정(사용자 11/27)**: 개인 이름(교인 동정 · 세례자 명단 · 특송자)은 그대로 옮긴다. 집 주소만 뺀다(`(주소 생략)`, m2에서 13건). 그 밖의 개인정보 검토는 새 사이트에서 나중에 한다.
-- R2 계정 · 버킷 — m4 전에.
+- ~~R2 계정 · 버킷 — m4 전에.~~ → 교회 계정에 만듦(11/28).

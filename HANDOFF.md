@@ -11,21 +11,22 @@
 
 ---
 
-## 지금 상태 — 2026-11-27 (저녁 마무리)
+## 지금 상태 — 2026-11-28 (오전 · R2 연결 끝)
 
-**다음 할 일 (11/28)** — 사용자 「내가 직접해야할 건, 내일 할거니까」
-1. 사용자: Cloudflare R2 켜기(카드) → 버킷 `chungpa-media` → r2.dev 공개 주소 허용 → 버킷 한정 「객체 읽기 및 쓰기」 API 토큰 → `! aws configure --profile chungpa-r2`(region `auto`, 키는 Claude에게 안 보임) → r2.dev 주소 · 계정 ID 전달
-2. Claude: `aws s3 sync ../chungpa21-crawl/media/out s3://chungpa-media --endpoint-url https://<계정ID>.r2.cloudflarestorage.com --profile chungpa-r2`(8,282개 · 357MB) → Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` = r2.dev 주소
-3. Claude: 환경 변수를 넣은 뒤 다시 배포 `vercel --prod --yes --archive=tgz --scope onaponds-projects` → 운영에서 옛 사진 확인. **11/27 저녁 배포는 이미 성공**(`--archive=tgz`라 한도에 안 걸림, `94ed749` 기준) — 15개 경로 200 · 옛 주소 308 · 주보 PDF 200 확인, 옛 사진(`/media/…`)만 404(R2 전이라 예상대로)
-4. 그 뒤 로드맵 P3(교회 확인 사실 반영 · 빠진 페이지) → P4(관리자 작업 환경)
+**R2 연결 끝 (11/28 · 이전 m4)** — 교회 Cloudflare 계정(`chungpa21c@gmail.com`, 계정 ID `20c857021f064823e1d0369000396b98`)에 버킷 `chungpa-media`(아시아 태평양 · Standard). 사진 8,282개 · 357MB 업로드, r2.dev `https://pub-81316758abd24473bf4c850d33e94ed5.r2.dev`. Vercel Production `NEXT_PUBLIC_MEDIA_BASE_URL` 넣고 재배포(`dpl_5EBDoarUo3fR7zH5PyRvPCdKSMuX`) → 운영 갤러리 R2 사진 237개 주소 · 표본 12장 200 · 화면에서 깨진 사진 0. 자세한 것 `docs/migration-plan.md` m4
+- 요금: R2에는 결제 상한이 없다 → 예산 알림 「R2 요금 발생 알림」 $1 → `chungpa21c@gmail.com`. 무료 한도(10GB · 쓰기 100만 · 읽기 1,000만/월) 안
+- 업로드 키: R2 계정 토큰 `chungpa-media-upload`(이 버킷만 객체 읽기 · 쓰기, 기한 없음) → 이 맥 `aws` 프로필 `chungpa-r2`에만 있음(저장소에 없음)
+
+**다음 할 일**
+1. 로드맵 P3(교회 확인 사실 반영 · 빠진 페이지) → P4(관리자 작업 환경)
+2. Vercel은 개인 계정(`onaponds-projects`) 유지 — 교회 Vercel 계정은 가입만 됨, P5에서 GitHub 조직과 함께 옮긴다(사용자 동의 11/28)
 
 **막힌 것 · 담당자 답 대기**
-- R2 설정(위 1) — 사용자
 - Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함 · 쓰지 않는 Sanity 환경 변수 삭제 승인
 - 교회 확인 사실: 예배 시간 · 주차 · 점심 · FAQ · 헌금 계좌 · 우편번호 · 좌표 · 큰 담임목사 사진(교회 메일은 `chungpa21c@gmail.com`으로 바꿈, 사용자 11/27)
 - 유튜브 비공개 19 · 삭제 2 = 특별영상 21건 재생 안 됨(옛 사이트와 같음). 교회가 공개로 돌리면 살아남 — 목록 `docs/migration-plan.md` m6
 
-**옛 사이트 이전 (`docs/migration-plan.md`)**: m1 스키마 · m2 변환기 · m3 사진 · m5 옛 주소 · **m6 확인 끝**, 남은 것 m4 R2 업로드(내일).
+**옛 사이트 이전 (`docs/migration-plan.md`)**: m1 스키마 · m2 변환기 · m3 사진 · m5 옛 주소 · **m6 확인 · m4 R2 업로드(11/28) 끝** — 이전 완료.
 - 이전 준비 Codex 판정 9번째 통과(`docs/reviews/2026-11-27-migration-prep-codex-9.md`). 검토 종료 기준 = `docs/검토규칙.md` ㉑(변환기 지적 중 git으로 되돌릴 수 있는 것은 「낮음」 기록만)
 - m6(11/27 저녁): 브라우저 표본 21쪽 이상 없음, 옛 글 1,357건 · 사진 키 7,961개 전부 있음. Codex 1차 「고칠 것 있음」(설교 제목이 본문 「▶ 설교제목」으로 바뀜 · 다른 설교일이 지워짐) → 변환기 고쳐 다시 변환(`2c41dc9` · `d8358a1`), **2차 판정 통과**(`docs/reviews/2026-11-27-m6-codex-2.md`). 낮음 3건 기록만(m6 절)
 - 변환기를 다시 돌린 뒤에는 `git status -- content public/bulletins`로 바뀐 것만 확인하고 커밋(`scripts/migrate/README.md`)
