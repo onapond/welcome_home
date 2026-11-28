@@ -12,7 +12,10 @@ Output: <out>/{sermons,praise,videos,albums,events,news,bulletins}/*.md, <out>/h
 
 Rules (docs/migration-plan.md, docs/검토규칙.md ⑱, content/README.md):
 - s_board_2 (새가족소개) and s_board_4 (중보기도) are never read.
-- Vimeo videos do not play: `video:` is only written for YouTube; Vimeo items keep text only.
+- Vimeo videos do not play. User decision 2026-11-28: a Vimeo-only post gets the same video on the church
+  YouTube channel (<crawl>/youtube/vimeo-match.tsv, made by youtube_match.py); YouTube links that do not play
+  (<crawl>/youtube/unplayable.tsv) are dropped; a sermon / praise / special-video post left without a video is
+  not written (deleted). 교회소식 posts keep their text without the Vimeo link.
 - Author IPs and author ids are never written. Personal data is kept as on the old site
   (user decision 2026-11-28: addresses, phones, e-mails, staff contacts — the church's staff decide
   later; the repo is private). Only 주민등록번호 / card-like numbers are masked.
@@ -71,6 +74,9 @@ class Report:
         self.pdf_restored = []  # bulletin ids whose PDF came from a previous run's public copy
         self.vimeo_only = Counter()  # board -> items whose only video was Vimeo
         self.vimeo_dropped = Counter()  # board -> Vimeo links dropped in total
+        self.vimeo_linked = Counter()  # board -> Vimeo-only items linked to the YouTube copy
+        self.unplayable = Counter()  # board -> YouTube links dropped as unplayable
+        self.no_video = {}  # board -> [(seq, title)] items deleted for having no playable video
         self.notes = defaultdict(list)  # board -> free text lines
         self.names = defaultdict(list)  # board -> [(file, excerpt)]
         self.replaced = []  # files removed from <out> (samples)
@@ -659,15 +665,47 @@ def ymd(y, m, d):
     return s if is_date(s) else None
 
 
+YT_MATCH: dict = {}  # (board, seq) -> YouTube id of a Vimeo-only post (vimeo-match.tsv)
+UNPLAYABLE: set = set()  # YouTube ids that do not play (unplayable.tsv)
+
+
+def load_youtube(crawl_dir):
+    d = os.path.join(crawl_dir, "youtube")
+    for line in open(os.path.join(d, "vimeo-match.tsv"), encoding="utf-8").read().splitlines()[1:]:
+        board, seq, vid = line.split("\t")[:3]
+        assert YOUTUBE_ID.match(vid), vid
+        YT_MATCH[(board, seq)] = vid
+    for line in open(os.path.join(d, "unplayable.tsv"), encoding="utf-8").read().splitlines()[1:]:
+        UNPLAYABLE.add(line.split("\t")[0])
+
+
 def videos_of(item, board):
     yts = [v["id"] for v in item.get("videos") or [] if v.get("host") == "youtube" and YOUTUBE_ID.match(v.get("id", ""))]
     yts = list(dict.fromkeys(yts))
+    dead = [v for v in yts if v in UNPLAYABLE]
+    if dead:
+        R.unplayable[board] += len(dead)
+        yts = [v for v in yts if v not in UNPLAYABLE]
     vimeo = [v for v in item.get("videos") or [] if v.get("host") == "vimeo"]
     if vimeo:
         R.vimeo_dropped[board] += len(vimeo)
-        if not yts:
-            R.vimeo_only[board] += 1
+        if not yts and not dead:
+            match = YT_MATCH.get((board, str(item.get("seq"))))
+            if match and match not in UNPLAYABLE:
+                R.vimeo_linked[board] += 1
+                yts = [match]
+            else:
+                R.vimeo_only[board] += 1
     return yts
+
+
+def lost_video(item, board, yts, title):
+    """True (and recorded) when a post had a video but none plays: it is not written (user decision 2026-11-28)."""
+    if yts or not item.get("videos"):
+        return False
+    R.no_video.setdefault(board, []).append((item.get("seq"), title))
+    R.skip(board, "영상 없음 — 삭제 (비메오 짝 없음 · 재생 안 되는 유튜브)")
+    return True
 
 
 def legacy_url(item):
@@ -794,9 +832,11 @@ def conv_sermons(W, crawl_dir, photos, public):
         if not title:
             R.skip(board, "제목 없음")
             continue
+        yts = videos_of(it, board)
+        if lost_video(it, board, yts, title):
+            continue
         ident = W.new_id("sermons", date)
         where = "sermons/%s.md" % ident
-        yts = videos_of(it, board)
         front = ["title: %s" % q(front_title(title, where)), "date: %s" % date, "kind: %s" % kind]
         if preacher:
             front.append("preacher: %s" % q(mask_private(preacher, where)))
@@ -826,9 +866,11 @@ def conv_praise(W, crawl_dir, photos, public):
         if not title:
             R.skip(board, "제목 없음")
             continue
+        yts = videos_of(it, board)
+        if lost_video(it, board, yts, title):
+            continue
         ident = W.new_id("praise", it["date"])
         where = "praise/%s.md" % ident
-        yts = videos_of(it, board)
         front = ["title: %s" % q(front_title(title, where)), "date: %s" % it["date"]]
         if yts:
             front.append("video: https://youtu.be/%s" % yts[0])
@@ -848,9 +890,11 @@ def conv_videos(W, crawl_dir, photos, public):
             R.skip(board, "수집 실패 · 날짜 없음")
             continue
         title = clean_title(it.get("title") or it.get("title_raw"))
+        yts = videos_of(it, board)
+        if lost_video(it, board, yts, title):
+            continue
         ident = W.new_id("videos", it["date"])
         where = "videos/%s.md" % ident
-        yts = videos_of(it, board)
         front = ["title: %s" % q(front_title(title, where)), "date: %s" % it["date"]]
         if yts:
             front.append("video: https://youtu.be/%s" % yts[0])
@@ -1011,7 +1055,7 @@ def conv_news(W, crawl_dir, photos, public):
     for date, _seq, it, title in rows:
         ident = W.new_id("news", date)
         where = "news/%s.md" % ident
-        videos_of(it, board)  # Vimeo only on this board: counted, never written
+        videos_of(it, board)  # Vimeo only on this board: counted, never written (the text stays)
         front = ["title: %s" % q(front_title(title, where)), "date: %s" % date, "category: 소식"]
         used = []
         body = body_md(it, board, photos, where, title, used=used)
@@ -1549,11 +1593,17 @@ def write_report(path, args, W):
     if R.collisions:
         L.append("같은 날짜 파일 이름 뒤 번호(-2, -3 …): " + ", ".join("%s %d" % kv for kv in sorted(R.collisions.items())))
         L.append("")
-    L += ["## Vimeo (⑱ 재생 안 됨 → video 비움)", "",
-          "| 게시판 | 영상이 Vimeo뿐이라 video 없이 옮긴 글 | 버린 Vimeo 링크 수 |", "|---|---:|---:|"]
-    for b in sorted(R.vimeo_dropped):
-        L.append("| %s %s | %d | %d |" % (b, BOARD_NAMES[b], R.vimeo_only[b], R.vimeo_dropped[b]))
-    L += ["| 합계 | %d | %d |" % (sum(R.vimeo_only.values()), sum(R.vimeo_dropped.values())), ""]
+    L += ["## Vimeo → 유튜브 (사용자 결정 11/28: 같은 영상을 교회 유튜브에 연결 · 못 찾으면 글 삭제)", "",
+          "| 게시판 | Vimeo 링크 | 유튜브로 연결한 글 | 짝 없는 글 | 재생 안 되는 유튜브 링크 | 삭제한 글 |",
+          "|---|---:|---:|---:|---:|---:|"]
+    for b in sorted(set(R.vimeo_dropped) | set(R.unplayable)):
+        L.append("| %s %s | %d | %d | %d | %d | %d |" % (b, BOARD_NAMES[b], R.vimeo_dropped[b], R.vimeo_linked[b],
+                 R.vimeo_only[b], R.unplayable[b], len(R.no_video.get(b, []))))
+    L += ["", "교회소식(s_board_6)은 짝 없는 Vimeo 글도 글은 남깁니다. 삭제한 글:", ""]
+    for b in sorted(R.no_video):
+        L.append("- %s %s %d건: %s" % (b, BOARD_NAMES[b], len(R.no_video[b]),
+                 ", ".join("%s(%s)" % (seq, t[:20]) for seq, t in R.no_video[b])))
+    L.append("")
     L += ["## 개인정보 가림", "",
           "작성자 IP · 작성자 아이디는 어떤 파일에도 쓰지 않는다. 교회 대표 번호(02-714-0041~3, 02-711-8166)와 "
           "교회 이메일은 그대로 둔다. 가린 값은 이 보고에도 적지 않는다.", ""]
@@ -1657,6 +1707,7 @@ def main():
     report = os.path.abspath(args.report or os.path.join(args.crawl, "convert-report.md"))
 
     photos = Photos(os.path.join(args.crawl, "media", "manifest.json"))
+    load_youtube(args.crawl)
     public_names = staff_names(args.crawl) | {"김항우"}
     W = Writer(args.out, args.public)
     conv_sermons(W, args.crawl, photos, public_names)

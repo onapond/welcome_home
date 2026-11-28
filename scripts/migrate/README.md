@@ -26,7 +26,11 @@ run does not write — the samples), `--no-download` (offline: cached PDFs only,
   so the news list thumbnail and the share preview (OG) use it).
   bulletins ← weekly (`pdf: /bulletins/<id>.pdf`, file in `public/bulletins/`). history.yaml, staff.yaml.
 - Video: only YouTube goes into `video:` (first one; more become `[영상 N](https://youtu.be/…)` links).
-  Vimeo links are dropped (docs/검토규칙.md ⑱). A videos post without YouTube gets its first photo as `thumbnail`.
+  Vimeo links are dropped (docs/검토규칙.md ⑱); a Vimeo-only post gets its YouTube copy from
+  `<crawl>/youtube/vimeo-match.tsv`, YouTube ids in `<crawl>/youtube/unplayable.tsv` are dropped, and a sermon /
+  praise / videos post left without a playable video is not written (user decision 2026-11-28; 교회소식 keeps the text).
+  Both files come from `python3 -I scripts/migrate/youtube_match.py --crawl ../chungpa21-crawl` (rules in its docstring).
+  A videos post without any video gets its first photo as `thumbnail`.
 - Photos: only manifest entries with `status: ok`. `sameFileAs` is NOT used (picked by file-name tail,
   may be a different photo); failed photos are left out and listed under 「사진 없음」 in the report.
 - Ids: `YYYY-MM-DD`, same day → `-2`, `-3` … in (date, board, seq) order. Same input → identical files
