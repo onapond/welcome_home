@@ -370,7 +370,7 @@ export const praiseSchema = z.strictObject({
   .superRefine(checkVideoFields)
   .transform(mergeVideo);
 
-export const NEWS_CATEGORIES = ["공지", "소식", "간증"] as const;
+export const NEWS_CATEGORIES = ["공지", "소식", "간증", "새가족", "중보기도"] as const;
 
 /**
  * A news (or video post) photo: either just a path, or { src, alt, thumb }

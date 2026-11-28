@@ -16,7 +16,7 @@
 | `pages/*.yaml` | 페이지별 문구 (홈 · 교회소개 · 공동체 · 새가족 · 예배 안내 · 문의 · 오시는 길 · 목록 머리글 · 개인정보 처리방침) | 정해진 파일만: `home` `about` `community` `visit` `service-times` `contact` `location` `lists` `privacy` (`.yaml`). 다른 이름의 파일을 두면 오류 |
 | `sermons/` | 설교 | 한 편 = `.md` 파일 하나 |
 | `praise/` | 찬양 영상 | 한 편 = `.md` 파일 하나 |
-| `news/` | 공지 · 소식 · 간증 | 한 건 = `.md` 파일 하나 |
+| `news/` | 공지 · 소식 · 간증 · 새가족 · 중보기도 | 한 건 = `.md` 파일 하나 |
 | `bulletins/` | 주보 | 한 호 = `.md` 파일 하나 |
 | `albums/` | 갤러리 사진첩 | 한 권 = `.md` 파일 하나 |
 | `videos/` | 영상 (행사 · 수련회 · 칸타타 · 교인 소식, 주소 `/news/videos/파일이름`) | 한 건 = `.md` 파일 하나 |

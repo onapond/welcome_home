@@ -15,7 +15,7 @@ Options: `--public DIR` (default `<out>/../public`), `--report FILE` (default `<
 outside the repo), `--replace` (delete `.md` files other than `_…` templates and bulletin PDFs that this
 run does not write — the samples), `--no-download` (offline: cached PDFs only, see PDFs below), `--delay 0.5`.
 
-- Mapping = `docs/migration-plan.md`. `s_board_2` / `s_board_4` are never read.
+- Mapping = `docs/migration-plan.md`. `s_board_2` (새가족소개) / `s_board_4` (중보기도) → news, category 새가족 / 중보기도 (2026-11-28; written after 교회소식 so its ids stay).
   sermons ← media_1 (주일예배) + media_2 (금요기도회): scripture = `chapter`, preacher = `author`,
   falling back to the `▶ 설교자 / 성경본문 / 설교제목` lines (those lines are dropped from the body).
   praise ← media_3 (no body). videos ← s_board_3. albums ← s_board_1 (category from title words,
@@ -44,8 +44,9 @@ run does not write — the samples), `--no-download` (offline: cached PDFs only,
   styles, iframes and other tags removed with their content (an unclosed inner one closes with its parent);
   void tags such as `<embed>` are dropped alone, never the text after them; entities decoded; Markdown
   characters and `{{ }}` escaped.
-- Privacy: author IP / id never written; phone-like numbers masked `010-****-****` (not the church's
-  02-714-0041~3 / 02-711-8166); e-mails masked except church@chungpa21.org; staff phones/e-mails omitted.
+- Privacy: author IP / id never written. Since 2026-11-28 (`KEEP_PERSONAL = True`, user decision) phones, e-mails,
+  home addresses and staff contacts (`publishContact: true`) are kept as on the old site; the rules below apply only
+  with `KEEP_PERSONAL = False`.
   Personal names are kept as-is (user decision 2026-11-27); the report still counts them per board.
 - Home addresses (user decision 2026-11-27) become `(주소 생략)`: a 시/군/구/읍/면 word + road
   (`…로/…길` + number) or lot (`…동/리/가` + number) + optional building / `N동 N호`, a bare `N동 N호`,
@@ -144,7 +145,7 @@ the repo, `prune` with a stale manifest). Download / resize failures do not chan
 they are listed in `manifest.json` `failures` and only `status: ok` keys are ever uploaded.
 
 - Scope: photos (`images` + photo attachments) of `media_1..3`, `s_board_1/3/5/6`, `history`, `staff`.
-  `s_board_2` (새가족소개) and `s_board_4` (중보기도) are not migrated: a URL used only there is skipped.
+  `s_board_2` (새가족소개) and `s_board_4` (중보기도) are migrated since 2026-11-28 (added last in BOARDS, so earlier keys stay).
   PDFs (weekly) are not handled here. Photo = `view_img.asp`, or a file name ending in a photo
   extension — for `view_img.asp` / `download.asp` links the name is the `filename=` value, so a
   `download.asp?filename=x.jpg` attachment counts; the downloaded bytes are still sniffed.

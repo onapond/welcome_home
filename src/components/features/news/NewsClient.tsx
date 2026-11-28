@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BookHeart, Megaphone, Newspaper, Pin } from "lucide-react";
+import { BookHeart, HandHeart, Megaphone, Newspaper, Pin, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CARD_BORDER, EmptyState, MoreButton, chipStyle, fmtDate } from "./shared";
 
@@ -24,6 +24,8 @@ export const CATEGORY_ICON: Record<string, { Icon: LucideIcon; color: string }> 
   공지: { Icon: Megaphone, color: "var(--color-primary)" },
   소식: { Icon: Newspaper, color: "var(--color-primary-light)" },
   간증: { Icon: BookHeart, color: "var(--color-primary-pale)" },
+  새가족: { Icon: UserPlus, color: "var(--color-primary-light)" },
+  중보기도: { Icon: HandHeart, color: "var(--color-primary-pale)" },
 };
 
 export default function NewsClient({ items, categories }: { items: NewsItem[]; categories: string[] }) {

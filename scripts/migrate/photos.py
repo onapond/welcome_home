@@ -9,7 +9,7 @@ Output: <out>/media/original/<key stem>.<ext>       originals as downloaded (unt
         <out>/media/state/                           resumable state (downloads, resize results, jobs)
 
 Scope: photos referenced by the migrated boards (BOARDS below). s_board_2 (새가족소개) and
-s_board_4 (중보기도) are not migrated (user decision 2026-11-27): a URL used only there is skipped.
+s_board_4 (중보기도) were added last (user decision 2026-11-28, reversing 11-27), so earlier keys stay.
 PDFs (weekly) are not handled here.
 
 Key: <collection>/<board_key>-<seq>/<nnn>.webp, nnn = 1-based position of the photo in its item
@@ -59,8 +59,10 @@ BOARDS = [
     ("s_board_6", "news"),
     ("history", "history"),
     ("staff", "staff"),
+    ("s_board_2", "news"),  # 새가족소개 — category 새가족 (2026-11-28)
+    ("s_board_4", "news"),  # 중보기도 — category 중보기도 (2026-11-28)
 ]
-EXCLUDED = ["s_board_2", "s_board_4"]
+EXCLUDED: list = []
 KEY_OK = re.compile(r"^[a-z0-9_\-/.]+$")
 MAGIC = [(b"\xff\xd8\xff", "jpeg"), (b"\x89PNG\r\n\x1a\n", "png"), (b"GIF87a", "gif"), (b"GIF89a", "gif"), (b"BM", "bmp")]
 

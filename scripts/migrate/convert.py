@@ -45,12 +45,12 @@ crawl = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(crawl)
 
 OLD_BASE = "http://www.chungpa21.org"
-EXCLUDED = ("s_board_2", "s_board_4")  # user decision 2026-11-27: never migrated
+EXCLUDED: tuple = ()  # 2026-11-28: s_board_2 / s_board_4 now migrated (news 새가족 / 중보기도)
 COLLECTIONS = ("sermons", "praise", "videos", "albums", "events", "news", "bulletins")
 BOARD_NAMES = {
     "media_1": "주일예배", "media_2": "금요예배", "media_3": "찬양", "s_board_3": "특별영상",
     "s_board_1": "청파앨범", "s_board_5": "교회 일정", "s_board_6": "교회소식", "weekly": "주보",
-    "history": "교회연혁", "staff": "섬기는 분",
+    "history": "교회연혁", "staff": "섬기는 분", "s_board_2": "새가족소개", "s_board_4": "중보기도",
 }
 YOUTUBE_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 CHURCH_PHONES = {"027140041", "027140042", "027140043", "027118166"}
@@ -1026,6 +1026,38 @@ def conv_news(W, crawl_dir, photos, public):
         R.board(board)["written"] += 1
 
 
+# 새가족소개 / 중보기도 (user decision 2026-11-28): news posts in their own category. Run after
+# conv_news, so the ids of the 교회소식 posts already written stay the same.
+EXTRA_NEWS = (("s_board_2", "새가족"), ("s_board_4", "중보기도"))
+
+
+def conv_extra_news(W, crawl_dir, photos, public):
+    for board, category in EXTRA_NEWS:
+        items = sorted(load_board(crawl_dir, board), key=lambda it: (it.get("date") or "", int(it["seq"])))
+        for it in items:
+            R.board(board)["in"] += 1
+            if not it.get("ok") or not is_date(it.get("date")):
+                R.skip(board, "수집 실패 · 날짜 없음")
+                continue
+            title = clean_title(it.get("title") or it.get("title_raw"))
+            if not title:
+                R.skip(board, "제목 없음")
+                continue
+            ident = W.new_id("news", it["date"])
+            where = "news/%s.md" % ident
+            front = ["title: %s" % q(front_title(title, where)), "date: %s" % it["date"], "category: %s" % category]
+            used = []
+            body = body_md(it, board, photos, where, title, used=used)
+            # As conv_news: body photos stay in place; the first also goes into `images:` (list thumbnail · OG).
+            lead = used[0] if used else (photos.item_photos(board, it["seq"]) or [None])[0]
+            if lead:
+                front += ["images:", "  - src: %s" % lead[0], "    thumb: %s" % lead[1]]
+            front += legacy_lines(board, it["seq"], legacy_url(it))
+            record_names(board, where, title + "\n" + body, public)
+            W.md("news", ident, front, body)
+            R.board(board)["written"] += 1
+
+
 # ------------------------------------------------------------------ bulletins (PDF download)
 
 
@@ -1508,7 +1540,7 @@ def write_report(path, args, W):
     L = ["# 옛 게시판 → content/ 변환 보고 (scripts/migrate/convert.py)", "",
          "- 입력: `%s`" % args.crawl, "- 출력: `%s`" % args.out, "- 공개 파일(PDF): `%s`" % args.public, "",
          "## 게시판별 건수", "", "| 게시판 | 이름 | 들어옴 | 씀 | 건너뜀 | 건너뛴 이유 |", "|---|---|---:|---:|---:|---|"]
-    for b in ("media_1", "media_2", "media_3", "s_board_3", "s_board_1", "s_board_5", "s_board_6", "weekly", "history", "staff"):
+    for b in ("media_1", "media_2", "media_3", "s_board_3", "s_board_1", "s_board_5", "s_board_6", "s_board_2", "s_board_4", "weekly", "history", "staff"):
         c = R.counts.get(b, Counter())
         why = ", ".join("%s %d" % kv for kv in sorted(R.skips[b].items())) or "-"
         L.append("| %s | %s | %d | %d | %d | %s |" % (b, BOARD_NAMES[b], c["in"], c["written"], c["skipped"], why))
@@ -1633,6 +1665,7 @@ def main():
     conv_albums(W, args.crawl, photos, public_names)
     conv_events(W, args.crawl, photos, public_names)
     conv_news(W, args.crawl, photos, public_names)
+    conv_extra_news(W, args.crawl, photos, public_names)
     conv_bulletins(W, args.crawl, args)
     conv_history(W, args.crawl, public_names)
     conv_staff(W, args.crawl, photos)
