@@ -29,7 +29,10 @@ run does not write — the samples), `--no-download` (offline: cached PDFs only,
   Vimeo links are dropped (docs/검토규칙.md ⑱); a Vimeo-only post gets its YouTube copy from
   `<crawl>/youtube/vimeo-match.tsv`, YouTube ids in `<crawl>/youtube/unplayable.tsv` are dropped, and a sermon /
   praise / videos post left without a playable video is not written (user decision 2026-11-28; 교회소식 keeps the text).
-  Both files come from `python3 -I scripts/migrate/youtube_match.py --crawl ../chungpa21-crawl` (rules in its docstring).
+  A sermon whose video is the whole live service (/streams) gets the sermon-only clip of that day instead
+  (`<crawl>/youtube/sermon-clip.tsv`, user 2026-11-28); without a clip it keeps the live service.
+  All three files come from `python3 -I scripts/migrate/youtube_match.py --crawl ../chungpa21-crawl` (rules in its
+  docstring; it also needs `channel-durations.tsv`).
   A videos post without any video gets its first photo as `thumbnail`.
 - Photos: only manifest entries with `status: ok`. `sameFileAs` is NOT used (picked by file-name tail,
   may be a different photo); failed photos are left out and listed under 「사진 없음」 in the report.

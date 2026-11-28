@@ -75,6 +75,7 @@ class Report:
         self.vimeo_only = Counter()  # board -> items whose only video was Vimeo
         self.vimeo_dropped = Counter()  # board -> Vimeo links dropped in total
         self.vimeo_linked = Counter()  # board -> Vimeo-only items linked to the YouTube copy
+        self.sermon_clip = Counter()  # board -> posts moved from the live service to the sermon clip
         self.unplayable = Counter()  # board -> YouTube links dropped as unplayable
         self.no_video = {}  # board -> [(seq, title)] items deleted for having no playable video
         self.notes = defaultdict(list)  # board -> free text lines
@@ -667,6 +668,7 @@ def ymd(y, m, d):
 
 YT_MATCH: dict = {}  # (board, seq) -> YouTube id of a Vimeo-only post (vimeo-match.tsv)
 UNPLAYABLE: set = set()  # YouTube ids that do not play (unplayable.tsv)
+SERMON_CLIP: dict = {}  # (board, seq) -> (live service id, sermon-only clip id) (sermon-clip.tsv)
 
 
 def load_youtube(crawl_dir):
@@ -677,6 +679,10 @@ def load_youtube(crawl_dir):
         YT_MATCH[(board, seq)] = vid
     for line in open(os.path.join(d, "unplayable.tsv"), encoding="utf-8").read().splitlines()[1:]:
         UNPLAYABLE.add(line.split("\t")[0])
+    for line in open(os.path.join(d, "sermon-clip.tsv"), encoding="utf-8").read().splitlines()[1:]:
+        board, seq, live, clip = line.split("\t")[:4]
+        assert YOUTUBE_ID.match(live) and YOUTUBE_ID.match(clip), line
+        SERMON_CLIP[(board, seq)] = (live, clip)
 
 
 def videos_of(item, board):
@@ -696,6 +702,11 @@ def videos_of(item, board):
                 yts = [match]
             else:
                 R.vimeo_only[board] += 1
+    # The sermon alone instead of the whole live service (user 2026-11-28; youtube_match.py sermon_clip).
+    live, clip = SERMON_CLIP.get((board, str(item.get("seq"))), (None, None))
+    if yts and yts[0] == live and clip not in UNPLAYABLE:
+        R.sermon_clip[board] += 1
+        yts = [clip] + [v for v in yts[1:] if v != clip]
     return yts
 
 
@@ -1588,8 +1599,7 @@ def write_report(path, args, W):
         c = R.counts.get(b, Counter())
         why = ", ".join("%s %d" % kv for kv in sorted(R.skips[b].items())) or "-"
         L.append("| %s | %s | %d | %d | %d | %s |" % (b, BOARD_NAMES[b], c["in"], c["written"], c["skipped"], why))
-    L += ["| s_board_2 | 새가족소개 | - | 0 | - | 옮기지 않음(사용자 결정 11/27, 파일을 읽지 않음) |",
-          "| s_board_4 | 중보기도 | - | 0 | - | 옮기지 않음(사용자 결정 11/27, 파일을 읽지 않음) |", ""]
+    L.append("")
     if R.collisions:
         L.append("같은 날짜 파일 이름 뒤 번호(-2, -3 …): " + ", ".join("%s %d" % kv for kv in sorted(R.collisions.items())))
         L.append("")
@@ -1599,7 +1609,9 @@ def write_report(path, args, W):
     for b in sorted(set(R.vimeo_dropped) | set(R.unplayable)):
         L.append("| %s %s | %d | %d | %d | %d | %d |" % (b, BOARD_NAMES[b], R.vimeo_dropped[b], R.vimeo_linked[b],
                  R.vimeo_only[b], R.unplayable[b], len(R.no_video.get(b, []))))
-    L += ["", "교회소식(s_board_6)은 짝 없는 Vimeo 글도 글은 남깁니다. 삭제한 글:", ""]
+    L += ["", "설교만 자른 영상으로 바꾼 글(예배 실황 → 같은 날 설교 영상, `sermon-clip.tsv`): " +
+          (", ".join("%s %d" % kv for kv in sorted(R.sermon_clip.items())) or "0"),
+          "", "교회소식(s_board_6)은 짝 없는 Vimeo 글도 글은 남깁니다. 삭제한 글:", ""]
     for b in sorted(R.no_video):
         L.append("- %s %s %d건: %s" % (b, BOARD_NAMES[b], len(R.no_video[b]),
                  ", ".join("%s(%s)" % (seq, t[:20]) for seq, t in R.no_video[b])))
