@@ -134,7 +134,7 @@ date: 2026-11-23
 
 ## 목록의 id
 
-`site.yaml`의 예배 `id`, `pages/community.yaml`의 공동체 `id`, `pages/location.yaml`의 교통편 `id`, 표어 `year`는 같은 목록 안에서 서로 달라야 합니다. 공동체 `id`는 주소(`/community#youth`)가 되고, 바닥글 「공동체」 링크도 이 목록에서 자동으로 만들어집니다.
+`site.yaml`의 예배 `id`, `pages/community.yaml`의 공동체 `id`, `pages/location.yaml`의 교통편 `id`, 표어 `year`는 같은 목록 안에서 서로 달라야 합니다. 공동체 `id`는 주소(`/community#cu`)가 되고, 바닥글 「공동체」 링크도 이 목록에서 자동으로 만들어집니다.
 
 ## 검색 · 공유 정보 (site.yaml 선택 항목)
 

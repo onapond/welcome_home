@@ -1,4 +1,4 @@
-# 공동체(/community) 문구 — 청년부 · 청소년부 · 선교 · 소그룹 소개와 하단 참여 안내.
+# 공동체(/community) 문구 — CU(청소년 · 청년 연합) · 청소년부 · 1청년 · 2청년 · 워십팀 · 선교 · 소그룹 소개와 하단 참여 안내.
 #   - groups 순서대로 페이지에 나오고, showOnHome: true 인 앞의 3개가 홈 화면 카드에 나온다.
 #   - id는 주소의 # 부분(/community#youth)이 된다. 바닥글 「공동체」 링크는 이 groups에서 자동으로 만든다(id는 서로 달라야 한다).
 #   - details 값에 {{phone}}처럼 적으면 site.yaml의 값으로 바뀐다.
@@ -11,7 +11,7 @@
 
 meta:
   title: 공동체
-  description: "{{name}}의 다양한 공동체를 소개합니다. 청년부 United, 청소년부, 선교, 소그룹/구역."
+  description: "{{name}}의 다양한 공동체를 소개합니다. CU(청소년 · 청년 연합) — 청소년부 · 1청년 · 2청년 · CU 워십팀, 선교, 소그룹/구역."
 
 hero:
   badge: 공동체
@@ -21,42 +21,101 @@ hero:
     - "{{name}}의 다양한 공동체에 함께하세요."
 
 groups:
-  - id: youth
-    image: /images/site/community-youth.webp   # 2026 CU 수련회 (옛 사이트 앨범)
-    label: 청년부
-    title: 청년부 United
-    subtitle: "@chungpa_united"
-    summary: 20-30대 청년들이 함께 예배하고 교제하며 신앙 안에서 성장해가는 공동체입니다.
+  # CU(Chungpa United) = 청소년부 + 1청년(20대) + 2청년(30대) + CU 워십팀 연합. 부서 구성 · 부서 사진은 교육위원회
+  #   관리 앱(church 프로젝트, Supabase departments · department_photos)에서 가져옴(11/28). 시간 · 장소는 옛 사이트 예배시간 그림.
+  #   홈 카드 = CU · 청소년부 · 선교.
+  - id: cu
+    image: /images/site/community-cu.webp   # 2026 CU 수련회 단체 사진 (옛 사이트 앨범)
+    label: CU
+    title: CU (Chungpa United)
+    subtitle: 청소년 · 청년 연합
+    summary: 청소년부와 청년부(1청년 · 2청년)가 함께 예배하고 자라 가는 연합 공동체입니다.
     tag: "@chungpa_united"
     description: >-
-      20~30대 청년들이 함께 예배하고, 말씀 안에서 성장하며, 서로를 세워가는 공동체입니다.
-      주일 청소년 · 청년 예배(오후 1시 30분, 3층 CU룸)와 다양한 소모임을 통해 함께 합니다.
-    tags: ["주일 1:30PM", 소모임, 수련회]
+      CU(Chungpa United)는 청소년부와 청년부(1청년 · 2청년)가 하나로 모인 연합 공동체입니다.
+      주일 오후 1시 30분 3층 CU룸에서 함께 예배하고, 수련회 · 아웃리치 · 비전트립을 함께 떠납니다.
+    tags: ["주일 1:30PM", 수련회, 아웃리치]
     color: primary
     showSnsLinks: true
     details:
-      - { label: 예배 시간, value: 주일 오후 1:30 }   # 옛 사이트 예배시간 그림(2025-10) — site.yaml services youth와 같게
+      - { label: 예배 시간, value: 주일 오후 1:30 }
       - { label: 장소, value: 3층 CU룸 }
-      - { label: 대상, value: 20~30대 청년 }
+      - { label: 함께하는 부서, value: 청소년부 · 1청년 · 2청년 · CU 워십팀 }
       - { label: 문의, value: "{{phone}}" }
 
   - id: students
-    image: /images/site/community-students.webp   # 2026 CU 수련회 찬양 (옛 사이트 앨범)
+    image: /images/site/community-students.webp   # 청소년부 (교육위원회 관리 앱 부서 사진, 2026-03-15)
     label: 청소년부
     title: 청소년부
-    subtitle: 중·고등학생 공동체
-    summary: 중·고등학생들이 말씀과 기도로 뿌리를 내리고 다음 세대 지도자로 세워지는 곳입니다.
-    tag: 매주 주일
+    subtitle: CU · 중 · 고등학생
+    summary: 중 · 고등학생들이 말씀과 기도로 뿌리를 내리고 다음 세대 지도자로 세워지는 곳입니다.
+    tag: CU
     description: >-
-      중학생·고등학생이 함께하는 청소년부입니다.
+      중학생 · 고등학생이 함께하는 청소년부입니다. CU의 한 부서로 청년부와 함께 예배하고,
       말씀과 찬양, 또래 친구들과의 교제를 통해 하나님을 알아가며 건강한 신앙을 키웁니다.
-    tags: ["주일 1:30PM", 캠프, 전도]
+    tags: ["주일 1:30PM", CU, 수련회]
     color: secondary
     details:
-      - { label: 예배 시간, value: 주일 오후 1:30 }   # 옛 사이트 예배시간 그림(2025-10) — site.yaml services youth와 같게
+      - { label: 예배 시간, value: 주일 오후 1:30 (CU 연합 예배) }
       - { label: 장소, value: 3층 CU룸 }
-      - { label: 대상, value: 중·고등학생 }
+      - { label: 대상, value: 중 · 고등학생 }
       - { label: 문의, value: 02-714-0042 }
+
+  - id: young1
+    image: /images/site/community-young1.webp   # 1청년 모임 (교육위원회 관리 앱 부서 사진, 2026-02)
+    label: 1청년
+    title: 1청년
+    subtitle: CU · 20대 청년
+    summary: 20대 청년들이 셀 모임으로 함께 말씀을 나누고 서로를 세워 가는 공동체입니다.
+    tag: CU
+    showOnHome: false
+    description: >-
+      20대 청년들이 모인 1청년입니다. CU의 한 부서로 청소년부 · 2청년과 함께 예배하고,
+      셀마다 모여 말씀을 나누고 서로의 삶을 돌봅니다.
+    tags: ["주일 1:30PM", 셀 모임, 20대]
+    color: primary-light
+    details:
+      - { label: 예배 시간, value: 주일 오후 1:30 (CU 연합 예배) }
+      - { label: 장소, value: 3층 CU룸 }
+      - { label: 대상, value: 20대 청년 }
+      - { label: 문의, value: "{{phone}}" }
+
+  - id: young2
+    image: /images/site/community-young2.webp   # 2청년부 아웃팅 (교육위원회 관리 앱 부서 사진, 2026-03-15)
+    label: 2청년
+    title: 2청년
+    subtitle: CU · 30대 청년
+    summary: 30대 청년들이 삶의 자리에서 믿음을 나누며 함께 걸어가는 공동체입니다.
+    tag: CU
+    showOnHome: false
+    description: >-
+      30대 청년들이 모인 2청년입니다. CU의 한 부서로 함께 예배하고,
+      직장과 가정 등 각자의 삶의 자리에서 믿음을 나누며 아웃팅 · 교제로 함께 걸어갑니다.
+    tags: ["주일 1:30PM", 교제, 30대]
+    color: primary
+    details:
+      - { label: 예배 시간, value: 주일 오후 1:30 (CU 연합 예배) }
+      - { label: 장소, value: 3층 CU룸 }
+      - { label: 대상, value: 30대 청년 }
+      - { label: 문의, value: "{{phone}}" }
+
+  - id: worship
+    image: /images/site/community-worship.webp   # 2026 CU 수련회 찬양 — CU 워십팀 (옛 사이트 앨범)
+    label: 워십팀
+    title: CU 워십팀
+    subtitle: 찬양으로 섬기는 사람들
+    summary: CU 예배의 찬양을 이끌고, 함께 책을 읽고 나누며 예배자로 자라 갑니다.
+    tag: CU
+    showOnHome: false
+    description: >-
+      CU 워십팀은 주일 CU 연합 예배와 수련회의 찬양을 섬기는 팀입니다.
+      찬양 연습과 함께 독서 나눔으로 예배자의 삶을 함께 배워 갑니다.
+    tags: [찬양, 예배, 독서 나눔]
+    color: secondary
+    details:
+      - { label: 섬기는 예배, value: 주일 CU 연합 예배 }
+      - { label: 장소, value: 3층 CU룸 }
+      - { label: 문의, value: "{{phone}}" }
 
   - id: mission
     image: /images/site/community-mission.webp   # 캄보디아 단기선교 (옛 사이트 앨범)

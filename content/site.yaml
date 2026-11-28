@@ -78,11 +78,11 @@ services:
     icon: sun
     showOnHome: false
   - id: youth
-    name: 청소년 · 청년 예배
+    name: CU 예배 (청소년 · 청년)
     day: 매주 일요일
     time: 오후 1:30
     place: 3층 CU룸
-    audience: 청소년부 · 청년부
+    audience: CU (청소년부 · 1청년 · 2청년)
     icon: users
     showOnHome: false
   - id: wednesday

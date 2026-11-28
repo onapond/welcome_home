@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BookHeart, HandHeart, Megaphone, Newspaper, Pin, UserPlus } from "lucide-react";
@@ -28,18 +28,19 @@ export const CATEGORY_ICON: Record<string, { Icon: LucideIcon; color: string }> 
   중보기도: { Icon: HandHeart, color: "var(--color-primary-pale)" },
 };
 
-export default function NewsClient({ items, categories }: { items: NewsItem[]; categories: string[] }) {
-  const [cat, setCat] = useState(ALL);
-  const [visible, setVisible] = useState(PAGE_SIZE);
+const noSubscribe = () => () => {};
+const readCategory = () => new URLSearchParams(window.location.search).get("category");
 
+export default function NewsClient({ items, categories }: { items: NewsItem[]; categories: string[] }) {
   // ?category=… picks the chip (old 새가족소개 / 중보기도 list links land here) and is kept on reload.
-  useEffect(() => {
-    const c = new URLSearchParams(window.location.search).get("category");
-    if (c && categories.includes(c)) setCat(c);
-  }, [categories]);
+  // Read without an effect: the static HTML renders 「전체」, the client then reads the URL.
+  const urlCat = useSyncExternalStore(noSubscribe, readCategory, () => null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const cat = picked ?? (urlCat && categories.includes(urlCat) ? urlCat : ALL);
 
   function pick(c: string) {
-    setCat(c);
+    setPicked(c);
     setVisible(PAGE_SIZE);
     const url = new URL(window.location.href);
     if (c === ALL) url.searchParams.delete("category");

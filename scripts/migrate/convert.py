@@ -1494,6 +1494,7 @@ def conv_history(W, crawl_dir, public):
 
 STAFF_HEAD = """# 교역자 · 직분자 명단 — 「교회소개」 페이지의 「교역자 소개」가 읽는다.
 #   name   이름 (직분은 role에)       role   담임목사 · 부목사 · 전도사 …
+#   status 시무(지금 섬김, 생략하면 시무) · 파송(선교사) · 은퇴(원로 · 은퇴) — 화면이 이 셋으로 나뉜다
 #   group  카드 아래 작은 배지(부서·역할)   photo  사진 경로(없으면 자리표시)
 #
 # 주의: email · phone은 사이트에 공개된다. 적으려면 publishContact: true 가 함께 있어야 하고,
@@ -1511,6 +1512,16 @@ def staff_names(crawl_dir):
     return names
 
 
+def staff_status(role):
+    """시무 · 파송 · 은퇴 from the old-site duty text (the about page groups by it)."""
+    r = role.replace(" ", "")
+    if "은퇴" in r or "원로" in r:
+        return "은퇴"
+    if "파송" in r or "선교사" in r:
+        return "파송"
+    return "시무"
+
+
 def conv_staff(W, crawl_dir, photos):
     board = "staff"
     lines = [STAFF_HEAD]
@@ -1524,6 +1535,9 @@ def conv_staff(W, crawl_dir, photos):
         phones, emails = it.get("phones") or [], it.get("emails") or []
         lines.append("- name: %s" % q(name))
         lines.append("  role: %s" % q(role))
+        status = staff_status(role)
+        if status != "시무":
+            lines.append("  status: %s" % status)
         charge = [clean_title(c) for c in it.get("charge") or [] if clean_title(c)]
         if charge:
             lines.append("  group: %s" % q(mask_private(" · ".join(charge), "staff.yaml")))

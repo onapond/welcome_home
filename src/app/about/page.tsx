@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
-import { getSite } from "@/lib/content";
+import { getSite, type StaffMember } from "@/lib/content";
 import {
   formatHistoryDate,
   getAboutPage,
@@ -25,6 +25,13 @@ export function generateMetadata(): Metadata {
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
+
+// 교역자 소개 묶음 (staff.yaml `status`) — 지금 섬기는 분 · 파송 선교사 · 원로와 은퇴를 나눠 보인다.
+const STAFF_GROUPS: { status: StaffMember["status"]; title: string }[] = [
+  { status: "시무", title: "섬기는 분" },
+  { status: "파송", title: "파송 선교사" },
+  { status: "은퇴", title: "원로 · 은퇴" },
+];
 
 export default function AboutPage() {
   const site = getSite();
@@ -394,72 +401,78 @@ export default function AboutPage() {
             className="mb-12"
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-            {staff.map((person) => (
-              <div
-                key={`${person.name}-${person.role}`}
-                className="flex flex-col items-center gap-4 rounded-2xl p-5 text-center"
-                style={{
-                  backgroundColor: "var(--color-bg)",
-                  border: "1px solid rgba(43,58,140,0.07)",
-                }}
-              >
-                {/* Photo */}
-                <div
-                  className="relative w-20 h-20 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: "var(--color-bg-warm)" }}
-                >
-                  {person.photo ? (
-                    <Image
-                      src={mediaUrl(person.photo)}
-                      alt={`${person.name} ${person.role}`}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <ImagePlaceholder
-                      label=""
-                      aspectRatio="1/1"
-                      className="w-full h-full rounded-full"
-                    />
-                  )}
-                </div>
+          <div className="flex flex-col gap-14">
+            {STAFF_GROUPS.map(({ status, title }) => {
+              const people = staff.filter((p) => p.status === status);
+              if (people.length === 0) return null;
+              return (
+                <div key={status}>
+                  <h3
+                    className="font-serif text-lg font-bold mb-6 pb-3"
+                    style={{ color: "var(--color-dark)", borderBottom: "1px solid var(--color-secondary-light)" }}
+                  >
+                    {title}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+                    {people.map((person) => (
+                      <div
+                        key={`${person.name}-${person.role}`}
+                        className="flex flex-col rounded-2xl overflow-hidden text-center"
+                        style={{
+                          backgroundColor: "var(--color-bg)",
+                          border: "1px solid rgba(43,58,140,0.07)",
+                        }}
+                      >
+                        {/* Photo — portrait, the full card width */}
+                        <div
+                          className="relative w-full aspect-[3/4] overflow-hidden"
+                          style={{ backgroundColor: "var(--color-bg-warm)" }}
+                        >
+                          {person.photo ? (
+                            <Image
+                              src={mediaUrl(person.photo)}
+                              alt={`${person.name} ${person.role}`}
+                              fill
+                              sizes="(min-width: 1024px) 240px, (min-width: 640px) 30vw, 45vw"
+                              className="object-cover object-top"
+                            />
+                          ) : (
+                            <ImagePlaceholder label="" className="absolute inset-0 w-full h-full" />
+                          )}
+                        </div>
 
-                <div>
-                  <p
-                    className="font-serif text-sm font-bold"
-                    style={{ color: "var(--color-dark)" }}
-                  >
-                    {person.name}
-                  </p>
-                  <p
-                    className="text-xs mt-0.5"
-                    style={{ color: "var(--color-primary)" }}
-                  >
-                    {person.role}
-                  </p>
-                  {person.group && (
-                    <span
-                      className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: "var(--color-bg-warm)",
-                        color: "var(--color-dark-soft)",
-                      }}
-                    >
-                      {person.group}
-                    </span>
-                  )}
-                  {person.publishContact && (person.phone || person.email) && (
-                    <p className="mt-2 text-xs" style={{ color: "var(--color-dark-soft)" }}>
-                      {person.phone}
-                      {person.phone && person.email && <br />}
-                      {person.email}
-                    </p>
-                  )}
+                        <div className="p-4">
+                          <p className="font-serif text-base font-bold" style={{ color: "var(--color-dark)" }}>
+                            {person.name}
+                          </p>
+                          <p className="text-sm mt-0.5" style={{ color: "var(--color-primary)" }}>
+                            {person.role}
+                          </p>
+                          {person.group && (
+                            <span
+                              className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: "var(--color-bg-warm)",
+                                color: "var(--color-dark-soft)",
+                              }}
+                            >
+                              {person.group}
+                            </span>
+                          )}
+                          {person.publishContact && (person.phone || person.email) && (
+                            <p className="mt-2 text-xs break-all" style={{ color: "var(--color-dark-soft)" }}>
+                              {person.phone}
+                              {person.phone && person.email && <br />}
+                              {person.email}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

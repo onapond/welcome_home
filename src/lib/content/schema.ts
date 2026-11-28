@@ -480,11 +480,15 @@ export const historySchema = z.array(
 const CONTACT_PRIVACY =
   "publishContact: true 가 없으면 연락처를 적을 수 없습니다. 이 파일은 공개 저장소에 올라가므로 본인이 공개에 동의한 연락처만 적고, 아니면 이 줄을 지워 주세요";
 
+// 교역자 소개 묶음 — 시무(지금 섬김) · 파송(선교사) · 은퇴(원로 · 은퇴), 화면에 이 순서로 나뉜다.
+export const STAFF_STATUS = ["시무", "파송", "은퇴"] as const;
+
 export const staffSchema = z.array(
   z
     .strictObject({
       name: text,
       role: text, // "담임목사", "부목사", "전도사" …
+      status: z.enum(STAFF_STATUS, { error: `시무 · 파송 · 은퇴 중 하나여야 합니다` }).default("시무"),
       group: optText, // "교역자", "장로" …
       photo: optional(mediaPath),
       bio: optText,
