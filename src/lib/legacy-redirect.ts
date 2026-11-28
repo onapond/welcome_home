@@ -24,9 +24,9 @@ const BOARDS = new Map<string, Board>(Object.entries({
   media_2: { list: "/sermons", detail: (id: string) => `/sermons/${id}` }, // 금요예배
   media_3: { list: "/sermons/praise", detail: null }, // 찬양 — list only (videos open on YouTube)
   s_board_1: { list: "/news/gallery", detail: (id: string) => `/news/gallery/${id}` }, // 청파앨범
-  s_board_2: { list: "/news", detail: (id: string) => `/news/${id}` }, // 새가족소개 — news, category 새가족
+  s_board_2: { list: `/news?category=${encodeURIComponent("새가족")}`, detail: (id: string) => `/news/${id}` }, // 새가족소개 — news, category 새가족 (the list opens on it)
   s_board_3: { list: "/news/videos", detail: (id: string) => `/news/videos/${id}` }, // 특별영상
-  s_board_4: { list: "/news", detail: (id: string) => `/news/${id}` }, // 중보기도 — news, category 중보기도
+  s_board_4: { list: `/news?category=${encodeURIComponent("중보기도")}`, detail: (id: string) => `/news/${id}` }, // 중보기도 — news, category 중보기도 (the list opens on it)
   s_board_5: { list: "/news", detail: null }, // 교회 일정 — kept in content/events, no page yet
   s_board_6: { list: "/news", detail: (id: string) => `/news/${id}` }, // 교회소식
 } satisfies Record<string, Board>));

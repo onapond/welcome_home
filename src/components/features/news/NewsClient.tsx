@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BookHeart, HandHeart, Megaphone, Newspaper, Pin, UserPlus } from "lucide-react";
@@ -32,6 +32,21 @@ export default function NewsClient({ items, categories }: { items: NewsItem[]; c
   const [cat, setCat] = useState(ALL);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
+  // ?category=… picks the chip (old 새가족소개 / 중보기도 list links land here) and is kept on reload.
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get("category");
+    if (c && categories.includes(c)) setCat(c);
+  }, [categories]);
+
+  function pick(c: string) {
+    setCat(c);
+    setVisible(PAGE_SIZE);
+    const url = new URL(window.location.href);
+    if (c === ALL) url.searchParams.delete("category");
+    else url.searchParams.set("category", c);
+    window.history.replaceState(null, "", url);
+  }
+
   const filtered = useMemo(() => (cat === ALL ? items : items.filter((n) => n.category === cat)), [items, cat]);
 
   if (items.length === 0) return <EmptyState message="아직 등록된 소식이 없습니다." />;
@@ -45,10 +60,7 @@ export default function NewsClient({ items, categories }: { items: NewsItem[]; c
             type="button"
             aria-pressed={cat === c}
             style={chipStyle(cat === c)}
-            onClick={() => {
-              setCat(c);
-              setVisible(PAGE_SIZE);
-            }}
+            onClick={() => pick(c)}
           >
             {c}
           </button>

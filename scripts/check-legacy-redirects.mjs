@@ -67,7 +67,7 @@ for (const [name, items, expect] of all) {
     const u = oldSiteUrl(i.legacy.url);
     const t = legacyTarget(u.pathname, u.searchParams);
     const k = `${name}:${t.permanent ? 308 : 302}`; byStatus[k] = (byStatus[k] || 0) + 1;
-    const page = t.to.split("#")[0];
+    const page = t.to.split("#")[0].split("?")[0];
     let ok = t.permanent && built.has(page);
     if (expect) ok = ok && t.to === expect(i);
     else {

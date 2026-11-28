@@ -7,7 +7,7 @@
 #   - image에 사진 경로를 적으면 자리표시 대신 나온다.
 #
 # TODO(이전): 옛 사이트 확인 전 — 모든 공동체 소개 · 시간 · 장소 · 인원 · 문의 번호는 교회 입력 없이 쓴 임시 문구다.
-#   특히 청소년부 문의 번호(02-714-0042)와 청년부 예배 시간(주일 오후 1시)을 옛 사이트와 대조할 것.
+#   특히 청소년부 문의 번호(02-714-0042)를 대조할 것. 예배 시간 · 장소는 11/28 옛 사이트 예배시간 그림대로(주일 오후 1:30 · 3층 CU룸).
 
 meta:
   title: 공동체
@@ -30,13 +30,13 @@ groups:
     tag: "@chungpa_united"
     description: >-
       20~30대 청년들이 함께 예배하고, 말씀 안에서 성장하며, 서로를 세워가는 공동체입니다.
-      주일 2부 예배(오후 1시)와 다양한 소모임을 통해 함께 합니다.
-    tags: ["주일 1PM", 소모임, 수련회]
+      주일 청소년 · 청년 예배(오후 1시 30분, 3층 CU룸)와 다양한 소모임을 통해 함께 합니다.
+    tags: ["주일 1:30PM", 소모임, 수련회]
     color: primary
     showSnsLinks: true
     details:
-      - { label: 예배 시간, value: 주일 오후 1:00 }
-      - { label: 장소, value: 청년부 예배실 }
+      - { label: 예배 시간, value: 주일 오후 1:30 }   # 옛 사이트 예배시간 그림(2025-10) — site.yaml services youth와 같게
+      - { label: 장소, value: 3층 CU룸 }
       - { label: 대상, value: 20~30대 청년 }
       - { label: 문의, value: "{{phone}}" }
 
@@ -50,11 +50,11 @@ groups:
     description: >-
       중학생·고등학생이 함께하는 청소년부입니다.
       말씀과 찬양, 또래 친구들과의 교제를 통해 하나님을 알아가며 건강한 신앙을 키웁니다.
-    tags: ["주일 11AM", 캠프, 전도]
+    tags: ["주일 1:30PM", 캠프, 전도]
     color: secondary
     details:
-      - { label: 예배 시간, value: 주일 오전 11:00 }
-      - { label: 장소, value: 청소년부 예배실 }
+      - { label: 예배 시간, value: 주일 오후 1:30 }   # 옛 사이트 예배시간 그림(2025-10) — site.yaml services youth와 같게
+      - { label: 장소, value: 3층 CU룸 }
       - { label: 대상, value: 중·고등학생 }
       - { label: 문의, value: 02-714-0042 }
 

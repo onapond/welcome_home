@@ -34,6 +34,7 @@ import difflib
 import json
 import os
 import re
+import unicodedata
 import urllib.error
 import urllib.request
 
@@ -68,6 +69,8 @@ def tdate(t):
 
 
 def norm(t, keep_digits):
+    # Some channel titles are stored as decomposed Hangul (NFD jamo); compare composed text (Codex 11/28 #3).
+    t = unicodedata.normalize("NFC", t)
     t = STOP.sub(" ", DATES.sub(" ", t))
     t = re.sub(r"20\d\d년?", " ", t)
     if not keep_digits:
@@ -115,10 +118,11 @@ def best_match(board, it, yt):
 
 
 def sermon_clip(it, live, clips):
-    """The sermon-only clip for a post whose video is the live service `live`, as (score, clip, how) or None."""
+    """The sermon-only clip for a post whose video is the live service `live` (a channel row), as
+    (score, clip, how) or None. The live title's date counts too: a post written a week late (Codex 11/28 #4)."""
     title = it.get("title") or ""
     d = datetime.date(*map(int, it["date"].split("-")))
-    days = {d} | ({tdate(title)} - {None})
+    days = {d} | ({tdate(title), live["td"]} - {None})
     tn = norm(title, True)
     best = None
     for c in clips:
@@ -188,7 +192,7 @@ def main():
             live = ids[0] if ids else matched.get((board, str(it["seq"])))
             if not live or dur.get(live, (None, ""))[1] != "streams":
                 continue
-            got = sermon_clip(it, live, clips)
+            got = sermon_clip(it, by_id[live], clips)
             if got:
                 s, c, how = got
                 clip_rows.append([board, str(it["seq"]), live, c["id"], "%.2f" % s, how, it.get("title"), c["title"]])

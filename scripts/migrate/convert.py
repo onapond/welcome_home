@@ -11,7 +11,7 @@ Output: <out>/{sermons,praise,videos,albums,events,news,bulletins}/*.md, <out>/h
         unless --no-download. A PDF not obtained in a run never deletes an existing public copy.
 
 Rules (docs/migration-plan.md, docs/검토규칙.md ⑱, content/README.md):
-- s_board_2 (새가족소개) and s_board_4 (중보기도) are never read.
+- s_board_2 (새가족소개) and s_board_4 (중보기도) go to news, category 새가족 / 중보기도 (2026-11-28), after 교회소식.
 - Vimeo videos do not play. User decision 2026-11-28: a Vimeo-only post gets the same video on the church
   YouTube channel (<crawl>/youtube/vimeo-match.tsv, made by youtube_match.py); YouTube links that do not play
   (<crawl>/youtube/unplayable.tsv) are dropped; a sermon / praise / special-video post left without a video is
@@ -1535,6 +1535,8 @@ def conv_staff(W, crawl_dir, photos):
             bio = "\n".join(l.rstrip() for l in bio.replace("\r", "").split("\n") if l.strip())
             lines.append("  bio: |-")
             lines += ["    " + l for l in bio.split("\n")]
+        if not KEEP_PERSONAL:  # contacts follow the same switch as the posts (Codex 11/28 #9)
+            phones, emails = [], []
         if phones:
             lines.append("  phone: %s" % q(phones[0]))
         if emails:
