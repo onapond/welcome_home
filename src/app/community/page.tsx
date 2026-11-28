@@ -116,10 +116,20 @@ export default function CommunityPage() {
                 <div className="w-full lg:w-1/2 flex flex-col gap-6">
                   {/* Label */}
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex items-center justify-center w-10 h-10 rounded-xl"
-                      style={{ backgroundColor: color, opacity: 0.12 }}
-                    />
+                    {group.logo ? (
+                      <Image
+                        src={mediaUrl(group.logo)}
+                        alt={`${group.label} 로고`}
+                        width={160}
+                        height={40}
+                        className="h-10 w-auto object-contain"
+                      />
+                    ) : (
+                      <div
+                        className="flex items-center justify-center w-10 h-10 rounded-xl"
+                        style={{ backgroundColor: color, opacity: 0.12 }}
+                      />
+                    )}
                     <span
                       className="text-xs font-bold"
                       style={{ color: textColor }}

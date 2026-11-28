@@ -49,6 +49,18 @@ export default function CommunitySection() {
                   />
                 )}
 
+                {card.logo && (
+                  <span className="absolute top-3 left-3 rounded-lg bg-white/90 px-2.5 py-1.5">
+                    <Image
+                      src={mediaUrl(card.logo)}
+                      alt={`${card.label} 로고`}
+                      width={120}
+                      height={32}
+                      className="h-6 w-auto object-contain"
+                    />
+                  </span>
+                )}
+
                 {/* Tag — bottom-right overlay */}
                 <span
                   className="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-semibold text-white"

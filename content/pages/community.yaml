@@ -5,6 +5,7 @@
 #   - showSnsLinks: true 면 site.yaml의 인스타그램 · 유튜브 버튼이 붙는다.
 #   - color: primary | secondary | accent | primary-light (정해진 브랜드 색 이름만)
 #   - image에 사진 경로를 적으면 자리표시 대신 나온다.
+#   - logo에 로고 경로(투명 배경 PNG · SVG, 예: /images/site/cu-logo.png)를 적으면 부서 이름 옆과 홈 카드 사진 위에 나온다.
 #
 # TODO(이전): 옛 사이트 확인 전 — 모든 공동체 소개 · 시간 · 장소 · 인원 · 문의 번호는 교회 입력 없이 쓴 임시 문구다.
 #   특히 청소년부 문의 번호(02-714-0042)를 대조할 것. 예배 시간 · 장소는 11/28 옛 사이트 예배시간 그림대로(주일 오후 1:30 · 3층 CU룸).

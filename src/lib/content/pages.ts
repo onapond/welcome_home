@@ -117,6 +117,7 @@ export const communitySchema = z.strictObject({
       tags: z.array(text).default([]),
       color: z.enum(GROUP_COLORS).default("primary"),
       image: optional(mediaPath),
+      logo: optional(mediaPath), // 부서 로고(투명 배경 PNG · SVG) — 이름 옆 · 홈 카드 사진 위에 나온다
       details: z.array(z.strictObject({ label: text, value: text })).default([]),
       showSnsLinks: z.boolean().default(false), // site.yaml의 인스타그램 · 유튜브 버튼
     }),
