@@ -44,7 +44,7 @@ groups:
       - { label: 문의, value: "{{phone}}" }
 
   - id: students
-    image: /images/site/community-students.webp   # 청소년부 (교육위원회 관리 앱 부서 사진, 2026-03-15)
+    image: /images/site/community-students.webp   # 2026 CU 수련회 단체 사진(옛 앨범) — 미성년자 얼굴이 크게 나오는 사진은 쓰지 않는다
     label: 청소년부
     title: 청소년부
     subtitle: CU · 중 · 고등학생

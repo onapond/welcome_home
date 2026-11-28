@@ -371,7 +371,7 @@ export default function AboutPage() {
               >
                 <span
                   className="font-serif text-2xl font-bold"
-                  style={{ color: "rgba(255,255,255,0.18)" }}
+                  style={{ color: "var(--color-secondary)" }}
                 >
                   {number}
                 </span>

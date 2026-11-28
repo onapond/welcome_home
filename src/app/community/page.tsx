@@ -230,6 +230,7 @@ export default function CommunityPage() {
             title={page.cta.title}
             align="center"
             className="mb-4"
+            onDark
           />
           <p className="text-sm sm:text-base leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.75)" }}>
             {page.cta.text}
