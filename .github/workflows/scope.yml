@@ -1,0 +1,35 @@
+# 범위 검사 — PR이 content/ · public/images/ · public/bulletins/ 만 바꾸면 통과.
+# main 규칙이 이 검사(scope) 통과를 요구하므로, 코드가 섞인 PR은
+# 저장소 관리자(onapond)만 검토 후 병합할 수 있다.
+#
+# pull_request_target: always runs the workflow from main, never the PR's
+# copy, so a PR cannot edit this file to pass itself. The PR's code is not
+# checked out or executed — only its file list is read through the API.
+name: 범위 검사
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  scope:
+    name: scope
+    runs-on: ubuntu-latest
+    steps:
+      - name: 바뀐 파일이 콘텐츠 범위 안인지
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Renames count both old and new paths (moving src/ into content/ is still a code change).
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)')
+          outside=$(printf '%s\n' "$files" | grep -vE '^(content/|public/images/|public/bulletins/)' || true)
+          if [ -n "$outside" ]; then
+            echo "콘텐츠 범위 밖 파일이 있습니다 — 개발자(onapond) 검토 후 병합합니다:"
+            printf '%s\n' "$outside" | sed 's/^/  /'
+            exit 1
+          fi
+          echo "콘텐츠만 바뀌었습니다 — 바로 병합할 수 있습니다."
