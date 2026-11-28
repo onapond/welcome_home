@@ -20,6 +20,8 @@ npm run dev                        # http://localhost:3000
 
 ## 콘텐츠 고치기
 
+교회 작업자는 Claude Code로 고칩니다. 처음 한 번, 작업자 컴퓨터의 Claude Code에 「https://github.com/onapond/welcome_home/blob/main/docs/worker-setup.md 읽고 이 컴퓨터에 설치해줘」라고 말하면 설치 · 로그인 안내 · 저장소 받기까지 진행합니다. 그 뒤 요청은 `.claude/skills/content-update` 규칙대로 처리됩니다.
+
 `content/README.md`에 폴더 · 파일 이름 · 날짜 형식 · 사진 경로 규칙이 있습니다. 각 폴더의 `_template.md`를 복사해 새 항목을 만듭니다.
 
 형식이 틀린 파일은 **빌드가 실패**하고, 어느 파일의 어느 항목이 틀렸는지 한국어로 알려 줍니다. 잘못된 내용이 사이트에 올라가지 않습니다.
