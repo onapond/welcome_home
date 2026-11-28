@@ -1,8 +1,8 @@
-import { ExternalLink, MapPin, Phone, Printer } from "lucide-react";
+import { ExternalLink, Phone, Printer } from "lucide-react";
 import { getSite } from "@/lib/content";
 import { getLocationInfo } from "@/lib/content/pages";
 import { getIcon } from "@/lib/icons";
-import { kakaoDirectionsUrl, naverMapUrl } from "@/lib/directions";
+import { googleMapEmbedUrl, kakaoDirectionsUrl, naverMapUrl } from "@/lib/directions";
 import { fullAddress, telHref } from "@/lib/site-summary";
 
 export default function LocationSection() {
@@ -34,50 +34,49 @@ export default function LocationSection() {
           </p>
         </div>
 
-        {/* Directions — 지도 앱의 검색 결과로 바로 연결한다 */}
+        {/* Map + directions — 화면 속 지도는 구글(키 없음), 길찾기는 카카오 · 네이버 앱으로 연결한다 */}
         <div
-          className="rounded-2xl mb-8 flex flex-col items-center justify-center px-6 py-12 gap-5 text-center"
+          className="rounded-2xl mb-8 overflow-hidden"
           style={{
             backgroundColor: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.1)",
           }}
         >
-          <div
-            className="flex items-center justify-center w-12 h-12 rounded-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-          >
-            <MapPin
-              className="w-6 h-6"
-              style={{ color: "var(--color-secondary)" }}
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white mb-1">{location.directions.title}</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.75)" }}>
-              {location.directions.text}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            {directions.map(({ label, href }) => (
-              <a
-                key={href}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 hover:brightness-110"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.12)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  color: "white",
-                }}
-              >
-                {label}
-                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="sr-only">(새 창)</span>
-              </a>
-            ))}
+          <iframe
+            src={googleMapEmbedUrl(site)}
+            title={`${site.name} 위치 지도`}
+            className="block w-full h-72 sm:h-96 border-0"
+            style={{ backgroundColor: "var(--color-bg-warm)" }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+          <div className="flex flex-col items-center justify-center px-6 py-8 gap-5 text-center">
+            <div>
+              <p className="text-sm font-medium text-white mb-1">{location.directions.title}</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.75)" }}>
+                {location.directions.text}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {directions.map(({ label, href }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 hover:brightness-110"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    color: "white",
+                  }}
+                >
+                  {label}
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span className="sr-only">(새 창)</span>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
