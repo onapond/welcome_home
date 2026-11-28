@@ -1,7 +1,7 @@
 # 재판정 요청 — 리팩토링 R4 수정분
 
 ## 범위
-- 수정 커밋: `72b75d7..e4e8be7` (`git log --oneline 72b75d7..e4e8be7`)
+- 수정 커밋: `4801796..0912a13` (`git log --oneline 4801796..0912a13`)
 - 지난 지적: `docs/reviews/2026-11-27-refactor-codex.md`(Codex) · `docs/reviews/2026-11-27-refactor-reviewer.md`(대립 검토)
 - 배경 · 볼 기준은 `docs/reviews/2026-11-27-refactor-request.md`와 같다. 제품 코드는 고치지 않는다.
 

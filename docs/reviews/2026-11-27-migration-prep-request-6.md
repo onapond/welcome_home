@@ -1,12 +1,12 @@
 # 여섯 번째 판정 요청 — 다섯 번째 판정 지적 수정 확인
 
 ## 범위
-- 커밋 `3da19e4..e129b17` (`git log --oneline 3da19e4..e129b17`).
+- 커밋 `18c474d..5b2b24c` (`git log --oneline 18c474d..5b2b24c`).
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-5.md`의 ② 7건(+ ① 7 「오후 7」). 기준: `docs/검토규칙.md`, `CLAUDE.md`. 제품 코드는 고치지 않는다.
 
 ## 할 일
 1. ② 1~7 각각 **고쳐짐 / 덜 고쳐짐 / 안 고쳐짐** + 근거(파일:줄). 지난번 실패 장면을 가능하면 그대로 다시 돌려 본다(임시 사본에서).
-2. 고친 코드가 새로 만든 문제만 본다(범위 밖의 새 기능 제안은 하지 않는다): `scripts/migrate/convert.py`(`front_matter` · `yaml_scalar` · `prior_bulletin_pdfs` · `restore_cache` · `pdf_complete` · `conv_bulletins` · 보고서), `scripts/check-legacy-redirects.mjs`, `src/lib/content/body.ts`(`imageUrlKey`), `src/lib/schedule.ts`(`parseTime`). 범위 안의 `3da19e4`(교회 메일 변경)는 사용자 결정이라 보지 않는다.
+2. 고친 코드가 새로 만든 문제만 본다(범위 밖의 새 기능 제안은 하지 않는다): `scripts/migrate/convert.py`(`front_matter` · `yaml_scalar` · `prior_bulletin_pdfs` · `restore_cache` · `pdf_complete` · `conv_bulletins` · 보고서), `scripts/check-legacy-redirects.mjs`, `src/lib/content/body.ts`(`imageUrlKey`), `src/lib/schedule.ts`(`parseTime`). 범위 안의 `18c474d`(교회 메일 변경)는 사용자 결정이라 보지 않는다.
 3. 가능하면 실행: `npm run check:content`, `npx tsc --noEmit && npm run lint`, 빌드(Turbopack이 막히면 `npx next build --webpack`) 뒤 `node scripts/check-legacy-redirects.mjs`. 변환기는 임시 폴더로(`--no-download --replace`, 출력이 저장소와 같아야 함). 3000번 서버는 건드리지 않는다. 임시 파일은 지우고 `content/` 원본을 바꾼 채로 두지 않는다.
 
 ## 결과 파일

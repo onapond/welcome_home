@@ -1,7 +1,7 @@
 # 일곱 번째 판정 요청 — 여섯 번째 판정 지적 수정 확인
 
 ## 범위
-- 커밋 `bf2b010..eed9511` (`git log --oneline bf2b010..eed9511`).
+- 커밋 `b2be93f..416214b` (`git log --oneline b2be93f..416214b`).
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-6.md`의 ② 5건. 기준: `docs/검토규칙.md`, `CLAUDE.md`. 제품 코드는 고치지 않는다.
 
 ## 할 일

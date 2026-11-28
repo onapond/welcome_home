@@ -1,7 +1,7 @@
 # 네 번째 판정 요청 — 3차 지적 수정분
 
 ## 범위
-- 수정 커밋: `605d16c..256af9e` (`git log --oneline 605d16c..256af9e`)
+- 수정 커밋: `d5e0a1e..35d0e95` (`git log --oneline d5e0a1e..35d0e95`)
 - 지난 지적: `docs/reviews/2026-11-27-refactor-codex-3.md` (① 덜 고쳐짐 · ② 새 지적)
 - 배경 · 볼 기준은 `docs/reviews/2026-11-27-refactor-request.md`와 같다. 제품 코드는 고치지 않는다.
 

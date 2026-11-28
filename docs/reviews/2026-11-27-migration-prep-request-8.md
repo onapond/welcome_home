@@ -1,7 +1,7 @@
 # 여덟 번째 판정 요청 — 일곱 번째 판정 지적 수정 확인
 
 ## 범위
-- 커밋 `b8789b5..bb6a265` (`git log --oneline b8789b5..bb6a265`).
+- 커밋 `2951392..c8c6802` (`git log --oneline 2951392..c8c6802`).
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-7.md`의 ② 2건 + ① 1번(따옴표 키). 기준: `docs/검토규칙.md`, `CLAUDE.md`. 제품 코드는 고치지 않는다.
 
 ## 할 일

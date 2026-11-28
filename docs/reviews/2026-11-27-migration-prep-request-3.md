@@ -1,7 +1,7 @@
 # 세 번째 판정 요청 — 두 번째 지적 수정 · 랜딩 사진 · m5 옛 주소 연결
 
 ## 범위
-- 커밋 `3e3013c..67e0645` (`git log --oneline 3e3013c..67e0645`). 제품 코드 · 스크립트 중심: `src/**` · `scripts/**` · `next.config.ts` · `.vercelignore` · `content/pages/*.yaml` · `content/site.yaml`.
+- 커밋 `56bd65f..70f973e` (`git log --oneline 56bd65f..70f973e`). 제품 코드 · 스크립트 중심: `src/**` · `scripts/**` · `next.config.ts` · `.vercelignore` · `content/pages/*.yaml` · `content/site.yaml`.
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-2.md`. 기준: `docs/검토규칙.md`, `CLAUDE.md`(디자인 시스템 · 비용 0). 제품 코드는 고치지 않는다.
 - `content/` 이전 데이터 · `public/bulletins/` PDF의 개인정보 관점 지적은 하지 않는다(사용자 결정 — 새 사이트에서 다시 검토).
 

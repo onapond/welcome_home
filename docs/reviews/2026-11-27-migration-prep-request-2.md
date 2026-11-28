@@ -1,7 +1,7 @@
 # 두 번째 판정 요청 — 지적 수정 + 개선(SEO · 디자인 · CTA) + 콘텐츠 이전
 
 ## 범위
-- 커밋 `609ef1c..118f0cc` (`git log --oneline 609ef1c..118f0cc`). 제품 코드 · 스크립트 중심: `src/**` · `scripts/**` · `next.config.ts` · `content/site.yaml` · `content/pages/*.yaml` · `content/README.md`.
+- 커밋 `32b70bf..babcecf` (`git log --oneline 32b70bf..babcecf`). 제품 코드 · 스크립트 중심: `src/**` · `scripts/**` · `next.config.ts` · `content/site.yaml` · `content/pages/*.yaml` · `content/README.md`.
 - `content/` 데이터(옛 사이트 이전분 1,500개)와 `public/bulletins/` PDF는 사용자 결정대로 옛 사이트를 그대로 옮긴 것 — 개인정보 관점의 내용 지적은 하지 않는다(새 사이트에서 다시 검토). 변환기가 규칙대로 만들었는지(형식 · 경로 · legacy · 깨진 마크다운)는 본다.
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex.md`. 개선 목록: `docs/improvement-audit-2026-11-27.md`.
 - 기준: `docs/검토규칙.md`, `CLAUDE.md`(디자인 시스템 · 비용 0). 제품 코드는 고치지 않는다.

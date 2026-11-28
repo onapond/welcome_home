@@ -1,7 +1,7 @@
 # 네 번째 판정 요청 — 세 번째 판정 지적 수정 확인
 
 ## 범위
-- 커밋 `0f40f8d..c9309e5` (`git log --oneline 0f40f8d..c9309e5`).
+- 커밋 `947d188..0ffebd8` (`git log --oneline 947d188..0ffebd8`).
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-3.md`의 ② 8건(+ 덜 고쳐진 두 번째 판정 3 · 8). 기준: `docs/검토규칙.md`, `CLAUDE.md`. 제품 코드는 고치지 않는다.
 
 ## 할 일

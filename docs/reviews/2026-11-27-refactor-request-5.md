@@ -1,7 +1,7 @@
 # 다섯 번째 판정 요청 — 4차 지적 수정분
 
 ## 범위
-- 수정 커밋: `10bfbe9..a2bb97e` (`git log --oneline 10bfbe9..a2bb97e`)
+- 수정 커밋: `59cef83..51ecb76` (`git log --oneline 59cef83..51ecb76`)
 - 지난 지적: `docs/reviews/2026-11-27-refactor-codex-4.md` (① 덜 고쳐짐 · ② 새 지적)
 - 배경 · 볼 기준은 `docs/reviews/2026-11-27-refactor-request.md`와 같다. 제품 코드는 고치지 않는다.
 

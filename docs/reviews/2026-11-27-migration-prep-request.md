@@ -1,7 +1,7 @@
 # 판정 요청 — 이전 준비분 (글꼴 · Vimeo · m1 · 사진 스크립트)
 
 ## 범위
-- 커밋 `95bc8ce..f9f767f` (`git log --oneline 95bc8ce..f9f767f`). 주로 `src/**` · `scripts/fonts/` · `scripts/migrate/photos.py` · `scripts/migrate/resize.mjs` · `next.config.ts` · `content/README.md` · `content/**/_template*`
+- 커밋 `8cb5884..e15c5bf` (`git log --oneline 8cb5884..e15c5bf`). 주로 `src/**` · `scripts/fonts/` · `scripts/migrate/photos.py` · `scripts/migrate/resize.mjs` · `next.config.ts` · `content/README.md` · `content/**/_template*`
 - 볼 기준: `docs/검토규칙.md`(특히 ⑱ 갱신분), `CLAUDE.md`(디자인 시스템 · 운영 모델 · 비용 0), `docs/migration-plan.md`. 배경은 `docs/reviews/2026-11-27-refactor-request.md`와 같다. 제품 코드는 고치지 않는다.
 
 ## 볼 것

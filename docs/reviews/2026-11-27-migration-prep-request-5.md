@@ -1,7 +1,7 @@
 # 다섯 번째 판정 요청 — 네 번째 판정 지적 수정 확인
 
 ## 범위
-- 커밋 `722744e..7298e17` (`git log --oneline 722744e..7298e17`).
+- 커밋 `c770a11..6c04826` (`git log --oneline c770a11..6c04826`).
 - 지난 지적: `docs/reviews/2026-11-27-migration-prep-codex-4.md`의 ② 7건. 기준: `docs/검토규칙.md`, `CLAUDE.md`. 제품 코드는 고치지 않는다.
 
 ## 할 일
