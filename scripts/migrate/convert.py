@@ -13,8 +13,9 @@ Output: <out>/{sermons,praise,videos,albums,events,news,bulletins}/*.md, <out>/h
 Rules (docs/migration-plan.md, docs/검토규칙.md ⑱, content/README.md):
 - s_board_2 (새가족소개) and s_board_4 (중보기도) are never read.
 - Vimeo videos do not play: `video:` is only written for YouTube; Vimeo items keep text only.
-- Author IPs and author ids are never written. Phone-like numbers (except the church's own)
-  and e-mail addresses (except the church's) are masked. Staff phones/e-mails are omitted.
+- Author IPs and author ids are never written. Personal data is kept as on the old site
+  (user decision 2026-11-28: addresses, phones, e-mails, staff contacts — the church's staff decide
+  later; the repo is private). Only 주민등록번호 / card-like numbers are masked.
 - Every collection item gets `legacy: {board, seq, url}` (history/staff schemas have no legacy).
 - File ids: YYYY-MM-DD, same-day items get -2, -3 ... in (date, board order, seq) order.
 - Deterministic: the same input always produces byte-identical files.
@@ -179,13 +180,17 @@ def remove_addresses(text, where):
     return "".join(out)
 
 
+KEEP_PERSONAL = True  # user decision 2026-11-28: addresses · phones · e-mails stay as on the old site
+
+
 def mask_private(text, where, markdown=False):
-    """Remove home addresses; mask phone numbers / e-mail addresses (not the church's own),
-    주민등록번호 and card-like numbers; log each by kind (never the value)."""
+    """Mask 주민등록번호 and card-like numbers; with KEEP_PERSONAL off, also remove home addresses
+    and mask phone numbers / e-mail addresses (not the church's own). Logs each by kind (never the value)."""
     star = "\\*" if markdown else "*"
     if not text:
         return text
-    text = remove_addresses(text, where)
+    if not KEEP_PERSONAL:
+        text = remove_addresses(text, where)
 
     def rrn(m):
         R.masks.append((where, "주민등록번호"))
@@ -195,6 +200,8 @@ def mask_private(text, where, markdown=False):
         R.masks.append((where, "카드번호"))
         return "(카드번호 생략)"
     text = CARD.sub(card, RRN.sub(rrn, text))
+    if KEEP_PERSONAL:
+        return text
 
     def ph(m):
         digits = m.group(1) + m.group(3) + m.group(5)
@@ -1402,11 +1409,10 @@ STAFF_HEAD = """# 교역자 · 직분자 명단 — 「교회소개」 페이지
 #   name   이름 (직분은 role에)       role   담임목사 · 부목사 · 전도사 …
 #   group  카드 아래 작은 배지(부서·역할)   photo  사진 경로(없으면 자리표시)
 #
-# 주의: 이 파일은 공개 저장소에 그대로 올라간다(누구나 읽을 수 있고, 지워도 기록에 남는다).
-#   본인이 홈페이지 공개에 동의한 연락처만 적는다. email · phone을 적으려면 publishContact: true 가
-#   함께 있어야 하고, 없으면 빌드가 멈춘다. 공개하지 않을 연락처는 이 파일에 적지 않는다.
-#   자세한 규칙은 content/README.md 「교역자 연락처」.
-# 옛 사이트 「섬기는 분들」(scripts/migrate/convert.py로 옮김). 옛 사이트의 전화 · 이메일은 옮기지 않았다.
+# 주의: email · phone은 사이트에 공개된다. 적으려면 publishContact: true 가 함께 있어야 하고,
+#   없으면 빌드가 멈춘다. 자세한 규칙은 content/README.md 「교역자 연락처」.
+# 옛 사이트 「섬기는 분들」(scripts/migrate/convert.py로 옮김). 옛 사이트에 공개돼 있던 전화 · 이메일을
+#   그대로 옮겼다(사용자 결정 2026-11-28: 공개 여부는 운영진이 나중에 정한다).
 """
 
 
@@ -1421,14 +1427,14 @@ def staff_names(crawl_dir):
 def conv_staff(W, crawl_dir, photos):
     board = "staff"
     lines = [STAFF_HEAD]
-    dropped = 0
+    shown = 0
     for it in sorted(load_board(crawl_dir, board), key=lambda x: int(x["seq"])):
         R.board(board)["in"] += 1
         name, role = clean_title(it.get("name")), clean_title(it.get("duty"))
         if not name or not role:
             R.skip(board, "이름 · 직분 없음")
             continue
-        dropped += len(it.get("phones") or []) + len(it.get("emails") or [])
+        phones, emails = it.get("phones") or [], it.get("emails") or []
         lines.append("- name: %s" % q(name))
         lines.append("  role: %s" % q(role))
         charge = [clean_title(c) for c in it.get("charge") or [] if clean_title(c)]
@@ -1442,9 +1448,16 @@ def conv_staff(W, crawl_dir, photos):
             bio = "\n".join(l.rstrip() for l in bio.replace("\r", "").split("\n") if l.strip())
             lines.append("  bio: |-")
             lines += ["    " + l for l in bio.split("\n")]
+        if phones:
+            lines.append("  phone: %s" % q(phones[0]))
+        if emails:
+            lines.append("  email: %s" % q(emails[0]))
+        if phones or emails:
+            lines.append("  publishContact: true")
+            shown += 1
         R.board(board)["written"] += 1
     W.files["staff.yaml"] = "\n".join(lines) + "\n"
-    R.notes[board].append("옛 사이트 전화 · 이메일 %d건은 어디에도 적지 않았습니다(publishContact 없음)" % dropped)
+    R.notes[board].append("옛 사이트 전화 · 이메일을 %d명에게 그대로 적었습니다(publishContact: true)" % shown)
     R.notes[board].append("legacy 칸이 섬기는 분 스키마에 없어 옛 글 번호는 적지 않았습니다")
 
 

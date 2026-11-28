@@ -2,11 +2,10 @@
 #   name   이름 (직분은 role에)       role   담임목사 · 부목사 · 전도사 …
 #   group  카드 아래 작은 배지(부서·역할)   photo  사진 경로(없으면 자리표시)
 #
-# 주의: 이 파일은 공개 저장소에 그대로 올라간다(누구나 읽을 수 있고, 지워도 기록에 남는다).
-#   본인이 홈페이지 공개에 동의한 연락처만 적는다. email · phone을 적으려면 publishContact: true 가
-#   함께 있어야 하고, 없으면 빌드가 멈춘다. 공개하지 않을 연락처는 이 파일에 적지 않는다.
-#   자세한 규칙은 content/README.md 「교역자 연락처」.
-# 옛 사이트 「섬기는 분들」(scripts/migrate/convert.py로 옮김). 옛 사이트의 전화 · 이메일은 옮기지 않았다.
+# 주의: email · phone은 사이트에 공개된다. 적으려면 publishContact: true 가 함께 있어야 하고,
+#   없으면 빌드가 멈춘다. 자세한 규칙은 content/README.md 「교역자 연락처」.
+# 옛 사이트 「섬기는 분들」(scripts/migrate/convert.py로 옮김). 옛 사이트에 공개돼 있던 전화 · 이메일을
+#   그대로 옮겼다(사용자 결정 2026-11-28: 공개 여부는 운영진이 나중에 정한다).
 
 - name: 김항우
   role: 담임목사
@@ -26,18 +25,30 @@
   role: 부목사
   group: 교육, 예배, 전도, 선교 지원
   photo: staff/staff-4/001.webp
+  phone: "02-714-0041"
+  email: besthong2000@naver.com
+  publishContact: true
 - name: 박경훈
   role: 부목사
   group: 장년, 교구
   photo: staff/staff-5/001.webp
+  phone: "010-3372-7091"
+  email: iryro821@gmail.com
+  publishContact: true
 - name: 김유창
   role: 간사
   group: 방송, 미디어, 행정 지원
   photo: staff/staff-6/001.webp
+  phone: "010-7130-3401"
+  email: zenapple@naver.com
+  publishContact: true
 - name: 정순태(고정숙)
   role: 파송선교사
   group: 캄보디아 파송선교사
   photo: staff/staff-7/001.webp
+  phone: "010-3377-8210"
+  email: jst21237@naver.com
+  publishContact: true
 - name: 강우열(이혜련)
   role: 파송 선교사
   group: 일본 파송 선교사
