@@ -21,6 +21,20 @@ info:
   officeHoursLabel: 교회 사무실
   officeHours: 월~금 09:00 – 18:00
 
+# 온라인 헌금 — 옛 사이트 「온라인헌금」 그림(2024-02)의 내용 (2차 이전 m5, 11/28). 지우면 칸이 사라진다.
+giving:
+  label: 온라인 헌금
+  bank: 농협
+  account: 301-0203-9885-11
+  howTo: "입금자명을 「이름 + 헌금종류 첫 글자」로 입력해 주세요. 예: 홍길동 주"
+  codes:
+    - { name: 주일헌금, code: 주 }
+    - { name: 감사헌금, code: 감 }
+    - { name: 십일조, code: 십 }
+    - { name: 선교헌금, code: 선 }
+    - { name: 건축헌금, code: 건 }
+    - { name: 일천번제, code: 일 }
+
 form:
   label: 문의 양식
   title: 메시지 보내기

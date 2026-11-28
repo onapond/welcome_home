@@ -5,7 +5,7 @@
 
 meta:
   title: 예배 안내
-  description: "{{name}} 예배 시간 안내. 주일예배({{service.sunday.time}}), 수요예배({{service.wednesday.time}}), 금요기도회({{service.friday.time}}), 새벽기도({{service.dawn.time}}). 누구나 환영합니다."
+  description: "{{name}} 예배 시간 안내. 주일예배({{service.sunday.time}}), 수요예배({{service.wednesday.time}}), 금요예배({{service.friday.time}}), 새벽기도회({{service.dawn.time}}). 누구나 환영합니다."
   ogDescription: "{{name}} 모든 예배의 시간, 장소, 대상을 안내합니다. 처음 오시는 분도 편안하게 참석하실 수 있습니다."
 
 hero:

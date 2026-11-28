@@ -184,6 +184,16 @@ export const contactSchema = z.strictObject({
     officeHoursLabel: text,
     officeHours: text,
   }),
+  // 온라인 헌금 안내(선택) — 옛 사이트 「온라인헌금」 쪽. 없으면 칸을 그리지 않는다.
+  giving: optional(
+    z.strictObject({
+      label: text,
+      bank: text,
+      account: text,
+      howTo: text, // 입금자명 적는 법
+      codes: z.array(z.strictObject({ name: text, code: text })).default([]),
+    }),
+  ),
   form: z.strictObject({
     label: text,
     title: text,

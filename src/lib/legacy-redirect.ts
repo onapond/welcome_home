@@ -36,7 +36,7 @@ const DOCUMENTS = new Map<string, string>([
   ["33018", "/about"], // 소개 및 비전
   ["33021", "/visit/service-times"], // 예배시간
   ["33020", "/visit#location"], // 오시는길
-  ["33019", "/contact"], // 온라인헌금 — no giving page yet
+  ["33019", "/contact#giving"], // 온라인헌금 — the giving box on the contact page
 ]);
 
 // Other old menu pages, by lower-cased path after /modu/.

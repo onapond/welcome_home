@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Phone, MapPin, Clock, Mail, CheckCircle, Send } from "lucide-react";
+import { Phone, MapPin, Clock, Mail, CheckCircle, Send, HandHeart } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import PhoneLinkText from "@/components/ui/PhoneLinkText";
 import type { ContactPage } from "@/lib/content/pages";
@@ -187,6 +187,35 @@ export default function ContactClient({
                   </div>
                 ))}
               </dl>
+
+              {page.giving && (
+                <div
+                  id="giving"
+                  className="rounded-2xl p-6 mb-10 scroll-mt-24"
+                  style={{ backgroundColor: "var(--color-white)", border: "1px solid rgba(43,58,140,0.1)" }}
+                >
+                  <p className="flex items-center gap-2 text-xs font-semibold mb-2" style={{ color: "var(--color-primary)" }}>
+                    <HandHeart className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
+                    {page.giving.label}
+                  </p>
+                  <p className="text-lg font-bold tabular-nums" style={{ color: "var(--color-dark)" }}>
+                    {page.giving.bank} {page.giving.account}
+                  </p>
+                  <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--color-dark-soft)" }}>
+                    {page.giving.howTo}
+                  </p>
+                  {page.giving.codes.length > 0 && (
+                    <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 mt-4 text-sm" style={{ color: "var(--color-dark)" }}>
+                      {page.giving.codes.map(({ name, code }) => (
+                        <li key={name}>
+                          {name} <span style={{ color: "var(--color-dark-soft)" }}>·</span>{" "}
+                          <strong style={{ color: "var(--color-primary)" }}>{code}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {/* Map placeholder */}
               <div

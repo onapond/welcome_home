@@ -83,7 +83,7 @@ export default function AboutPage() {
             className="mb-6"
           />
           <p
-            className="text-base leading-relaxed text-center max-w-2xl mx-auto mb-14"
+            className="text-base leading-relaxed text-center max-w-2xl mx-auto mb-14 whitespace-pre-line"
             style={{ color: "var(--color-dark-soft)" }}
           >
             {page.vision.intro}
