@@ -25,7 +25,7 @@
 - Vercel은 개인 계정(`onaponds-projects`) 유지 — 교회 Vercel 계정은 가입만 됨, P5에서 GitHub 조직과 함께 옮긴다(사용자 동의 11/28). 비공개 조직 저장소는 Vercel 무료판 Git 연동이 안 되므로 그때 다시 정함
 
 **막힌 것 · 담당자 답 대기**
-- Vercel에 `RESEND_API_KEY` 없음 → 폼 메일이 안 감. 사용자가 Resend 키를 넣어야 함 · 쓰지 않는 Sanity 환경 변수 삭제 승인
+- ~~Resend 키~~ 11/28 끝: Resend 계정 = 교회 메일(`chungpa21c@gmail.com`), Vercel `RESEND_API_KEY` 넣음 · `FORM_NOTIFY_TO` = 교회 메일(도메인 등록 전에는 Resend가 가입 메일로만 보냄). 운영 문의 폼 테스트 1건 `ok:true`. 다른 주소로도 받으려면 Resend에 도메인 등록(P6). 남은 것: 쓰지 않는 Sanity 환경 변수 삭제 승인
 - 교회 확인 사실: (예배 시간 · 장소 · 헌금 계좌는 11/28 옛 사이트 그림대로 넣음) 주차 · 점심 · FAQ · 목사 소개 · 신앙고백 · 우편번호 · 좌표 · 큰 담임목사 사진(교회 메일은 `chungpa21c@gmail.com`으로 바꿈, 사용자 11/27)
 
 **옛 사이트 이전 (`docs/migration-plan.md`)**: m1 스키마 · m2 변환기 · m3 사진 · m5 옛 주소 · **m6 확인 · m4 R2 업로드(11/28) 끝** — 이전 완료.
