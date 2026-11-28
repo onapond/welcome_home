@@ -77,3 +77,4 @@ export function formatRelativeTime(date: string | Date): string {
   }
   return rtf.format(Math.round(diffDays / 365), "year");
 }
+
